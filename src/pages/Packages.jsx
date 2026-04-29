@@ -104,12 +104,28 @@ export default function Packages() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-10">
-      <div className="text-center mb-12">
-        <h1 className="text-3xl font-heading font-bold text-page mb-3">{t('packages.title')}</h1>
-        <p className="text-page-secondary max-w-xl mx-auto">
-          {t('packages.subtitle')}
-        </p>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+      {/* ─── Hero with decorative illustration ─── */}
+      <div className="relative mb-10 md:mb-14">
+        {/* Soft glow backdrop */}
+        <div
+          className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-0 w-[640px] h-[280px] rounded-full blur-3xl opacity-60"
+          style={{ background: 'radial-gradient(closest-side, rgba(37,99,235,0.18), rgba(14,165,233,0.08) 55%, transparent 75%)' }}
+        />
+
+        <div className="relative flex flex-col items-center text-center">
+          <PackagesHeroArt />
+          <span className="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-page-link/10 text-page-link text-[11px] font-semibold tracking-[0.18em] uppercase mb-3">
+            <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+            Plans
+          </span>
+          <h1 className="text-3xl md:text-4xl font-heading font-bold text-page mb-3 tracking-tight">
+            {t('packages.title')}
+          </h1>
+          <p className="text-sm md:text-base text-page-secondary max-w-xl">
+            {t('packages.subtitle')}
+          </p>
+        </div>
       </div>
 
       {/* Active Subscriptions */}
@@ -157,10 +173,21 @@ export default function Packages() {
       )}
 
       {enabled.length === 0 ? (
-        <div className="text-center py-12 text-page-secondary">
-          <p>{t('packages.noPackages')}</p>
-          <Link to="/pricing" className="text-page-link hover:text-page-link transition-colors mt-2 inline-block">
-            {t('packages.checkPricing')} &rarr;
+        <div className="max-w-md mx-auto text-center py-10 px-6 glass rounded-3xl">
+          <EmptyPackagesArt />
+          <p className="text-base font-medium text-page mt-5 mb-1.5">
+            {t('packages.noPackages')}
+          </p>
+          <p className="text-sm text-page-secondary mb-5">
+            {t('packages.subtitle')}
+          </p>
+          <Link
+            to="/pricing"
+            className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-medium text-white transition-all shadow-md shadow-blue-500/25 hover:shadow-blue-500/40 hover:-translate-y-0.5"
+            style={{ backgroundImage: 'linear-gradient(135deg, #2563eb 0%, #0ea5e9 100%)' }}
+          >
+            {t('packages.checkPricing')}
+            <span className="arrow-nudge">→</span>
           </Link>
         </div>
       ) : (
@@ -321,5 +348,132 @@ export default function Packages() {
         );
       })()}
     </div>
+  );
+}
+
+/* ───────── Decorative SVGs ───────── */
+
+/**
+ * Hero illustration: three layered "package" cards with sparkles.
+ * Pure inline SVG; uses gradients matching the AI theme blue palette.
+ */
+function PackagesHeroArt() {
+  return (
+    <svg
+      viewBox="0 0 220 140"
+      className="w-44 md:w-52 h-auto mb-2 drop-shadow-[0_8px_24px_rgba(37,99,235,0.18)]"
+      fill="none"
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id="pkgCard1" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#dbeafe" />
+          <stop offset="100%" stopColor="#bfdbfe" />
+        </linearGradient>
+        <linearGradient id="pkgCard2" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#93c5fd" />
+          <stop offset="100%" stopColor="#60a5fa" />
+        </linearGradient>
+        <linearGradient id="pkgCard3" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#2563eb" />
+          <stop offset="60%" stopColor="#3b82f6" />
+          <stop offset="100%" stopColor="#0ea5e9" />
+        </linearGradient>
+      </defs>
+
+      {/* Back card */}
+      <g transform="translate(38 22) rotate(-10 60 40)">
+        <rect width="120" height="80" rx="14" fill="url(#pkgCard1)" />
+        <rect x="14" y="18" width="50" height="6" rx="3" fill="#ffffff" opacity="0.9" />
+        <rect x="14" y="32" width="80" height="4" rx="2" fill="#ffffff" opacity="0.7" />
+        <rect x="14" y="42" width="60" height="4" rx="2" fill="#ffffff" opacity="0.55" />
+      </g>
+
+      {/* Middle card */}
+      <g transform="translate(50 30)">
+        <rect width="120" height="80" rx="14" fill="url(#pkgCard2)" />
+        <rect x="14" y="18" width="58" height="6" rx="3" fill="#ffffff" opacity="0.95" />
+        <rect x="14" y="32" width="86" height="4" rx="2" fill="#ffffff" opacity="0.8" />
+        <rect x="14" y="42" width="68" height="4" rx="2" fill="#ffffff" opacity="0.65" />
+      </g>
+
+      {/* Front card (primary) */}
+      <g transform="translate(60 38) rotate(8 60 40)">
+        <rect width="120" height="80" rx="14" fill="url(#pkgCard3)" />
+        {/* Crown / star icon */}
+        <path
+          d="M30 32 L36 22 L42 32 L52 26 L48 42 L24 42 L20 26 Z"
+          fill="#ffffff"
+          opacity="0.95"
+        />
+        <rect x="62" y="26" width="40" height="5" rx="2.5" fill="#ffffff" opacity="0.9" />
+        <rect x="62" y="36" width="32" height="4" rx="2" fill="#ffffff" opacity="0.7" />
+        {/* "Price tag" pill */}
+        <rect x="20" y="54" width="86" height="14" rx="7" fill="#ffffff" opacity="0.18" stroke="#ffffff" strokeOpacity="0.35" />
+        <text x="63" y="64" textAnchor="middle" fontSize="9" fontWeight="700" fill="#ffffff" fontFamily="ui-monospace,monospace">
+          BLUEFUTURE
+        </text>
+      </g>
+
+      {/* Sparkles */}
+      <g fill="#fbbf24">
+        <path d="M24 22 L26 26 L30 28 L26 30 L24 34 L22 30 L18 28 L22 26 Z" opacity="0.95" />
+        <path d="M196 50 L197.5 53 L200.5 54.5 L197.5 56 L196 59 L194.5 56 L191.5 54.5 L194.5 53 Z" opacity="0.85" />
+        <circle cx="186" cy="100" r="2.5" opacity="0.9" />
+        <circle cx="32" cy="110" r="2" opacity="0.7" />
+      </g>
+    </svg>
+  );
+}
+
+/**
+ * Empty state illustration: an open box with a soft sparkle inside.
+ */
+function EmptyPackagesArt() {
+  return (
+    <svg
+      viewBox="0 0 160 120"
+      className="w-32 h-auto mx-auto"
+      fill="none"
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id="emptyBoxBody" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#dbeafe" />
+          <stop offset="100%" stopColor="#bfdbfe" />
+        </linearGradient>
+        <linearGradient id="emptyBoxLid" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#93c5fd" />
+          <stop offset="100%" stopColor="#60a5fa" />
+        </linearGradient>
+      </defs>
+      {/* Box body */}
+      <path
+        d="M28 60 L80 78 L132 60 L132 100 L80 116 L28 100 Z"
+        fill="url(#emptyBoxBody)"
+      />
+      <path d="M80 78 L80 116" stroke="#3b82f6" strokeOpacity="0.3" strokeWidth="1.5" />
+      {/* Open lid (front flap) */}
+      <path
+        d="M28 60 L80 44 L132 60 L80 78 Z"
+        fill="url(#emptyBoxLid)"
+      />
+      {/* Inner shadow */}
+      <path
+        d="M52 67 L80 75 L108 67 L80 83 Z"
+        fill="#1e3a8a"
+        opacity="0.12"
+      />
+      {/* Sparkle floating above */}
+      <g>
+        <path
+          d="M80 26 L83 36 L93 39 L83 42 L80 52 L77 42 L67 39 L77 36 Z"
+          fill="#fbbf24"
+          opacity="0.95"
+        />
+        <circle cx="60" cy="32" r="2" fill="#60a5fa" opacity="0.7" />
+        <circle cx="104" cy="34" r="1.6" fill="#60a5fa" opacity="0.6" />
+      </g>
+    </svg>
   );
 }

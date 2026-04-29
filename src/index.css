@@ -104,6 +104,34 @@
   .theme-default { --page-bg: #09090b; }
   .theme-dark { --page-bg: #030712; }
   .theme-minimal { --page-bg: #0a0a0a; }
+
+  /* ───────── AI theme (blue, simple, AI-relay-station vibe) ───────── */
+  .theme-ai {
+    --page-bg: #f7faff;
+    --page-spinner: rgba(37,99,235,0.85);
+    --page-spinner-track: rgba(37,99,235,0.18);
+    --page-text: 15 23 42;            /* slate-900 */
+    --page-text-secondary: 71 85 105; /* slate-600 */
+    --page-text-muted: 148 163 184;   /* slate-400 */
+    --page-label: 51 65 85;           /* slate-700 */
+    --page-link: 37 99 235;           /* blue-600 */
+    --page-card-bg: rgba(255,255,255,0.78);
+    --page-card-border: rgba(37,99,235,0.12);
+    --page-input-bg: #ffffff;
+    --page-input-border: rgb(203 213 225); /* slate-300 */
+    --page-surface: rgba(37,99,235,0.05);
+    --page-surface-hover: rgba(37,99,235,0.09);
+    --page-divider: rgba(37,99,235,0.10);
+    --page-inset: rgba(37,99,235,0.04);
+    --page-success: 16 185 129;
+    --page-success-text: 5 150 105;
+    --page-warning: 217 119 6;
+    --page-warning-text: 180 83 9;
+    --page-danger: 220 38 38;
+    --page-danger-text: 220 38 38;
+    --page-info: 37 99 235;
+    --page-info-text: 37 99 235;
+  }
 }
 
 @layer components {
@@ -276,4 +304,172 @@
 }
 .hover\:bg-page-surface-hover:hover {
   background: var(--page-surface-hover);
+}
+
+/* ═══════════════════════════════════════════════
+   AI theme accent overrides — blue / simple
+   ═══════════════════════════════════════════════ */
+.theme-ai {
+  color: rgb(15 23 42);
+}
+
+.theme-ai .glass,
+.theme-ai .glass-sm {
+  box-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 8px 32px -12px rgba(37,99,235,0.10);
+}
+
+.theme-ai .modal-overlay .glass,
+.theme-ai .modal-overlay .glass-sm {
+  background: rgba(255,255,255,0.98);
+}
+
+.theme-ai .btn-primary {
+  background-image: linear-gradient(135deg, #2563eb 0%, #0ea5e9 100%);
+  background-color: #2563eb;
+  box-shadow: 0 6px 20px -6px rgba(37,99,235,0.45);
+}
+.theme-ai .btn-primary:hover {
+  background-image: linear-gradient(135deg, #1d4ed8 0%, #0284c7 100%);
+}
+.theme-ai .btn-primary:active {
+  background-image: linear-gradient(135deg, #1e40af 0%, #0369a1 100%);
+}
+
+.theme-ai .input {
+  border-color: rgb(203 213 225);
+}
+.theme-ai .input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+}
+
+.theme-ai .btn-secondary {
+  border-color: rgb(203 213 225);
+  color: rgb(51 65 85);
+}
+.theme-ai .btn-secondary:hover {
+  background-color: rgba(37,99,235,0.06);
+  border-color: rgba(37,99,235,0.35);
+}
+
+.theme-ai ::-webkit-scrollbar-thumb {
+  background-color: rgba(37,99,235,0.25);
+}
+.theme-ai ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(37,99,235,0.45);
+}
+
+/* Soft animated glow used by AI theme hero */
+@keyframes ai-pulse {
+  0%, 100% { opacity: 0.55; transform: translate(-50%, 0) scale(1); }
+  50%      { opacity: 0.85; transform: translate(-50%, 0) scale(1.06); }
+}
+.theme-ai .ai-hero-glow {
+  animation: ai-pulse 9s ease-in-out infinite;
+}
+
+/* ───── Shine sweep button (used on hero CTA) ─────
+   - A diagonal white highlight sweeps left → right on a loop
+   - On hover the sweep speeds up, and the button lifts slightly
+*/
+.btn-shine {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.btn-shine::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.0) 35%,
+    rgba(255, 255, 255, 0.55) 50%,
+    rgba(255, 255, 255, 0.0) 65%,
+    transparent 80%
+  );
+  transform: translateX(-120%);
+  animation: btn-shine-sweep 3.2s ease-in-out infinite;
+  animation-delay: 0.6s;
+  z-index: 1;
+}
+.btn-shine:hover::before {
+  animation-duration: 1.2s;
+}
+.btn-shine > * {
+  position: relative;
+  z-index: 2;
+}
+
+@keyframes btn-shine-sweep {
+  0%   { transform: translateX(-120%); }
+  60%  { transform: translateX(120%); }
+  100% { transform: translateX(120%); }
+}
+
+/* ───── Arrow nudge — subtle right-left bobbing ─────
+   Plays continuously to draw the eye; speeds up & shifts further on parent hover.
+*/
+@keyframes arrow-nudge {
+  0%, 100% { transform: translateX(0); }
+  50%      { transform: translateX(3px); }
+}
+.arrow-nudge {
+  display: inline-block;
+  animation: arrow-nudge 1.6s ease-in-out infinite;
+  will-change: transform;
+}
+.group:hover .arrow-nudge {
+  animation-duration: 0.7s;
+  transform: translateX(2px);
+}
+
+/* Subtle pulsing glow for primary CTAs */
+@keyframes cta-glow {
+  0%, 100% { box-shadow: 0 8px 24px -8px rgba(37, 99, 235, 0.45), 0 0 0 0 rgba(37, 99, 235, 0.0); }
+  50%      { box-shadow: 0 12px 32px -8px rgba(37, 99, 235, 0.65), 0 0 0 6px rgba(37, 99, 235, 0.08); }
+}
+.cta-glow {
+  animation: cta-glow 3.6s ease-in-out infinite;
+}
+
+/* ───── Marquee (announcement broadcast) ─────
+   Used on mobile to horizontally scroll long announcements.
+   Two copies of the content sit side-by-side; we translate -50%
+   for a seamless loop.
+*/
+@keyframes marquee-x {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee-x 22s linear infinite;
+  will-change: transform;
+}
+.marquee:hover {
+  animation-play-state: paused;
+}
+.marquee > .marquee-item {
+  flex-shrink: 0;
+  padding-right: 3rem;
+}
+
+/* Fade masks at edges so text appears/disappears smoothly */
+.marquee-mask {
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 8%, #000 92%, transparent 100%);
+  mask-image:         linear-gradient(to right, transparent 0, #000 8%, #000 92%, transparent 100%);
+}
+
+/* Subtle grid background pattern for AI theme */
+.ai-grid-bg {
+  background-image:
+    linear-gradient(rgba(37,99,235,0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(37,99,235,0.07) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 35%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 35%, transparent 75%);
 }
