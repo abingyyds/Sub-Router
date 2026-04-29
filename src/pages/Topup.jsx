@@ -3,10 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useSite } from '../context/SiteContext';
 import {
-  getUserUsage, redeemCode, getTopupInfo, calculateAmount,
+  getUserUsage, redeemCode, getTopupInfo,
   createEpayOrder, createStripeOrder, createCreemOrder,
   createCryptoOrder, getCryptoOrderStatus, getTopupHistory,
-  Q, quotaToDollar,
+  Q,
 } from '../api';
 import { useCurrency } from '../context/SiteContext';
 import CountUp from '../components/bits/CountUp';
@@ -30,8 +30,6 @@ export default function Topup() {
   const [amount, setAmount] = useState('');
   const [displayAmount, setDisplayAmount] = useState('');
   const [selectedPreset, setSelectedPreset] = useState(null);
-  const [payAmount, setPayAmount] = useState(null);
-  const [amountLoading, setAmountLoading] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [payingMethod, setPayingMethod] = useState('');
 
@@ -112,25 +110,11 @@ export default function Topup() {
     setRedeeming(false);
   };
 
-  // Calculate amount
-  const calcAmount = async (val) => {
-    if (!val || val <= 0) { setPayAmount(null); return; }
-    setAmountLoading(true);
-    try {
-      const res = await calculateAmount({ amount: parseInt(val) });
-      if (res.data.message === 'success') {
-        setPayAmount(res.data.data);
-      }
-    } catch (e) { /* interceptor */ }
-    setAmountLoading(false);
-  };
-
   // Select preset
   const handlePreset = (val) => {
     setSelectedPreset(val);
     setAmount(String(val));
     setDisplayAmount(toDisplayAmount(val));
-    calcAmount(val);
   };
 
   // Determine if a payment method is Stripe-based
@@ -286,6 +270,15 @@ export default function Topup() {
     if (cryptoWallets.bsc) chains.push({ key: 'bsc', label: 'BSC (BEP20)' });
     return chains;
   }, [cryptoWallets.tron, cryptoWallets.eth, cryptoWallets.bsc]);
+  const selectedChainMeta = useMemo(
+    () => availableChains.find((chain) => chain.key === selectedChain) || null,
+    [availableChains, selectedChain],
+  );
+  const selectedChainLabel = selectedChainMeta?.label || '';
+  const selectedTokenLabel = selectedToken.toUpperCase();
+  const selectedCryptoLabel = selectedChainLabel
+    ? `${selectedTokenLabel} (${selectedChainLabel})`
+    : selectedTokenLabel;
 
   // Set default chain when available
   useEffect(() => {
@@ -409,19 +402,16 @@ export default function Topup() {
                   setSelectedPreset(null);
                   const quotaAmount = toQuotaAmount(currentValue);
                   setAmount(quotaAmount === '' ? '' : String(quotaAmount));
-                  calcAmount(quotaAmount);
                 }}
                 onBlur={(e) => {
                   const quotaAmount = toQuotaAmount(e.target.value);
                   if (quotaAmount === '') {
                     setDisplayAmount('');
                     setAmount('');
-                    setPayAmount(null);
                     return;
                   }
                   setAmount(String(quotaAmount));
                   setDisplayAmount(toDisplayAmount(quotaAmount));
-                  calcAmount(quotaAmount);
                 }}
                 min={minTopup * rate}
                 step="0.01"
@@ -432,18 +422,7 @@ export default function Topup() {
             <p className="text-xs text-page-muted mt-2">
               {t('topup.customAmountHint')}
             </p>
-            {amountLoading ? (
-              <p className="text-xs text-page-muted mt-2">{t('topup.calculating')}</p>
-            ) : payAmount ? (
-              <div className="mt-2 space-y-1 text-xs text-page-secondary">
-                <p>
-                  {t('topup.rechargeAmountLabel')}: <span className="text-page font-medium">{symbol}{displayAmount || toDisplayAmount(amount)}</span>
-                </p>
-                <p>
-                  {t('topup.payAmountLabel')}: <span className="text-page-success font-medium">{symbol}{payAmount}</span>
-                </p>
-              </div>
-            ) : amount ? (
+            {amount ? (
               <p className="text-xs text-page-muted mt-2">
                 {t('topup.rechargeAmountLabel')}: {symbol}{displayAmount || toDisplayAmount(amount)}
               </p>
@@ -474,48 +453,72 @@ export default function Topup() {
           {enableCrypto && availableChains.length > 0 && (
             <div className="mt-6 pt-6 border-t border-page-divider">
               <label className="block text-sm font-medium text-page-label mb-3">{t('topup.cryptoPayment')}</label>
-              <div className="flex flex-wrap items-center gap-3">
-                {/* Chain */}
-                <div className="flex gap-1.5">
-                  {availableChains.map((chain) => (
-                    <button
-                      key={chain.key}
-                      onClick={() => setSelectedChain(chain.key)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                        selectedChain === chain.key
-                          ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/25'
-                          : 'glass-sm text-page-label hover:text-page hover:bg-page-surface-hover'
-                      }`}
-                    >
-                      {chain.label}
-                    </button>
-                  ))}
+              <div className="rounded-xl border border-page-divider bg-page-surface/50 p-4 space-y-4">
+                <p className="text-xs text-page-muted">
+                  {t('topup.cryptoSelectionHint')}
+                </p>
+
+                <div>
+                  <p className="text-xs font-medium text-page-label mb-2">
+                    {t('topup.cryptoStepChain')}
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {availableChains.map((chain) => (
+                      <button
+                        key={chain.key}
+                        onClick={() => setSelectedChain(chain.key)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                          selectedChain === chain.key
+                            ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/25'
+                            : 'glass-sm text-page-label hover:text-page hover:bg-page-surface-hover'
+                        }`}
+                      >
+                        {chain.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                {/* Token */}
-                <div className="flex gap-1.5">
-                  {['usdt', 'usdc'].map((token) => (
-                    <button
-                      key={token}
-                      onClick={() => setSelectedToken(token)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                        selectedToken === token
-                          ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/25'
-                          : 'glass-sm text-page-label hover:text-page hover:bg-page-surface-hover'
-                      }`}
-                    >
-                      {token.toUpperCase()}
-                    </button>
-                  ))}
+
+                <div>
+                  <p className="text-xs font-medium text-page-label mb-2">
+                    {t('topup.cryptoStepToken')}
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {['usdt', 'usdc'].map((token) => (
+                      <button
+                        key={token}
+                        onClick={() => setSelectedToken(token)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                          selectedToken === token
+                            ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/25'
+                            : 'glass-sm text-page-label hover:text-page hover:bg-page-surface-hover'
+                        }`}
+                      >
+                        {token.toUpperCase()}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                {/* Pay */}
+
+                <div className="rounded-lg bg-page-inset/60 px-3 py-3">
+                  <p className="text-[11px] text-page-muted mb-1">
+                    {t('topup.cryptoSelectedSummary')}
+                  </p>
+                  <p className="text-sm font-medium text-page">
+                    {selectedCryptoLabel}
+                  </p>
+                </div>
+
                 <button
                   onClick={handleCryptoPay}
                   disabled={paymentLoading || !amount}
-                  className="px-4 py-2.5 rounded-xl text-sm font-medium glass-sm text-page-label hover:text-page hover:bg-page-surface-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  className="btn-primary w-full justify-center flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  {paymentLoading && payingMethod === 'crypto'
-                    ? t('topup.processing')
-                    : `${selectedToken.toUpperCase()} (${availableChains.find(c => c.key === selectedChain)?.label || selectedChain})`}
+                  {paymentLoading && payingMethod === 'crypto' ? (
+                    t('topup.processing')
+                  ) : (
+                    t('topup.generateCryptoAddress', { method: selectedCryptoLabel })
+                  )}
                 </button>
               </div>
             </div>
@@ -581,7 +584,7 @@ export default function Topup() {
                 </div>
                 <div className="glass-sm rounded-xl p-3">
                   <p className="text-xs text-page-secondary mb-1">{t('topup.chain')}</p>
-                  <p className="text-sm text-page font-medium">{cryptoOrder.chain}</p>
+                  <p className="text-sm text-page font-medium">{selectedChainLabel || cryptoOrder.chain}</p>
                 </div>
               </div>
               {cryptoPolling && (

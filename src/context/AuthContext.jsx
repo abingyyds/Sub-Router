@@ -9,9 +9,9 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   // Refresh user data — used after login, redeem, subscribe, etc.
-  const refreshUser = useCallback(async () => {
+  const refreshUser = useCallback(async (config = {}) => {
     try {
-      const res = await getUserSelf();
+      const res = await getUserSelf(config);
       if (res.data.success) {
         setUser(res.data.data);
         return res.data.data;

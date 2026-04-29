@@ -82,6 +82,7 @@ export function useCurrency() {
   const symbol = currency?.symbol || '¥';
   const rate = currency?.exchange_rate || 7;
   const code = currency?.code || 'CNY';
+  const usdRate = currency?.usd_exchange_rate || 7;
 
   const fmt = (usdValue, decimals = 4) => {
     if (usdValue == null || isNaN(usdValue)) return '-';
@@ -89,5 +90,12 @@ export function useCurrency() {
     return symbol + converted.toFixed(decimals);
   };
 
-  return { symbol, rate, code, fmt };
+  const fmtCNY = (cnyValue, decimals = 2) => {
+    if (cnyValue == null || isNaN(cnyValue)) return '-';
+    const v = Number(cnyValue);
+    const converted = code === 'CNY' ? v : v / usdRate;
+    return symbol + converted.toFixed(decimals);
+  };
+
+  return { symbol, rate, code, fmt, fmtCNY, usdRate };
 }

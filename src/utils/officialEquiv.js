@@ -7,6 +7,7 @@ import { Q } from '../api';
 // Patterns must match actual backend model_name format (e.g. "claude-opus-4-5-20251101").
 const OFFICIAL_PRICES = [
   // Claude — order matters: longer/more-specific first
+  { pattern: 'claude-opus-4-7', label: 'Claude Opus 4.7', inputPerMtok: 5, family: 'claudecode' },
   { pattern: 'claude-opus-4-5', label: 'Claude Opus 4.5', inputPerMtok: 5, family: 'claudecode' },
   { pattern: 'claude-opus-4-6', label: 'Claude Opus 4.6', inputPerMtok: 5, family: 'claudecode' },
   { pattern: 'claude-opus-4-1', label: 'Claude Opus 4.1', inputPerMtok: 15, family: 'claudecode' },

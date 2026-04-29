@@ -25,7 +25,7 @@ export default function Packages() {
   const { t } = useTranslation();
   const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
-  const { symbol, rate } = useCurrency();
+  const { symbol, rate, fmtCNY } = useCurrency();
   const [packages, setPackages] = useState([]);
   const [models, setModels] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -69,11 +69,14 @@ export default function Packages() {
       if (res.data.success) {
         toast.success(t('packages.subscribedSuccess'));
         setConfirmPkg(null);
-        await refreshUser();
-        // Reload subscriptions
-        getActiveSubscriptions()
-          .then((r) => { if (r.data.success) setActiveSubs(r.data.data || []); })
-          .catch(() => {});
+        // Background refresh errors shouldn't override a successful purchase toast.
+        await refreshUser({ skipErrorHandler: true }).catch(() => null);
+        const subsRes = await getActiveSubscriptions({
+          skipErrorHandler: true,
+        }).catch(() => null);
+        if (subsRes?.data?.success) {
+          setActiveSubs(subsRes.data.data || []);
+        }
       } else {
         toast.error(res.data.message || t('common.requestFailed'));
       }
@@ -233,9 +236,9 @@ export default function Packages() {
                 {/* Price */}
                 <div className="mb-6">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-bold text-page">{symbol}{Number(pkg.price).toFixed(2)}</span>
+                    <span className="text-4xl font-bold text-page">{fmtCNY(pkg.price)}</span>
                     {pkg.original_price > 0 && pkg.original_price > pkg.price && (
-                      <span className="text-lg text-page-muted line-through">{symbol}{Number(pkg.original_price).toFixed(2)}</span>
+                      <span className="text-lg text-page-muted line-through">{fmtCNY(pkg.original_price)}</span>
                     )}
                   </div>
                   {pkg.duration > 0 && (
@@ -263,8 +266,8 @@ export default function Packages() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                       {isSubscription
-                        ? t('packages.periodicQuota', { amount: (pkg.quota_amount / Q * rate).toFixed(2), period: getResetLabel(resetPeriod) })
-                        : t('packages.creditIncluded', { amount: (pkg.quota_amount / Q * rate).toFixed(2) })
+                        ? t('packages.periodicQuota', { symbol, amount: (pkg.quota_amount / Q * rate).toFixed(2), period: getResetLabel(resetPeriod) })
+                        : t('packages.creditIncluded', { symbol, amount: (pkg.quota_amount / Q * rate).toFixed(2) })
                       }
                     </li>
                   )}
@@ -316,12 +319,13 @@ export default function Packages() {
           <div className="glass rounded-2xl p-6 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-lg font-semibold text-page mb-3">{t('packages.confirmTitle')}</h2>
             <p className="text-sm text-page-secondary mb-2">
-              {t('packages.confirmDesc', { name: confirmPkg.name, price: pkgPrice.toFixed(2) })}
+              {t('packages.confirmDesc', { name: confirmPkg.name, price: fmtCNY(pkgPrice) })}
             </p>
             {isSubscription && (
               <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-3 mb-3">
                 <p className="text-xs text-page-info">
                   {t('packages.subscriptionInfo', {
+                    symbol,
                     period: getResetLabel(resetPeriod),
                     days: confirmPkg.duration || 30,
                     amount: (confirmPkg.quota_amount / Q * rate).toFixed(2),

@@ -8,12 +8,13 @@ import { calcOfficialEquivList } from '../../utils/officialEquiv';
 import RotatingEquiv from '../../components/bits/RotatingEquiv';
 import CountUp from '../../components/bits/CountUp';
 import FadeContent from '../../components/bits/FadeContent';
+import ApiEndpoints from '../../components/ApiEndpoints';
 
 export default function ClaudeHome() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { site } = useSite();
-  const { symbol, rate } = useCurrency();
+  const { symbol, rate, fmtCNY } = useCurrency();
   const [models, setModels] = useState([]);
   const [packages, setPackages] = useState([]);
 
@@ -80,6 +81,8 @@ export default function ClaudeHome() {
           </div>
         </FadeContent>
       </section>
+
+      <ApiEndpoints />
 
       {/* Features */}
       <section className="bg-[#F5EEE6]">
@@ -160,9 +163,9 @@ export default function ClaudeHome() {
                   <h3 className="text-base font-semibold text-[#3D3024]">{pkg.name}</h3>
                   {pkg.description && <p className="text-sm text-[#8B7D6E] mt-1">{pkg.description}</p>}
                   <div className="mt-auto pt-6">
-                    <span className="text-3xl font-bold text-[#3D3024]">{symbol}{Number(pkg.price).toFixed(2)}</span>
+                    <span className="text-3xl font-bold text-[#3D3024]">{fmtCNY(pkg.price)}</span>
                     {pkg.original_price > pkg.price && (
-                      <span className="text-sm text-[#8B7D6E] line-through ml-2">{symbol}{Number(pkg.original_price).toFixed(2)}</span>
+                      <span className="text-sm text-[#8B7D6E] line-through ml-2">{fmtCNY(pkg.original_price)}</span>
                     )}
                     {pkg.duration > 0 && <p className="text-xs text-[#8B7D6E] mt-1">{t('home.days', { count: pkg.duration })}</p>}
                   </div>

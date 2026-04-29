@@ -1,15 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { createSubDistributorOrder, getSubDistributorInfo } from '../api';
 import { useAuth } from '../context/AuthContext';
-import { useSite } from '../context/SiteContext';
+import { useSite, useCurrency } from '../context/SiteContext';
 
 function submitEpayForm(resData) {
   const params = resData.data;
   const url = resData.url;
-  if (!params || !url) return;
+  if (!params || !url) return false;
   const form = document.createElement('form');
   form.action = url;
   form.method = 'POST';
@@ -27,12 +27,16 @@ function submitEpayForm(resData) {
   document.body.appendChild(form);
   form.submit();
   document.body.removeChild(form);
+  return true;
 }
 
 export default function SubDistributor() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, refreshUser, loading: authLoading } = useAuth();
   const { site } = useSite();
+  const { symbol, fmtCNY } = useCurrency();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [subInfo, setSubInfo] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -65,6 +69,41 @@ export default function SubDistributor() {
     () => paymentMethods.find((item) => item.type === form.payment_method),
     [paymentMethods, form.payment_method]
   );
+  const paymentReturned = useMemo(
+    () => new URLSearchParams(location.search).get('payment') === 'return',
+    [location.search]
+  );
+
+  useEffect(() => {
+    if (!paymentReturned || authLoading) return;
+
+    let cancelled = false;
+    const toastId = 'sub-dist-payment-return';
+
+    const checkPaymentResult = async () => {
+      if (!user) {
+        toast(t('subDist.paymentPending'), { id: toastId });
+        navigate('/sub-site', { replace: true });
+        return;
+      }
+
+      toast.loading(t('subDist.confirmingPayment'), { id: toastId });
+      const refreshed = await refreshUser({ skipErrorHandler: true });
+      if (cancelled) return;
+
+      if (refreshed?.has_distributor) {
+        toast.success(t('subDist.openedSuccess'), { id: toastId });
+      } else {
+        toast(t('subDist.paymentPending'), { id: toastId });
+      }
+      navigate('/sub-site', { replace: true });
+    };
+
+    checkPaymentResult();
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, navigate, paymentReturned, refreshUser, t, user]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -88,6 +127,7 @@ export default function SubDistributor() {
         name: form.name.trim(),
         slug: form.slug.trim().toLowerCase(),
         payment_method: form.payment_method,
+        return_url: `${window.location.origin}/sub-site?payment=return`,
       };
       if (form.payment_method === 'crypto') {
         payload.chain = form.chain;
@@ -96,14 +136,26 @@ export default function SubDistributor() {
       const res = await createSubDistributorOrder(payload);
       if (res.data.message === 'success') {
         if (res.data.payment_type === 'stripe' && res.data.data?.pay_link) {
-          window.open(res.data.data.pay_link, '_blank');
+          const opened = window.open(res.data.data.pay_link, '_blank');
+          if (opened) {
+            toast.success(t('subDist.paymentPageOpened'));
+          } else {
+            toast.error(t('subDist.popupBlocked'));
+          }
         } else if (res.data.payment_type === 'crypto') {
           setCryptoOrder(res.data.data);
+          toast.success(t('subDist.cryptoOrderCreated'));
         } else {
-          submitEpayForm(res.data);
+          if (submitEpayForm(res.data)) {
+            toast.success(t('subDist.paymentPageOpened'));
+          } else {
+            toast.error(t('subDist.paymentPageFailed'));
+          }
         }
       } else if (res.data.data) {
         toast.error(typeof res.data.data === 'string' ? res.data.data : t('subDist.createFailed'));
+      } else {
+        toast.error(t('subDist.createFailed'));
       }
     } catch (e) {
       // handled by interceptor
@@ -200,6 +252,15 @@ export default function SubDistributor() {
                 <Link to="/login" className="btn-primary">{t('subDist.goLogin')}</Link>
                 <Link to="/register" className="btn-secondary">{t('subDist.goRegister')}</Link>
               </div>
+            </div>
+          ) : user?.has_distributor ? (
+            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5 space-y-3">
+              <p className="text-sm font-medium text-page">{t('subDist.alreadyOpenTitle')}</p>
+              <p className="text-sm text-page-secondary">
+                {t('subDist.alreadyOpenDesc', {
+                  name: user.distributor_name || user.distributor_slug || t('subDist.defaultSiteName'),
+                })}
+              </p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-7">

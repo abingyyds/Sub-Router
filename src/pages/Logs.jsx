@@ -20,6 +20,87 @@ function getLogOther(otherStr) {
   }
 }
 
+function formatAmount(symbol, rate, amount) {
+  return `${symbol}${(Number(amount || 0) * rate).toFixed(6)}`;
+}
+
+function getProviderSummary(other) {
+  if (!other?.provider_name) return '';
+  if (other.provider_description) {
+    return `${other.provider_name}：${other.provider_description}`;
+  }
+  return other.provider_name;
+}
+
+function getBillingSourceLabel(other, t) {
+  if (!other?.billing_source) return '';
+  if (other.billing_source === 'subscription') {
+    if (other.subscription_source === 'dist_package') return t('dashboard.packages');
+    if (other.subscription_source === 'order') return t('主站订阅');
+    if (other.subscription_source === 'admin') return t('后台订阅');
+    return t('订阅');
+  }
+  if (other.billing_source === 'wallet') {
+    return t('钱包');
+  }
+  return '';
+}
+
+function getSitePricingDetails(other, symbol, rate, t) {
+  if (!other?.site_billing_mode) return [];
+
+  if (other.site_billing_mode === 'per_call') {
+    return [
+      { key: t('定价方式'), value: t('按次计费') },
+      { key: t('价格'), value: formatAmount(symbol, rate, other.site_fixed_price) },
+    ];
+  }
+
+  const details = [{ key: t('定价方式'), value: t('按量计费') }];
+  if (Number(other.site_input_price || 0) > 0) {
+    details.push({
+      key: t('输入价格'),
+      value: `${formatAmount(symbol, rate, other.site_input_price)} / 1M tokens`,
+    });
+  }
+  if (Number(other.site_output_price || 0) > 0) {
+    details.push({
+      key: t('输出价格'),
+      value: `${formatAmount(symbol, rate, other.site_output_price)} / 1M tokens`,
+    });
+  }
+  if (Number(other.site_cache_read_price || 0) > 0) {
+    details.push({
+      key: t('缓存读取价格'),
+      value: `${formatAmount(symbol, rate, other.site_cache_read_price)} / 1M tokens`,
+    });
+  }
+
+  const cacheCreate5m = Number(other.site_cache_creation_price_5m || 0);
+  const cacheCreate1h = Number(other.site_cache_creation_price_1h || 0);
+  const cacheCreate = Number(other.site_cache_creation_price || 0);
+  if (cacheCreate5m > 0 || cacheCreate1h > 0) {
+    const parts = [];
+    if (cacheCreate5m > 0) {
+      parts.push(`5m ${formatAmount(symbol, rate, cacheCreate5m)} / 1M tokens`);
+    }
+    if (cacheCreate1h > 0) {
+      parts.push(`1h ${formatAmount(symbol, rate, cacheCreate1h)} / 1M tokens`);
+    }
+    details.push({
+      key: t('缓存创建价格'),
+      value: parts.join(' / '),
+    });
+  } else if (cacheCreate > 0) {
+    details.push({
+      key: t('缓存创建价格'),
+      value: `${formatAmount(symbol, rate, cacheCreate)} / 1M tokens`,
+    });
+  }
+
+  return details;
+}
+
 export default function Logs() {
   const { t } = useTranslation();
   const { symbol, rate } = useCurrency();
@@ -55,20 +136,35 @@ export default function Logs() {
     setExpandedRows(prev => ({ ...prev, [logId]: !prev[logId] }));
   };
 
-  const getExpandData = (log) => {
+  const getExpandData = useCallback((log) => {
     const other = getLogOther(log.other);
     if (!other) return [];
 
     const data = [];
+    const billingSourceLabel = getBillingSourceLabel(other, t);
 
-    // Cache hits
-    if (other.cache_tokens > 0) {
-      data.push({ key: t('缓存命中 Tokens'), value: other.cache_tokens.toLocaleString() });
+    const providerSummary = getProviderSummary(other);
+    if (providerSummary) {
+      data.push({ key: t('供应商'), value: providerSummary });
     }
 
-    // Cache creation
+    if (billingSourceLabel) {
+      data.push({ key: t('实际扣费来源'), value: billingSourceLabel });
+    }
+
+    data.push(...getSitePricingDetails(other, symbol, rate, t));
+
+    if (other.cache_tokens > 0) {
+      data.push({ key: t('缓存命中 Tokens'), value: Number(other.cache_tokens).toLocaleString() });
+    }
     if (other.cache_creation_tokens > 0) {
-      data.push({ key: t('缓存创建 Tokens'), value: other.cache_creation_tokens.toLocaleString() });
+      data.push({ key: t('缓存创建 Tokens'), value: Number(other.cache_creation_tokens).toLocaleString() });
+    }
+    if (other.cache_creation_tokens_5m > 0) {
+      data.push({ key: t('缓存创建 Tokens (5m)'), value: Number(other.cache_creation_tokens_5m).toLocaleString() });
+    }
+    if (other.cache_creation_tokens_1h > 0) {
+      data.push({ key: t('缓存创建 Tokens (1h)'), value: Number(other.cache_creation_tokens_1h).toLocaleString() });
     }
 
     // Request ID
@@ -87,13 +183,8 @@ export default function Logs() {
       data.push({ key: t('首字时间'), value: `${frtSeconds}s` });
     }
 
-    // Billing source
-    if (other.billing_source === 'subscription') {
-      data.push({ key: t('计费方式'), value: t('订阅抵扣') });
-    }
-
     return data;
-  };
+  }, [rate, symbol, t]);
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-10">
@@ -162,6 +253,7 @@ export default function Logs() {
                     const expandData = getExpandData(log);
                     const hasExpandData = expandData.length > 0;
                     const isExpanded = expandedRows[log.id];
+                    const billingSourceLabel = getBillingSourceLabel(getLogOther(log.other), t);
                     return (
                       <React.Fragment key={i}>
                         <tr
@@ -180,8 +272,17 @@ export default function Logs() {
                           <td className="px-4 py-3 text-xs text-page-secondary">{log.token_name || '-'}</td>
                           <td className="px-4 py-3 text-right font-mono text-xs text-page-label">{log.prompt_tokens?.toLocaleString() || '0'}</td>
                           <td className="px-4 py-3 text-right font-mono text-xs text-page-label">{log.completion_tokens?.toLocaleString() || '0'}</td>
-                          <td className="px-4 py-3 text-right font-mono text-xs text-page-warning">
-                            {log.quota > 0 ? `${symbol}${(log.quota / Q * rate).toFixed(6)}` : '-'}
+                          <td className="px-4 py-3 text-right">
+                            <div className="flex flex-col items-end">
+                              <span className="font-mono text-xs text-page-warning">
+                                {log.quota > 0 ? `${symbol}${(log.quota / Q * rate).toFixed(6)}` : '-'}
+                              </span>
+                              {billingSourceLabel && (
+                                <span className="text-[10px] text-page-secondary mt-1">
+                                  {billingSourceLabel}
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td className="px-4 py-3 text-right text-xs text-page-secondary">
                             {log.use_time > 0 ? `${log.use_time}s` : '-'}
@@ -214,6 +315,7 @@ export default function Logs() {
                 const expandData = getExpandData(log);
                 const hasExpandData = expandData.length > 0;
                 const isExpanded = expandedRows[log.id];
+                const billingSourceLabel = getBillingSourceLabel(getLogOther(log.other), t);
                 return (
                   <div key={i} className="px-4 py-3 space-y-1.5">
                     <div
@@ -226,9 +328,16 @@ export default function Logs() {
                         )}
                         <span className="font-mono text-xs text-page font-medium">{log.model_name || '-'}</span>
                       </div>
-                      <span className="font-mono text-xs text-page-warning">
-                        {log.quota > 0 ? `${symbol}${(log.quota / Q * rate).toFixed(6)}` : '-'}
-                      </span>
+                      <div className="flex flex-col items-end">
+                        <span className="font-mono text-xs text-page-warning">
+                          {log.quota > 0 ? `${symbol}${(log.quota / Q * rate).toFixed(6)}` : '-'}
+                        </span>
+                        {billingSourceLabel && (
+                          <span className="text-[10px] text-page-secondary mt-1">
+                            {billingSourceLabel}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center justify-between text-[11px] text-page-secondary">
                       <span>{formatTime(log.created_at)}</span>

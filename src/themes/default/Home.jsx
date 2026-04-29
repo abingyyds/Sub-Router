@@ -8,12 +8,13 @@ import { calcOfficialEquivList } from '../../utils/officialEquiv';
 import RotatingEquiv from '../../components/bits/RotatingEquiv';
 import CountUp from '../../components/bits/CountUp';
 import FadeContent from '../../components/bits/FadeContent';
+import ApiEndpoints from '../../components/ApiEndpoints';
 
 export default function DefaultHome() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { site } = useSite();
-  const { symbol, rate } = useCurrency();
+  const { symbol, rate, fmtCNY } = useCurrency();
   const [models, setModels] = useState([]);
   const [packages, setPackages] = useState([]);
 
@@ -80,6 +81,8 @@ export default function DefaultHome() {
           </div>
         </FadeContent>
       </section>
+
+      <ApiEndpoints />
 
       {/* Features */}
       <section className="max-w-5xl mx-auto px-6 py-20">
@@ -172,9 +175,9 @@ export default function DefaultHome() {
                   <h3 className="text-base font-semibold text-white">{pkg.name}</h3>
                   {pkg.description && <p className="text-sm text-neutral-500 mt-1">{pkg.description}</p>}
                   <div className="mt-auto pt-6">
-                    <span className="text-3xl font-bold text-white">{symbol}{Number(pkg.price).toFixed(2)}</span>
+                    <span className="text-3xl font-bold text-white">{fmtCNY(pkg.price)}</span>
                     {pkg.original_price > pkg.price && (
-                      <span className="text-sm text-neutral-600 line-through ml-2">{symbol}{Number(pkg.original_price).toFixed(2)}</span>
+                      <span className="text-sm text-neutral-600 line-through ml-2">{fmtCNY(pkg.original_price)}</span>
                     )}
                     {pkg.duration > 0 && <p className="text-xs text-neutral-600 mt-1">{t('home.days', { count: pkg.duration })}</p>}
                   </div>

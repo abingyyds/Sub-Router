@@ -1,18 +1,35 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getTokens, createToken, updateToken, deleteToken, getSiteKeyGroups } from '../api';
+import {
+  getTokens,
+  createToken,
+  updateToken,
+  deleteToken,
+  getSiteKeyGroups,
+  getSiteKeyGroupPricing,
+  getTokenSupportedModels,
+} from '../api';
+import ConfigExporter from '../components/ConfigExporter';
+import { useCurrency } from '../context/SiteContext';
 import toast from 'react-hot-toast';
 
 export default function Tokens() {
   const { t } = useTranslation();
+  const { symbol, rate } = useCurrency();
   const [tokens, setTokens] = useState([]);
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState(null);
   const [newKey, setNewKey] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [expandedTokens, setExpandedTokens] = useState({});
+  const [tokenModels, setTokenModels] = useState({});
 
   // Key groups
   const [keyGroups, setKeyGroups] = useState([]);
+  const [activePricingGroup, setActivePricingGroup] = useState(null);
+  const [groupPricingCache, setGroupPricingCache] = useState({});
+  const [loadingGroupPricingId, setLoadingGroupPricingId] = useState(0);
+  const [groupPricingSearch, setGroupPricingSearch] = useState('');
 
   // Create modal
   const [showCreate, setShowCreate] = useState(false);
@@ -57,6 +74,30 @@ export default function Tokens() {
     setSelectedGroupId(0);
     setCreateName('');
     setShowCreate(true);
+  };
+
+  const openGroupPricing = async (group) => {
+    setActivePricingGroup(group);
+    setGroupPricingSearch('');
+    if (groupPricingCache[group.id] || loadingGroupPricingId === group.id) {
+      return;
+    }
+    setLoadingGroupPricingId(group.id);
+    try {
+      const res = await getSiteKeyGroupPricing(group.id);
+      if (res.data.success) {
+        setGroupPricingCache((prev) => ({
+          ...prev,
+          [group.id]: res.data.data || { items: [], summary: null, group },
+        }));
+      }
+    } catch (e) { /* interceptor */ }
+    setLoadingGroupPricingId(0);
+  };
+
+  const closeGroupPricing = () => {
+    setActivePricingGroup(null);
+    setGroupPricingSearch('');
   };
 
   const handleCreate = async (e) => {
@@ -128,6 +169,65 @@ export default function Tokens() {
     try { return JSON.parse(tagsStr || '[]'); } catch { return []; }
   };
 
+  const handleToggleSupportedModels = async (tokenId) => {
+    const isExpanded = !!expandedTokens[tokenId];
+    setExpandedTokens((prev) => ({ ...prev, [tokenId]: !isExpanded }));
+    if (isExpanded || tokenModels[tokenId]) return;
+
+    setTokenModels((prev) => ({
+      ...prev,
+      [tokenId]: { loading: true, models: [], count: 0, provider_names: [], restricted_by_providers: false, restricted_by_models: false },
+    }));
+
+    try {
+      const res = await getTokenSupportedModels(tokenId);
+      if (res.data.success) {
+        const data = res.data.data || {};
+        setTokenModels((prev) => ({
+          ...prev,
+          [tokenId]: {
+            loading: false,
+            models: data.models || [],
+            count: data.count || 0,
+            provider_names: data.provider_names || [],
+            restricted_by_providers: Boolean(data.restricted_by_providers),
+            restricted_by_models: Boolean(data.restricted_by_models),
+          },
+        }));
+      } else {
+        setTokenModels((prev) => ({
+          ...prev,
+          [tokenId]: { loading: false, error: true, models: [], count: 0, provider_names: [], restricted_by_providers: false, restricted_by_models: false },
+        }));
+      }
+    } catch (e) {
+      setTokenModels((prev) => ({
+        ...prev,
+        [tokenId]: { loading: false, error: true, models: [], count: 0, provider_names: [], restricted_by_providers: false, restricted_by_models: false },
+      }));
+    }
+  };
+
+  const hasGroups = keyGroups.length > 0;
+  const activeGroupPricing = activePricingGroup
+    ? groupPricingCache[activePricingGroup.id] || null
+    : null;
+  const filteredGroupPricingItems = useMemo(() => {
+    const items = activeGroupPricing?.items || [];
+    const keyword = groupPricingSearch.trim().toLowerCase();
+    if (!keyword) return items;
+    return items.filter((item) => {
+      const modelName = (item.model_name || '').toLowerCase();
+      const displayName = (item.display_name || '').toLowerCase();
+      const category = (item.category || '').toLowerCase();
+      return (
+        modelName.includes(keyword) ||
+        displayName.includes(keyword) ||
+        category.includes(keyword)
+      );
+    });
+  }, [activeGroupPricing, groupPricingSearch]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -135,8 +235,6 @@ export default function Tokens() {
       </div>
     );
   }
-
-  const hasGroups = keyGroups.length > 0;
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-10">
@@ -189,6 +287,7 @@ export default function Tokens() {
                   group={group}
                   parseTags={parseTags}
                   onSelect={openCreateFromGroup}
+                  onViewPricing={openGroupPricing}
                   t={t}
                 />
               ))}
@@ -236,6 +335,20 @@ export default function Tokens() {
           </div>
         </div>
       )}
+
+      <GroupPricingModal
+        open={!!activePricingGroup}
+        group={activePricingGroup}
+        pricingData={activeGroupPricing}
+        items={filteredGroupPricingItems}
+        loading={loadingGroupPricingId === activePricingGroup?.id}
+        search={groupPricingSearch}
+        onSearchChange={setGroupPricingSearch}
+        onClose={closeGroupPricing}
+        symbol={symbol}
+        rate={rate}
+        t={t}
+      />
 
       {/* ========== New Key Reveal Modal ========== */}
       {newKey && (
@@ -315,6 +428,12 @@ export default function Tokens() {
                   </span>
                   <div className="flex items-center gap-2">
                     <button
+                      onClick={() => handleToggleSupportedModels(token.id)}
+                      className="px-3 py-1 text-xs rounded-lg border border-page-divider text-page-secondary hover:bg-page-surface-hover transition-colors"
+                    >
+                      {expandedTokens[token.id] ? t('tokens.hideSupportedModels') : t('tokens.viewSupportedModels')}
+                    </button>
+                    <button
                       onClick={() => handleToggle(token)}
                       className={`px-3 py-1 text-xs rounded-lg border transition-colors ${
                         token.status === 1
@@ -345,17 +464,72 @@ export default function Tokens() {
                     </button>
                   </div>
                 )}
+                {expandedTokens[token.id] && (
+                  <div className="mt-3 rounded-xl border border-page-divider bg-page-surface/50 px-4 py-3">
+                    {tokenModels[token.id]?.loading ? (
+                      <div className="flex items-center gap-2 text-sm text-page-secondary">
+                        <div className="w-4 h-4 border-2 border-brand-500/30 border-t-brand-500 rounded-full animate-spin" />
+                        <span>{t('tokens.loadingSupportedModels')}</span>
+                      </div>
+                    ) : tokenModels[token.id]?.error ? (
+                      <p className="text-sm text-page-danger">{t('tokens.loadSupportedModelsFailed')}</p>
+                    ) : (
+                      <>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-sm font-medium text-page">
+                            {t('tokens.supportedModels')} ({tokenModels[token.id]?.count || 0})
+                          </p>
+                          {tokenModels[token.id]?.restricted_by_models && (
+                            <span className="px-2 py-0.5 rounded-full text-[11px] bg-brand-500/10 text-brand-500">
+                              {t('tokens.restrictedByModels')}
+                            </span>
+                          )}
+                          {tokenModels[token.id]?.restricted_by_providers && (
+                            <span className="px-2 py-0.5 rounded-full text-[11px] bg-brand-500/10 text-brand-500">
+                              {t('tokens.restrictedByProviders')}
+                            </span>
+                          )}
+                        </div>
+                        {tokenModels[token.id]?.provider_names?.length > 0 && (
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <span className="text-xs text-page-muted">{t('tokens.supportedProviders')}</span>
+                            {tokenModels[token.id].provider_names.map((name) => (
+                              <span key={name} className="px-2 py-0.5 rounded-full text-[11px] bg-page-inset text-page-secondary">
+                                {name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        {tokenModels[token.id]?.models?.length > 0 ? (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {tokenModels[token.id].models.map((modelName) => (
+                              <code key={modelName} className="px-2.5 py-1 rounded-lg text-[11px] font-mono bg-page-inset text-page-secondary">
+                                {modelName}
+                              </code>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="mt-3 text-sm text-page-muted">{t('tokens.noSupportedModels')}</p>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
         )}
+      </div>
+
+      <div className="mt-8">
+        <ConfigExporter tokens={tokens} />
       </div>
     </div>
   );
 }
 
 /* ========== Key Group Card ========== */
-function KeyGroupCard({ group, parseTags, onSelect, t }) {
+function KeyGroupCard({ group, parseTags, onSelect, onViewPricing, t }) {
   const tags = parseTags(group.tags);
   const isUnavailable = group.is_unavailable;
 
@@ -363,7 +537,7 @@ function KeyGroupCard({ group, parseTags, onSelect, t }) {
     <div
       className={`glass-sm rounded-xl p-4 border border-page-divider transition-all ${
         isUnavailable
-          ? 'opacity-50 cursor-not-allowed'
+          ? 'opacity-75'
           : 'hover:border-brand-500/40 cursor-pointer group'
       }`}
       onClick={() => !isUnavailable && onSelect(group)}
@@ -410,16 +584,287 @@ function KeyGroupCard({ group, parseTags, onSelect, t }) {
           )}
         </div>
 
-        {/* Create arrow */}
-        {!isUnavailable && (
-          <div className="flex items-center gap-1.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-            <span className="text-xs font-medium text-brand-500">{t('tokens.create')}</span>
-            <svg className="w-4 h-4 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </div>
-        )}
+        <div className="flex flex-col items-end gap-2 flex-shrink-0">
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onViewPricing(group);
+            }}
+            className="px-3 py-1.5 text-xs rounded-lg border border-page-divider text-page-secondary hover:bg-page-surface-hover hover:text-page transition-colors"
+          >
+            {t('tokens.viewGroupPricing')}
+          </button>
+
+          {!isUnavailable && (
+            <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+              <span className="text-xs font-medium text-brand-500">{t('tokens.create')}</span>
+              <svg className="w-4 h-4 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
+}
+
+function GroupPricingModal({
+  open,
+  group,
+  pricingData,
+  items,
+  loading,
+  search,
+  onSearchChange,
+  onClose,
+  symbol,
+  rate,
+  t,
+}) {
+  if (!open || !group) {
+    return null;
+  }
+
+  const displayGroup = pricingData?.group || group;
+  const summary = pricingData?.summary;
+  const hasItems = (pricingData?.items || []).length > 0;
+
+  return (
+    <div
+      className="modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="glass rounded-2xl w-full max-w-6xl max-h-[88vh] overflow-hidden"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="px-6 py-5 border-b border-page-divider">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-heading font-semibold text-page">
+                {displayGroup.name} · {t('tokens.groupPricingTitle')}
+              </h2>
+              <p className="text-sm text-page-secondary mt-1 max-w-3xl">
+                {t('tokens.groupPricingSubtitle')}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-3 py-1.5 text-sm rounded-lg border border-page-divider text-page-secondary hover:bg-page-surface-hover transition-colors"
+            >
+              {t('tokens.cancel')}
+            </button>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 mt-4">
+            {displayGroup.discount_label && (
+              <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-green-500/10 text-page-success">
+                {displayGroup.discount_label}
+              </span>
+            )}
+            {displayGroup.rmb_per_usd > 0 && (
+              <span className="px-2.5 py-1 rounded-full text-xs bg-page-surface text-page-secondary">
+                {displayGroup.rmb_per_usd} {t('tokens.rmbPerUsd')}
+              </span>
+            )}
+            {summary && (
+              <span className="px-2.5 py-1 rounded-full text-xs bg-page-surface text-page-secondary">
+                {t('tokens.groupPricingAvailableLines')}: {summary.provider_count}
+              </span>
+            )}
+            {summary && (
+              <span className="px-2.5 py-1 rounded-full text-xs bg-page-surface text-page-secondary">
+                {t('tokens.groupPricingAvailableModels')}: {summary.model_count}
+              </span>
+            )}
+            {summary?.provider_limited && (
+              <span className="px-2.5 py-1 rounded-full text-xs bg-brand-500/10 text-brand-500">
+                {t('tokens.restrictedByProviders')}
+              </span>
+            )}
+            {summary?.model_limited && (
+              <span className="px-2.5 py-1 rounded-full text-xs bg-brand-500/10 text-brand-500">
+                {t('tokens.restrictedByModels')}
+              </span>
+            )}
+          </div>
+
+          {displayGroup.description && (
+            <p className="text-sm text-page-secondary mt-3">
+              {displayGroup.description}
+            </p>
+          )}
+        </div>
+
+        <div className="px-6 py-4 border-b border-page-divider bg-page-surface/40">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <p className="text-sm text-page-secondary">
+              {t('tokens.groupPricingNotice')}
+            </p>
+            <input
+              type="text"
+              value={search}
+              onChange={(event) => onSearchChange(event.target.value)}
+              className="input lg:max-w-xs"
+              placeholder={t('tokens.groupPricingSearchPlaceholder')}
+            />
+          </div>
+        </div>
+
+        <div className="px-6 py-5 overflow-y-auto max-h-[58vh]">
+          {loading ? (
+            <div className="flex items-center gap-2 text-sm text-page-secondary">
+              <div className="w-4 h-4 border-2 border-brand-500/30 border-t-brand-500 rounded-full animate-spin" />
+              <span>{t('tokens.groupPricingLoading')}</span>
+            </div>
+          ) : !hasItems ? (
+            <div className="text-sm text-page-secondary">
+              {t('tokens.groupPricingNoData')}
+            </div>
+          ) : items.length === 0 ? (
+            <div className="text-sm text-page-secondary">
+              {t('tokens.groupPricingNoMatch')}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[860px]">
+                <thead>
+                  <tr className="border-b border-page-divider">
+                    <th className="text-left px-4 py-3 font-medium text-page-secondary">{t('pricing.model')}</th>
+                    <th className="text-left px-4 py-3 font-medium text-page-secondary">{t('定价方式')}</th>
+                    <th className="text-right px-4 py-3 font-medium text-page-secondary">{t('tokens.groupPricingReferencePrice')}</th>
+                    <th className="text-right px-4 py-3 font-medium text-page-secondary">{t('pricing.outputPrice')}</th>
+                    <th className="text-right px-4 py-3 font-medium text-page-secondary">{t('pricing.cacheReadPrice')}</th>
+                    <th className="text-right px-4 py-3 font-medium text-page-secondary">{t('pricing.cacheCreationPrice')}</th>
+                    <th className="text-center px-4 py-3 font-medium text-page-secondary">{t('tokens.groupPricingLines')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item) => (
+                    <tr key={`${item.model_name}:${item.billing_type}`} className="border-b border-page-divider last:border-0 align-top">
+                      <td className="px-4 py-3.5">
+                        <div className="min-w-0">
+                          <div className="font-medium text-page">{item.display_name || item.model_name}</div>
+                          {(item.display_name || item.model_name) !== item.model_name && (
+                            <div className="text-xs text-page-muted font-mono mt-1">{item.model_name}</div>
+                          )}
+                          {item.category && (
+                            <div className="text-xs text-page-muted mt-1 uppercase tracking-wide">{item.category}</div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5 text-page-secondary">
+                        {item.billing_type === 'per_call' ? t('pricing.perCall') : t('按量计费')}
+                      </td>
+                      <td className="px-4 py-3.5 text-right font-mono text-page-label whitespace-nowrap">
+                        {item.status !== 'healthy'
+                          ? t('pricing.unknown')
+                          : item.billing_type === 'per_call'
+                            ? formatGroupPriceRange(item.fixed_price_min, item.fixed_price_max, symbol, rate, true, t)
+                            : formatGroupPriceRange(item.input_price_min, item.input_price_max, symbol, rate, false, t)}
+                      </td>
+                      <td className="px-4 py-3.5 text-right font-mono text-page-label whitespace-nowrap">
+                        {item.status !== 'healthy'
+                          ? '-'
+                          : item.billing_type === 'per_call'
+                            ? '-'
+                            : formatGroupPriceRange(item.output_price_min, item.output_price_max, symbol, rate, false, t)}
+                      </td>
+                      <td className="px-4 py-3.5 text-right font-mono text-page-label whitespace-nowrap">
+                        {item.status !== 'healthy'
+                          ? '-'
+                          : item.billing_type === 'per_call'
+                            ? '-'
+                            : formatGroupPriceRange(item.cache_read_price_min, item.cache_read_price_max, symbol, rate, false, t)}
+                      </td>
+                      <td className="px-4 py-3.5 text-right font-mono text-page-label whitespace-nowrap">
+                        {item.status !== 'healthy'
+                          ? '-'
+                          : item.billing_type === 'per_call'
+                            ? '-'
+                            : formatGroupCachePriceRange(item, symbol, rate, t)}
+                      </td>
+                      <td className="px-4 py-3.5 text-center">
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-page-surface text-page-secondary">
+                          {formatRouteCount(item.route_count, item.has_range, t)}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function formatGroupPriceRange(min, max, symbol, rate, perCall, t) {
+  if (min == null && max == null) {
+    return '-';
+  }
+  const low = Number(min ?? max ?? 0);
+  const high = Number(max ?? min ?? 0);
+  const factor = perCall ? rate : rate * 1000;
+  const suffix = perCall ? `/${t('pricing.perCallUnit')}` : '';
+  const lowText = `${symbol}${(low * factor).toFixed(4)}`;
+  const highText = `${symbol}${(high * factor).toFixed(4)}`;
+  if (Math.abs(low - high) <= 1e-9) {
+    return `${lowText}${suffix}`;
+  }
+  return `${lowText} - ${highText}${suffix}`;
+}
+
+function formatGroupCachePriceRange(item, symbol, rate, t) {
+  const base = formatGroupPriceRange(
+    item.cache_creation_price_min,
+    item.cache_creation_price_max,
+    symbol,
+    rate,
+    false,
+    t,
+  );
+  if (
+    item.cache_creation_price_1h_min == null &&
+    item.cache_creation_price_1h_max == null
+  ) {
+    return base;
+  }
+  const baseMin = Number(item.cache_creation_price_min ?? 0);
+  const baseMax = Number(item.cache_creation_price_max ?? 0);
+  const oneHourMin = Number(item.cache_creation_price_1h_min ?? 0);
+  const oneHourMax = Number(item.cache_creation_price_1h_max ?? 0);
+  if (
+    Math.abs(baseMin - oneHourMin) <= 1e-9 &&
+    Math.abs(baseMax - oneHourMax) <= 1e-9
+  ) {
+    return base;
+  }
+  const oneHour = formatGroupPriceRange(
+    item.cache_creation_price_1h_min,
+    item.cache_creation_price_1h_max,
+    symbol,
+    rate,
+    false,
+    t,
+  );
+  return `${t('pricing.cacheCreation5m')} ${base} / ${t('pricing.cacheCreation1h')} ${oneHour}`;
+}
+
+function formatRouteCount(routeCount, hasRange, t) {
+  if (!routeCount) {
+    return t('pricing.unknown');
+  }
+  if (routeCount === 1) {
+    return `1 ${t('tokens.groupPricingLineUnitSingle')}`;
+  }
+  if (!hasRange) {
+    return `${routeCount} ${t('tokens.groupPricingLineUnit')} · ${t('tokens.groupPricingSamePrice')}`;
+  }
+  return `${routeCount} ${t('tokens.groupPricingLineUnit')}`;
 }

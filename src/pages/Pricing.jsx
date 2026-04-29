@@ -70,6 +70,15 @@ export default function Pricing() {
   const formatTokenPrice = (price) =>
     price != null ? `${symbol}${(Number(price) * 1000 * rate).toFixed(4)}` : '-';
 
+  const formatCacheCreationPrice = (modelName, price, price1h) => {
+    if (price == null) return '-';
+    const supportsDualCacheWindow = (modelName || '').toLowerCase().includes('claude');
+    if (supportsDualCacheWindow && price1h != null && Math.abs(Number(price1h) - Number(price)) > 1e-12) {
+      return `${t('pricing.cacheCreation5m')} ${formatTokenPrice(price)} / ${t('pricing.cacheCreation1h')} ${formatTokenPrice(price1h)}`;
+    }
+    return formatTokenPrice(price);
+  };
+
   const formatPerCallPrice = (price) =>
     price != null
       ? `${symbol}${(Number(price) * rate).toFixed(4)}/${t('pricing.perCallUnit')}`

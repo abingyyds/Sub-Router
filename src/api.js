@@ -19,11 +19,18 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+const shouldSkipErrorHandler = (config) => Boolean(config?.skipErrorHandler);
+
 // Global error handler
 api.interceptors.response.use(
   (res) => {
     // Handle success:false responses with user-visible errors
-    if (res.data && res.data.success === false && res.data.message) {
+    if (
+      res.data &&
+      res.data.success === false &&
+      res.data.message &&
+      !shouldSkipErrorHandler(res.config)
+    ) {
       toast.error(res.data.message);
     }
     return res;
@@ -34,8 +41,10 @@ api.interceptors.response.use(
       localStorage.removeItem('dist_user_id');
       // Emit event so AuthContext can clear React state
       window.dispatchEvent(new Event('auth:logout'));
-      toast.error('Session expired, please log in again');
-    } else {
+      if (!shouldSkipErrorHandler(err.config)) {
+        toast.error('Session expired, please log in again');
+      }
+    } else if (!shouldSkipErrorHandler(err.config)) {
       toast.error(msg);
     }
     return Promise.reject(err);
@@ -48,6 +57,7 @@ export const getSiteModels = () => api.get('/api/dist/site/models');
 export const getSitePricing = () => api.get('/api/dist/site/pricing');
 export const getSitePackages = () => api.get('/api/dist/site/packages');
 export const getSiteKeyGroups = () => api.get('/api/dist/site/key-groups');
+export const getSiteKeyGroupPricing = (id) => api.get(`/api/dist/site/key-groups/${id}/pricing`);
 export const getSubDistributorInfo = () => api.get('/api/dist/site/sub-distributor/info');
 
 // ===== Auth =====
@@ -56,12 +66,13 @@ export const login = (data) => api.post('/api/dist/user/login', data);
 export const logout = () => api.post('/api/dist/user/logout');
 
 // ===== User =====
-export const getUserSelf = () => api.get('/api/dist/user/self');
+export const getUserSelf = (config) => api.get('/api/dist/user/self', config);
 export const getUserUsage = () => api.get('/api/dist/user/usage');
 export const getUserLogs = (params) => api.get('/api/dist/user/logs', { params });
 
 // ===== Tokens =====
 export const getTokens = () => api.get('/api/dist/token/list');
+export const getTokenSupportedModels = (id) => api.get(`/api/dist/token/${id}/models`);
 export const createToken = (data) => api.post('/api/dist/token/create', data);
 export const updateToken = (id, data) => api.put(`/api/dist/token/${id}`, data);
 export const deleteToken = (id) => api.delete(`/api/dist/token/${id}`);
@@ -69,7 +80,8 @@ export const deleteToken = (id) => api.delete(`/api/dist/token/${id}`);
 // ===== Purchase =====
 export const redeemCode = (key) => api.post('/api/dist/topup/redeem', { key }); // backend field is "key"
 export const subscribePackage = (packageId) => api.post('/api/dist/package/subscribe', { package_id: packageId });
-export const getActiveSubscriptions = () => api.get('/api/dist/package/subscriptions');
+export const getActiveSubscriptions = (config) =>
+  api.get('/api/dist/package/subscriptions', config);
 
 // ===== Online Topup =====
 export const getTopupInfo = () => api.get('/api/dist/topup/info');
