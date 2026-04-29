@@ -33,6 +33,10 @@ const themeRegistry = {
     Home: React.lazy(() => import('../themes/claude/Home')),
     Layout: React.lazy(() => import('../themes/claude/Layout')),
   },
+  ai: {
+    Home: React.lazy(() => import('../themes/ai/Home')),
+    Layout: React.lazy(() => import('../themes/ai/Layout')),
+  },
 };
 
 // Full-screen loading spinner shown while site info is being fetched
@@ -54,7 +58,8 @@ export function ThemeProvider({ children }) {
     return <ThemeLoading />;
   }
 
-  const themeName = site?.theme_template || 'starter';
+  // Force the AI blue theme site-wide, ignoring any backend-provided template.
+  const themeName = 'ai';
 
   return (
     <ThemeInner themeName={themeName}>
@@ -66,7 +71,7 @@ export function ThemeProvider({ children }) {
 // Inner component to keep useMemo stable after loading completes
 function ThemeInner({ themeName, children }) {
   const theme = useMemo(() => {
-    const t = themeRegistry[themeName] || themeRegistry.starter;
+    const t = themeRegistry[themeName] || themeRegistry.ai;
     return { name: themeName, ...t };
   }, [themeName]);
 

@@ -12,12 +12,22 @@ const themeClassMap = {
   clean: 'theme-light',
   corporate: 'theme-light',
   claude: 'theme-light theme-claude',
+  ai: 'theme-light theme-ai',
 };
 
 function applyThemeClass(themeName) {
-  const cls = themeClassMap[themeName] || '';
+  // Fallback to AI theme classes when site has no explicit theme.
+  const cls = themeName && themeName in themeClassMap
+    ? themeClassMap[themeName]
+    : themeClassMap.ai;
   document.body.className = cls + (cls ? ' ' : '') + 'antialiased';
   try { localStorage.setItem('dist-theme-class', cls); } catch(e) {}
+}
+
+// Apply ai theme immediately on module load to prevent a flash of the
+// default dark theme before getSiteInfo() resolves.
+if (typeof document !== 'undefined') {
+  applyThemeClass('ai');
 }
 
 export function SiteProvider({ children }) {
@@ -29,8 +39,8 @@ export function SiteProvider({ children }) {
       .then((res) => {
         if (res.data.success) {
           setSite(res.data.data);
-          // Apply theme class to body immediately
-          applyThemeClass(res.data.data?.theme_template);
+          // Force ai theme regardless of backend value.
+          applyThemeClass('ai');
           // Update page title
           if (res.data.data?.name) {
             document.title = res.data.data.name;
