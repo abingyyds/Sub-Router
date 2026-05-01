@@ -172,7 +172,7 @@ export default function Tokens() {
   const handleToggleSupportedModels = async (tokenId) => {
     const isExpanded = !!expandedTokens[tokenId];
     setExpandedTokens((prev) => ({ ...prev, [tokenId]: !isExpanded }));
-    if (isExpanded || tokenModels[tokenId]) return;
+    if (isExpanded) return;
 
     setTokenModels((prev) => ({
       ...prev,
