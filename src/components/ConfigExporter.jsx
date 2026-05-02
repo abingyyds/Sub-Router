@@ -8,8 +8,16 @@ const TOOLS = [
   { id: 'claudecode', name: 'Claude Code', path: '~/.claude/settings.json' },
   { id: 'hermes', name: 'Hermes', path: 'hermes-subrouter.sh' },
   { id: 'openclaw', name: 'OpenClaw', path: '~/.openclaw/openclaw.json' },
-  { id: 'opencode', name: 'OpenCode', path: '~/.config/opencode/opencode.json' },
-  { id: 'cursor', name: 'Cursor', path: 'Settings -> Models -> OpenAI API Key' },
+  {
+    id: 'opencode',
+    name: 'OpenCode',
+    path: '~/.config/opencode/opencode.json',
+  },
+  {
+    id: 'cursor',
+    name: 'Cursor',
+    path: 'Settings -> Models -> OpenAI API Key',
+  },
   { id: 'curl', name: 'cURL', path: 'Terminal' },
   { id: 'python', name: 'Python SDK', path: 'main.py' },
   { id: 'anthropic', name: 'Anthropic SDK', path: 'main.py' },
@@ -20,6 +28,21 @@ const CCSWITCH_APPS = [
   { id: 'claude', name: 'Claude Code', endpointType: 'anthropic' },
   { id: 'opencode', name: 'OpenCode', endpointType: 'openai' },
   { id: 'openclaw', name: 'OpenClaw', endpointType: 'openclaw' },
+];
+
+const API_ENDPOINTS = [
+  {
+    id: 'china',
+    url: 'https://china.claudecoder.me',
+    nameKey: 'config.apiEndpointChinaName',
+    descKey: 'config.apiEndpointChinaDesc',
+  },
+  {
+    id: 'world',
+    url: 'https://world.claudecoder.me',
+    nameKey: 'config.apiEndpointWorldName',
+    descKey: 'config.apiEndpointWorldDesc',
+  },
 ];
 
 const CCSWITCH_RELEASE_URL =
@@ -73,7 +96,9 @@ function ThemedSelect({
 
   const selectedOption = options.find((option) => option.value === value);
   const displayLabel = selectedOption
-    ? (renderValue ? renderValue(selectedOption) : selectedOption.label)
+    ? renderValue
+      ? renderValue(selectedOption)
+      : selectedOption.label
     : placeholder;
 
   return (
@@ -173,6 +198,7 @@ const ConfigExporter = ({ tokens = [] }) => {
   const [selectedModel, setSelectedModel] = useState('');
   const [selectedTool, setSelectedTool] = useState('claudecode');
   const [selectedCCSwitchApp, setSelectedCCSwitchApp] = useState('codex');
+  const [selectedEndpointId, setSelectedEndpointId] = useState('china');
   const [loadingModels, setLoadingModels] = useState(false);
   const [modelsError, setModelsError] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -180,6 +206,13 @@ const ConfigExporter = ({ tokens = [] }) => {
   const [showCCSwitchDownload, setShowCCSwitchDownload] = useState(false);
 
   const serverAddress = window.location.origin;
+  const selectedEndpoint = useMemo(
+    () =>
+      API_ENDPOINTS.find((endpoint) => endpoint.id === selectedEndpointId) ||
+      API_ENDPOINTS[0],
+    [selectedEndpointId],
+  );
+  const apiServerAddress = selectedEndpoint.url;
 
   const selectedToken = useMemo(
     () => tokens.find((token) => token.id === selectedTokenId) || null,
@@ -271,7 +304,7 @@ const ConfigExporter = ({ tokens = [] }) => {
     if (lower.includes('claude')) {
       return {
         family: 'anthropic',
-        baseUrl: serverAddress,
+        baseUrl: apiServerAddress,
         openclawApi: 'anthropic-messages',
         openclawProviderId: 'subrouter-anthropic',
         opencodeProviderId: 'anthropic',
@@ -279,7 +312,7 @@ const ConfigExporter = ({ tokens = [] }) => {
     }
     return {
       family: 'openai',
-      baseUrl: `${serverAddress}/v1`,
+      baseUrl: `${apiServerAddress}/v1`,
       openclawApi: 'openai-completions',
       openclawProviderId: 'subrouter-openai',
       opencodeProviderId: 'openai',
@@ -287,17 +320,15 @@ const ConfigExporter = ({ tokens = [] }) => {
   };
 
   const getCCSwitchEndpoint = () => {
-    const app = CCSWITCH_APPS.find(
-      (item) => item.id === selectedCCSwitchApp,
-    );
+    const app = CCSWITCH_APPS.find((item) => item.id === selectedCCSwitchApp);
     const preset = getModelConnectionPreset(selectedModel);
     if (app?.endpointType === 'anthropic') {
-      return serverAddress;
+      return apiServerAddress;
     }
     if (app?.id === 'openclaw' || app?.id === 'opencode') {
       return preset.baseUrl;
     }
-    return `${serverAddress}/v1`;
+    return `${apiServerAddress}/v1`;
   };
 
   const generateCCSwitchLink = () => {
@@ -326,7 +357,7 @@ const ConfigExporter = ({ tokens = [] }) => {
         return `{
   "env": {
     "ANTHROPIC_API_KEY": "${apiKey}",
-    "ANTHROPIC_BASE_URL": "${serverAddress}",
+    "ANTHROPIC_BASE_URL": "${apiServerAddress}",
     "ANTHROPIC_MODEL": "${selectedModel}"
   }
 }`;
@@ -349,7 +380,7 @@ cat > "$PROFILE_DIR/config.yaml" <<'YAML'
 model:
   default: ${selectedModel}
   provider: custom
-  base_url: ${serverAddress}/v1
+  base_url: ${apiServerAddress}/v1
   api_key: ${apiKey}
 YAML
 
@@ -419,10 +450,10 @@ echo "Hermes profile exported to ./$PROFILE_NAME.tar.gz"`;
       }
       case 'cursor':
         return `API Key: ${apiKey}
-Base URL: ${serverAddress}/v1
+Base URL: ${apiServerAddress}/v1
 Model: ${selectedModel}`;
       case 'curl':
-        return `curl ${serverAddress}/v1/chat/completions \\
+        return `curl ${apiServerAddress}/v1/chat/completions \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer ${apiKey}" \\
   -d '{
@@ -436,7 +467,7 @@ Model: ${selectedModel}`;
 
 client = OpenAI(
     api_key="${apiKey}",
-    base_url="${serverAddress}/v1"
+    base_url="${apiServerAddress}/v1"
 )
 
 response = client.chat.completions.create(
@@ -452,7 +483,7 @@ print(response.choices[0].message.content)`;
 
 client = anthropic.Anthropic(
     api_key="${apiKey}",
-    base_url="${serverAddress}"
+    base_url="${apiServerAddress}"
 )
 
 message = client.messages.create(
@@ -482,7 +513,8 @@ print(message.content[0].text)`;
         return 'cursor-config.txt';
       default:
         return (
-          selectedToolMeta.path.split('/').pop() || `${selectedToolMeta.id}.json`
+          selectedToolMeta.path.split('/').pop() ||
+          `${selectedToolMeta.id}.json`
         );
     }
   };
@@ -505,12 +537,12 @@ print(message.content[0].text)`;
   const getSelectedToolBaseUrl = () => {
     const preset = getModelConnectionPreset(selectedModel);
     if (selectedTool === 'claudecode' || selectedTool === 'anthropic') {
-      return serverAddress;
+      return apiServerAddress;
     }
     if (selectedTool === 'openclaw' || selectedTool === 'opencode') {
       return preset.baseUrl;
     }
-    return `${serverAddress}/v1`;
+    return `${apiServerAddress}/v1`;
   };
 
   const handleCopyValue = async (text, successKey = 'config.copied') => {
@@ -709,6 +741,49 @@ print(message.content[0].text)`;
             />
           </div>
 
+          <div>
+            <label className="flex items-center gap-2 text-xs font-medium text-page-label mb-2">
+              <svg
+                className="w-3 h-3"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                />
+              </svg>
+              {t('config.selectApiEndpoint')}
+            </label>
+            <div className="grid gap-2 md:grid-cols-2">
+              {API_ENDPOINTS.map((endpoint) => (
+                <button
+                  key={endpoint.id}
+                  type="button"
+                  onClick={() => setSelectedEndpointId(endpoint.id)}
+                  className={`rounded-xl border px-3 py-2 text-left transition-all ${
+                    selectedEndpointId === endpoint.id
+                      ? 'border-brand-500 bg-brand-500/10 text-page'
+                      : 'border-page-divider bg-page-inset/40 text-page-secondary hover:bg-page-surface-hover'
+                  }`}
+                >
+                  <div className="text-xs font-semibold">
+                    {t(endpoint.nameKey)}
+                  </div>
+                  <div className="mt-1 text-[11px] text-page-muted">
+                    {t(endpoint.descKey)}
+                  </div>
+                  <code className="mt-1 block break-all text-[11px] text-page-muted">
+                    {endpoint.url}
+                  </code>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="rounded-xl border border-page-divider bg-page-surface/50 px-4 py-4 space-y-3">
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div>
@@ -748,7 +823,7 @@ print(message.content[0].text)`;
                 <button
                   onClick={() =>
                     handleCopyValue(
-                      `${serverAddress}/v1`,
+                      `${apiServerAddress}/v1`,
                       'config.apiUrlCopied',
                     )
                   }
@@ -758,15 +833,12 @@ print(message.content[0].text)`;
                     {t('config.openaiApiUrl')}
                   </div>
                   <code className="block mt-1 text-[11px] text-page-muted break-all">
-                    {serverAddress}/v1
+                    {apiServerAddress}/v1
                   </code>
                 </button>
                 <button
                   onClick={() =>
-                    handleCopyValue(
-                      `${serverAddress}/`,
-                      'config.apiUrlCopied',
-                    )
+                    handleCopyValue(apiServerAddress, 'config.apiUrlCopied')
                   }
                   className="rounded-lg border border-page-divider bg-page-inset/40 px-3 py-2 text-left hover:bg-page-surface-hover transition-colors"
                 >
@@ -774,7 +846,7 @@ print(message.content[0].text)`;
                     {t('config.anthropicApiUrl')}
                   </div>
                   <code className="block mt-1 text-[11px] text-page-muted break-all">
-                    {serverAddress}/
+                    {apiServerAddress}
                   </code>
                 </button>
               </div>
