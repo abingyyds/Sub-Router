@@ -1,6 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import {
+  Activity,
+  ArrowRight,
+  CheckCircle2,
+  Cpu,
+  Gauge,
+  KeyRound,
+  ShieldCheck,
+  WalletCards,
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useSite, useCurrency } from '../../context/SiteContext';
 import { getSiteModels, getSitePackages, Q } from '../../api';
@@ -14,7 +24,7 @@ export default function DefaultHome() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { site } = useSite();
-  const { symbol, rate, fmtCNY } = useCurrency();
+  const { fmtCNY } = useCurrency();
   const [models, setModels] = useState([]);
   const [packages, setPackages] = useState([]);
 
@@ -23,141 +33,167 @@ export default function DefaultHome() {
     getSitePackages().then(r => { if (r.data.success) setPackages(r.data.data || []); }).catch(() => {});
   }, []);
 
-  const enabledModels = models.filter(m => m.enabled !== false);
+  const enabledModels = useMemo(() => models.filter(m => m.enabled !== false), [models]);
+  const visiblePackages = useMemo(() => packages.filter(p => p.enabled), [packages]);
+  const modelPreview = enabledModels.slice(0, 6);
+
+  const features = [
+    {
+      title: t('home.lightningFast'),
+      desc: t('home.lightningFastDesc'),
+      icon: Gauge,
+      tone: 'bg-indigo-50 text-indigo-700 ring-indigo-100',
+    },
+    {
+      title: t('home.securePrivate'),
+      desc: t('home.securePrivateDesc'),
+      icon: ShieldCheck,
+      tone: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
+    },
+    {
+      title: t('home.payAsYouGo'),
+      desc: t('home.payAsYouGoDesc'),
+      icon: WalletCards,
+      tone: 'bg-amber-50 text-amber-700 ring-amber-100',
+    },
+  ];
 
   return (
-    <div className="relative">
-      {/* Subtle gradient */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 left-1/4 w-[600px] h-[600px] bg-violet-600/10 rounded-full blur-3xl" />
-        <div className="absolute top-20 right-1/4 w-[400px] h-[400px] bg-blue-600/8 rounded-full blur-3xl" />
-      </div>
+    <div className="relative overflow-hidden">
+      <section className="relative border-b border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f7f8fb_100%)]">
+        <div className="absolute inset-0 pointer-events-none opacity-[0.55] [background-image:linear-gradient(#e5e7eb_1px,transparent_1px),linear-gradient(90deg,#e5e7eb_1px,transparent_1px)] [background-size:44px_44px]" />
 
-      {/* Hero — centered, editorial */}
-      <section className="relative max-w-5xl mx-auto px-6 pt-32 pb-20">
-        <FadeContent blur duration={800} delay={100}>
-          <div className="text-center max-w-3xl mx-auto">
-            <h1 className="text-5xl md:text-7xl font-heading font-extrabold text-white leading-[1.08] tracking-tight">
-              {site?.name || t('home.defaultHeroTitle')}
-            </h1>
-            <p className="text-lg text-neutral-400 mt-6 leading-relaxed max-w-xl mx-auto">
-              {t('home.heroSubtitle')}
-            </p>
-
-            <div className="flex items-center justify-center gap-4 mt-10">
-              {user ? (
-                <Link to="/dashboard" className="px-8 py-3.5 rounded-2xl bg-white text-black font-semibold text-sm hover:bg-neutral-100 transition-all">
-                  {t('home.goToDashboard')}
-                </Link>
-              ) : (
-                <>
-                  <Link to="/register" className="px-8 py-3.5 rounded-2xl bg-white text-black font-semibold text-sm hover:bg-neutral-100 transition-all">
-                    {t('home.getStarted')}
-                  </Link>
-                  <Link to="/pricing" className="px-8 py-3.5 rounded-2xl border border-white/15 text-white font-medium text-sm hover:bg-white/5 transition-all">
-                    {t('home.viewPricing')}
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        </FadeContent>
-
-        {/* Stats */}
-        <FadeContent blur duration={800} delay={400}>
-          <div className="grid grid-cols-3 gap-6 max-w-xl mx-auto mt-24">
-            {[
-              { value: enabledModels.length || 50, suffix: '+', label: t('home.aiModels') },
-              { value: 99.9, suffix: '%', label: t('home.uptime') },
-              { value: 50, suffix: 'ms', label: t('home.latency'), prefix: '<' },
-            ].map((stat, i) => (
-              <div key={i} className="text-center p-5 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
-                <div className="text-2xl font-bold text-white">
-                  {stat.prefix}<CountUp from={0} to={stat.value} duration={2} />{stat.suffix}
-                </div>
-                <p className="text-sm text-neutral-500 mt-1">{stat.label}</p>
+        <div className="relative mx-auto grid max-w-7xl gap-12 px-4 pb-16 pt-16 sm:px-6 lg:grid-cols-[1.02fr_0.98fr] lg:items-center lg:pb-20 lg:pt-20">
+          <FadeContent blur duration={700} delay={80}>
+            <div className="max-w-2xl">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 shadow-sm">
+                <Activity className="h-4 w-4 text-emerald-600" />
+                {t('home.heroTagline')}
               </div>
-            ))}
-          </div>
-        </FadeContent>
+
+              <h1 className="text-4xl font-black tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
+                {site?.name || t('home.defaultHeroTitle')}
+              </h1>
+              <p className="mt-6 max-w-xl text-base leading-8 text-slate-600 sm:text-lg">
+                {t('home.heroSubtitle')}
+              </p>
+
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                {user ? (
+                  <Link
+                    to="/dashboard"
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-950 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700"
+                  >
+                    {t('home.goToDashboard')}
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      to="/register"
+                      className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-950 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700"
+                    >
+                      {t('home.getStarted')}
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                    <Link
+                      to="/pricing"
+                      className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50"
+                    >
+                      {t('home.viewPricing')}
+                    </Link>
+                  </>
+                )}
+              </div>
+
+              <div className="mt-10 grid max-w-xl grid-cols-3 gap-3">
+                <Metric value={enabledModels.length || 50} suffix="+" label={t('home.aiModels')} />
+                <Metric value={99.9} suffix="%" label={t('home.uptime')} />
+                <Metric value={50} prefix="<" suffix="ms" label={t('home.latency')} />
+              </div>
+            </div>
+          </FadeContent>
+
+          <FadeContent blur duration={700} delay={220}>
+            <HeroConsole models={modelPreview} t={t} />
+          </FadeContent>
+        </div>
       </section>
 
       <ApiEndpoints />
 
-      {/* Features */}
-      <section className="max-w-5xl mx-auto px-6 py-20">
-        <FadeContent blur duration={800} delay={100}>
-          <div className="text-center mb-14">
-            <h2 className="text-2xl font-heading font-bold text-white mb-3">{t('home.whyChooseUs')}</h2>
-            <p className="text-neutral-500">{t('home.whyChooseUsDesc')}</p>
+      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
+        <FadeContent blur duration={700} delay={80}>
+          <div className="mb-8 flex flex-col justify-between gap-3 md:flex-row md:items-end">
+            <div>
+              <h2 className="text-2xl font-black tracking-tight text-slate-950">{t('home.whyChooseUs')}</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{t('home.whyChooseUsDesc')}</p>
+            </div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-5">
-            {[
-              { title: t('home.lightningFast'), desc: t('home.lightningFastDesc'), color: 'violet', icon: (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              )},
-              { title: t('home.securePrivate'), desc: t('home.securePrivateDesc'), color: 'blue', icon: (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-              )},
-              { title: t('home.payAsYouGo'), desc: t('home.payAsYouGoDesc'), color: 'cyan', icon: (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              )},
-            ].map((f, i) => (
-              <div key={i} className="p-6 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.12] transition-colors">
-                <div className={`w-10 h-10 rounded-lg bg-${f.color}-500/10 text-${f.color}-400 flex items-center justify-center mb-4`}>
-                  {f.icon}
+          <div className="grid gap-4 md:grid-cols-3">
+            {features.map((feature) => {
+              const Icon = feature.icon;
+              return (
+                <div key={feature.title} className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
+                  <div className={`mb-5 flex h-11 w-11 items-center justify-center rounded-lg ring-1 ${feature.tone}`}>
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="text-base font-bold text-slate-950">{feature.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{feature.desc}</p>
                 </div>
-                <h3 className="text-base font-semibold text-white mb-2">{f.title}</h3>
-                <p className="text-sm text-neutral-400 leading-relaxed">{f.desc}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </FadeContent>
       </section>
 
-      {/* Models */}
       {enabledModels.length > 0 && (
-        <section className="max-w-5xl mx-auto px-6 py-20">
-          <FadeContent blur duration={800} delay={100}>
-            <div className="flex items-end justify-between mb-8">
-              <div>
-                <h2 className="text-2xl font-heading font-bold text-white mb-2">{t('home.availableModels')}</h2>
-                <p className="text-neutral-500">{t('home.availableModelsDesc', { count: enabledModels.length })}</p>
-              </div>
-              {enabledModels.length > 8 && (
-                <Link to="/pricing" className="text-sm text-violet-400 hover:text-violet-300 transition-colors">
-                  {t('home.viewAllModels', { count: enabledModels.length })} →
-                </Link>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              {enabledModels.slice(0, 8).map((m, i) => (
-                <div key={m.id || i} className="px-4 py-3 rounded-lg border border-white/[0.06] hover:border-white/[0.12] transition-colors">
-                  <span className="text-sm text-neutral-300 font-mono">{m.display_name || m.model_name}</span>
+        <section className="border-y border-slate-200 bg-white">
+          <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
+            <FadeContent blur duration={700} delay={80}>
+              <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+                <div>
+                  <h2 className="text-2xl font-black tracking-tight text-slate-950">{t('home.availableModels')}</h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {t('home.availableModelsDesc', { count: enabledModels.length })}
+                  </p>
                 </div>
-              ))}
-            </div>
-          </FadeContent>
+                {enabledModels.length > 8 && (
+                  <Link to="/pricing" className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-700 hover:text-indigo-900">
+                    {t('home.viewAllModels', { count: enabledModels.length })}
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {enabledModels.slice(0, 8).map((m, i) => (
+                  <div key={m.id || i} className="flex min-h-16 items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-indigo-700 ring-1 ring-slate-200">
+                      <Cpu className="h-4 w-4" />
+                    </div>
+                    <span className="min-w-0 truncate font-mono text-sm font-medium text-slate-800">
+                      {m.display_name || m.model_name}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </FadeContent>
+          </div>
         </section>
       )}
 
-      {/* Packages */}
-      {packages.length > 0 && (
-        <section className="max-w-5xl mx-auto px-6 py-20">
-          <FadeContent blur duration={800} delay={100}>
-            <h2 className="text-2xl font-heading font-bold text-white mb-2">{t('home.plansPackages')}</h2>
-            <p className="text-neutral-500 mb-10">{t('home.choosePlan')}</p>
+      {visiblePackages.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
+          <FadeContent blur duration={700} delay={80}>
+            <div className="mb-8">
+              <h2 className="text-2xl font-black tracking-tight text-slate-950">{t('home.plansPackages')}</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{t('home.choosePlan')}</p>
+            </div>
 
-            <div className="grid md:grid-cols-3 gap-4 max-w-4xl">
-              {packages.filter(p => p.enabled).slice(0, 3).map((pkg, i) => {
+            <div className="grid gap-4 lg:grid-cols-3">
+              {visiblePackages.slice(0, 3).map((pkg, i) => {
                 const quotaDollars = pkg.quota_amount > 0 ? pkg.quota_amount / Q : 0;
                 const rp = pkg.quota_reset_period || 'never';
                 let tqd = quotaDollars;
@@ -167,62 +203,151 @@ export default function DefaultHome() {
                   tqd = quotaDollars * n;
                 }
                 const equiv = calcOfficialEquivList(enabledModels, tqd);
+                const featured = i === 1;
+
                 return (
-                <div key={pkg.id} className={`rounded-2xl p-6 flex flex-col border transition-colors ${
-                  i === 1 ? 'bg-white/[0.04] border-white/[0.12]' : 'bg-white/[0.02] border-white/[0.06] hover:border-white/[0.1]'
-                }`}>
-                  {i === 1 && <span className="text-xs text-violet-400 font-medium mb-2 uppercase tracking-wider">{t('home.popular') || 'Popular'}</span>}
-                  <h3 className="text-base font-semibold text-white">{pkg.name}</h3>
-                  {pkg.description && <p className="text-sm text-neutral-500 mt-1">{pkg.description}</p>}
-                  <div className="mt-auto pt-6">
-                    <span className="text-3xl font-bold text-white">{fmtCNY(pkg.price)}</span>
-                    {pkg.original_price > pkg.price && (
-                      <span className="text-sm text-neutral-600 line-through ml-2">{fmtCNY(pkg.original_price)}</span>
+                  <div
+                    key={pkg.id}
+                    className={`flex min-h-[280px] flex-col rounded-lg border p-6 shadow-sm ${
+                      featured ? 'border-indigo-200 bg-indigo-50/70' : 'border-slate-200 bg-white'
+                    }`}
+                  >
+                    {featured && (
+                      <span className="mb-3 w-fit rounded-full bg-indigo-700 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-white">
+                        {t('home.popular')}
+                      </span>
                     )}
-                    {pkg.duration > 0 && <p className="text-xs text-neutral-600 mt-1">{t('home.days', { count: pkg.duration })}</p>}
+                    <h3 className="text-lg font-bold text-slate-950">{pkg.name}</h3>
+                    {pkg.description && <p className="mt-2 text-sm leading-6 text-slate-600">{pkg.description}</p>}
+
+                    <div className="mt-auto pt-6">
+                      <div className="flex items-end gap-2">
+                        <span className="text-3xl font-black tracking-tight text-slate-950">{fmtCNY(pkg.price)}</span>
+                        {pkg.original_price > pkg.price && (
+                          <span className="pb-1 text-sm text-slate-400 line-through">{fmtCNY(pkg.original_price)}</span>
+                        )}
+                      </div>
+                      {pkg.duration > 0 && <p className="mt-1 text-xs font-medium text-slate-500">{t('home.days', { count: pkg.duration })}</p>}
+                      {equiv.length > 0 && (
+                        <p className="mt-3 text-xs font-medium text-amber-700">
+                          <RotatingEquiv items={equiv} text={(item) => t('packages.officialEquiv', { model: item.label, amount: item.equivDollars })} />
+                        </p>
+                      )}
+                    </div>
+
+                    <Link
+                      to={user ? '/packages' : '/register'}
+                      className={`mt-5 inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${
+                        featured ? 'bg-indigo-700 text-white hover:bg-indigo-800' : 'bg-slate-950 text-white hover:bg-indigo-700'
+                      }`}
+                    >
+                      {user ? t('home.subscribe') : t('home.getStarted')}
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
                   </div>
-                  {equiv.length > 0 && (
-                    <p className="text-xs text-amber-300/80 mt-2">🔥 <RotatingEquiv items={equiv} text={(item) => t('packages.officialEquiv', { model: item.label, amount: item.equivDollars })} /></p>
-                  )}
-                  <Link to={user ? '/packages' : '/register'} className={`mt-4 py-2.5 rounded-xl font-medium text-sm text-center transition-colors ${
-                    i === 1
-                      ? 'bg-white text-black hover:bg-neutral-100'
-                      : 'bg-white/[0.06] text-white hover:bg-white/[0.1]'
-                  }`}>
-                    {user ? t('home.subscribe') : t('home.getStarted')}
-                  </Link>
-                </div>
-              )})}
+                );
+              })}
             </div>
           </FadeContent>
         </section>
       )}
 
-      {/* CTA */}
-      <section className="max-w-5xl mx-auto px-6 py-24">
-        <FadeContent blur duration={800} delay={100}>
-          <div className="border-t border-white/[0.06] pt-16 text-center">
-            <h2 className="text-2xl font-heading font-bold text-white mb-3">{t('home.readyToStart')}</h2>
-            <p className="text-neutral-500 mb-8 max-w-md mx-auto">{t('home.readyToStartDesc')}</p>
-            <div className="flex items-center justify-center gap-4">
+      <section className="border-t border-slate-200 bg-slate-950">
+        <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-14 text-white sm:px-6 md:flex-row md:items-center md:justify-between">
+          <FadeContent blur duration={700} delay={80}>
+            <div>
+              <h2 className="text-2xl font-black tracking-tight">{t('home.readyToStart')}</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">{t('home.readyToStartDesc')}</p>
+            </div>
+          </FadeContent>
+
+          <FadeContent blur duration={700} delay={160}>
+            <div className="flex flex-col gap-3 sm:flex-row">
               {user ? (
-                <Link to="/dashboard" className="px-8 py-3.5 rounded-2xl bg-white text-black font-semibold text-sm hover:bg-neutral-100 transition-all">
+                <Link to="/dashboard" className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-bold text-slate-950 hover:bg-slate-100">
                   {t('home.goToDashboard')}
+                  <ArrowRight className="h-4 w-4" />
                 </Link>
               ) : (
                 <>
-                  <Link to="/register" className="px-8 py-3.5 rounded-2xl bg-white text-black font-semibold text-sm hover:bg-neutral-100 transition-all">
+                  <Link to="/register" className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-bold text-slate-950 hover:bg-slate-100">
                     {t('home.createFreeAccount')}
+                    <ArrowRight className="h-4 w-4" />
                   </Link>
-                  <Link to="/login" className="px-8 py-3.5 rounded-2xl border border-white/15 text-white font-medium text-sm hover:bg-white/5 transition-all">
+                  <Link to="/login" className="inline-flex items-center justify-center rounded-lg border border-white/20 px-5 py-3 text-sm font-bold text-white hover:bg-white/10">
                     {t('home.signIn')}
                   </Link>
                 </>
               )}
             </div>
-          </div>
-        </FadeContent>
+          </FadeContent>
+        </div>
       </section>
+    </div>
+  );
+}
+
+function Metric({ value, label, prefix = '', suffix = '' }) {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white/90 p-4 shadow-sm">
+      <div className="text-xl font-black tracking-tight text-slate-950">
+        {prefix}<CountUp from={0} to={value} duration={2} />{suffix}
+      </div>
+      <p className="mt-1 truncate text-xs font-medium text-slate-500">{label}</p>
+    </div>
+  );
+}
+
+function HeroConsole({ models, t }) {
+  const rows = models.length > 0 ? models : [
+    { display_name: 'gpt-4o-mini' },
+    { display_name: 'claude-3.5-sonnet' },
+    { display_name: 'gemini-1.5-pro' },
+  ];
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl shadow-slate-200/80">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-950">
+        <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
+            <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+            <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+          </div>
+          <span className="font-mono text-xs text-slate-400">/v1/chat/completions</span>
+        </div>
+
+        <div className="grid gap-0 lg:grid-cols-[1fr_0.86fr]">
+          <div className="border-b border-white/10 p-5 lg:border-b-0 lg:border-r">
+            <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-white">
+              <KeyRound className="h-4 w-4 text-emerald-400" />
+              {t('nav.apiKeys')}
+            </div>
+            <pre className="overflow-hidden rounded-lg bg-black/40 p-4 text-xs leading-6 text-slate-300">
+{`curl https://api.example.com/v1/chat/completions
+  -H "Authorization: Bearer sk-..."
+  -d '{"model":"${rows[0]?.display_name || rows[0]?.model_name}"}'`}
+            </pre>
+          </div>
+
+          <div className="p-5">
+            <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-white">
+              <CheckCircle2 className="h-4 w-4 text-indigo-300" />
+              {t('home.availableModels')}
+            </div>
+            <div className="space-y-2">
+              {rows.slice(0, 4).map((model, index) => (
+                <div key={model.id || model.model_name || model.display_name || index} className="flex items-center justify-between rounded-lg bg-white/[0.06] px-3 py-2">
+                  <span className="min-w-0 truncate font-mono text-xs text-slate-200">
+                    {model.display_name || model.model_name}
+                  </span>
+                  <span className="ml-3 rounded-full bg-emerald-400/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-300">OK</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -5,13 +5,16 @@ const SiteContext = createContext(null);
 
 // Map theme template name → CSS class(es) to apply on <body>
 const themeClassMap = {
-  starter: '',
-  default: 'theme-default',
+  starter: 'theme-light theme-starter',
+  default: 'theme-light theme-starter',
   dark: 'theme-dark',
   minimal: 'theme-minimal',
   clean: 'theme-light',
   corporate: 'theme-light',
   claude: 'theme-light theme-claude',
+  aurora: 'theme-light theme-aurora',
+  terminal: 'theme-terminal',
+  market: 'theme-light theme-market',
 };
 
 function applyThemeClass(themeName) {
@@ -20,11 +23,37 @@ function applyThemeClass(themeName) {
   try { localStorage.setItem('dist-theme-class', cls); } catch(e) {}
 }
 
+function getDevPreviewTheme() {
+  if (!import.meta.env.DEV || typeof window === 'undefined') return '';
+  return new URLSearchParams(window.location.search).get('preview_theme') || '';
+}
+
 export function SiteProvider({ children }) {
   const [site, setSite] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const previewTheme = getDevPreviewTheme();
+    if (previewTheme) {
+      const previewSite = {
+        name: 'SubRouter Preview',
+        theme_template: previewTheme,
+        enable_topup: true,
+        allow_sub_dist: true,
+        currency: {
+          code: 'CNY',
+          symbol: '¥',
+          exchange_rate: 7,
+          usd_exchange_rate: 7,
+        },
+      };
+      setSite(previewSite);
+      applyThemeClass(previewTheme);
+      document.title = `${previewSite.name} · ${previewTheme}`;
+      setLoading(false);
+      return;
+    }
+
     getSiteInfo()
       .then((res) => {
         if (res.data.success) {

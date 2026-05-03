@@ -106,6 +106,90 @@
     --page-inset: rgba(61,48,36,0.06);
   }
 
+  .theme-starter {
+    --brand: 79 70 229;
+    --page-bg: #f7f8fb;
+    --page-spinner: rgba(79,70,229,0.8);
+    --page-spinner-track: rgba(79,70,229,0.18);
+    --page-link: 67 56 202;
+    --page-card-bg: rgba(255,255,255,0.92);
+    --page-card-border: rgb(226,232,240);
+    --page-input-bg: #ffffff;
+    --page-input-border: rgb(203,213,225);
+    --page-select-bg: #ffffff;
+    --page-select-panel-bg: #ffffff;
+    --page-surface: rgba(15,23,42,0.04);
+    --page-surface-hover: rgba(15,23,42,0.07);
+    --page-divider: rgb(226,232,240);
+    --page-inset: rgba(15,23,42,0.05);
+  }
+
+  .theme-aurora {
+    --brand: 37 99 235;
+    --page-bg: #f6f8fb;
+    --page-spinner: rgba(37,99,235,0.8);
+    --page-spinner-track: rgba(37,99,235,0.18);
+    --page-link: 29 78 216;
+    --page-card-bg: rgba(255,255,255,0.94);
+    --page-card-border: rgb(226,232,240);
+    --page-input-bg: #ffffff;
+    --page-input-border: rgb(203,213,225);
+    --page-select-bg: #ffffff;
+    --page-select-panel-bg: #ffffff;
+    --page-surface: rgba(15,23,42,0.04);
+    --page-surface-hover: rgba(15,23,42,0.07);
+    --page-divider: rgb(226,232,240);
+    --page-inset: rgba(15,23,42,0.05);
+  }
+
+  .theme-market {
+    --brand: 234 88 12;
+    --page-bg: #fbfaf7;
+    --page-spinner: rgba(234,88,12,0.82);
+    --page-spinner-track: rgba(234,88,12,0.18);
+    --page-link: 194 65 12;
+    --page-card-bg: rgba(255,255,255,0.94);
+    --page-card-border: rgb(231,229,228);
+    --page-input-bg: #ffffff;
+    --page-input-border: rgb(214,211,209);
+    --page-select-bg: #ffffff;
+    --page-select-panel-bg: #ffffff;
+    --page-surface: rgba(41,37,36,0.04);
+    --page-surface-hover: rgba(41,37,36,0.07);
+    --page-divider: rgb(231,229,228);
+    --page-inset: rgba(41,37,36,0.05);
+  }
+
+  .theme-terminal {
+    --brand: 52 211 153;
+    --page-bg: #050807;
+    --page-spinner: rgba(52,211,153,0.82);
+    --page-spinner-track: rgba(52,211,153,0.18);
+    --page-text: 236 253 245;
+    --page-text-secondary: 167 243 208;
+    --page-text-muted: 110 231 183;
+    --page-label: 209 250 229;
+    --page-link: 52 211 153;
+    --page-card-bg: rgba(6,17,13,0.82);
+    --page-card-border: rgba(52,211,153,0.18);
+    --page-input-bg: rgba(6,17,13,0.9);
+    --page-input-border: rgba(52,211,153,0.28);
+    --page-select-bg: rgba(6,17,13,0.98);
+    --page-select-panel-bg: rgba(6,17,13,0.98);
+    --page-surface: rgba(52,211,153,0.06);
+    --page-surface-hover: rgba(52,211,153,0.12);
+    --page-divider: rgba(52,211,153,0.18);
+    --page-inset: rgba(0,0,0,0.32);
+    --page-success: 52 211 153;
+    --page-success-text: 52 211 153;
+    --page-warning: 251 191 36;
+    --page-warning-text: 251 191 36;
+    --page-danger: 248 113 113;
+    --page-danger-text: 248 113 113;
+    --page-info: 45 212 191;
+    --page-info-text: 45 212 191;
+  }
+
   /* Per-dark-theme background overrides */
   .theme-default { --page-bg: #09090b; }
   .theme-dark { --page-bg: #030712; }
