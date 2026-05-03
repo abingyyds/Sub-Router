@@ -268,6 +268,8 @@
     "pricing.outputPrice": "Output / 1M tokens",
     "pricing.cacheReadPrice": "Cache read / 1M tokens",
     "pricing.cacheCreationPrice": "Cache creation / 1M tokens",
+    "pricing.officialPrice": "Official in/out",
+    "pricing.savings": "Savings",
     "pricing.cacheCreation5m": "5m",
     "pricing.cacheCreation1h": "1h",
     "pricing.perCall": "Per call",
