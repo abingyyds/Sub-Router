@@ -33,6 +33,18 @@ const themeRegistry = {
     Home: React.lazy(() => import('../themes/claude/Home')),
     Layout: React.lazy(() => import('../themes/claude/Layout')),
   },
+  aurora: {
+    Home: React.lazy(() => import('../themes/aurora/Home')),
+    Layout: React.lazy(() => import('../themes/aurora/Layout')),
+  },
+  terminal: {
+    Home: React.lazy(() => import('../themes/terminal/Home')),
+    Layout: React.lazy(() => import('../themes/terminal/Layout')),
+  },
+  market: {
+    Home: React.lazy(() => import('../themes/market/Home')),
+    Layout: React.lazy(() => import('../themes/market/Layout')),
+  },
 };
 
 // Full-screen loading spinner shown while site info is being fetched

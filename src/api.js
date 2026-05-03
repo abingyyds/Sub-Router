@@ -3,6 +3,60 @@ import toast from 'react-hot-toast';
 
 export const Q = 500000; // QuotaPerUnit — single source of truth
 
+const previewModels = [
+  { id: 'preview-1', model_name: 'gpt-4o-mini', display_name: 'GPT-4o Mini', enabled: true },
+  { id: 'preview-2', model_name: 'claude-sonnet-4-5', display_name: 'Claude Sonnet 4.5', enabled: true },
+  { id: 'preview-3', model_name: 'gemini-2.5-pro', display_name: 'Gemini 2.5 Pro', enabled: true },
+  { id: 'preview-4', model_name: 'deepseek-chat', display_name: 'DeepSeek Chat', enabled: true },
+  { id: 'preview-5', model_name: 'qwen-max', display_name: 'Qwen Max', enabled: true },
+  { id: 'preview-6', model_name: 'grok-4', display_name: 'Grok 4', enabled: true },
+  { id: 'preview-7', model_name: 'claude-haiku-4-5', display_name: 'Claude Haiku 4.5', enabled: true },
+  { id: 'preview-8', model_name: 'gpt-5-mini', display_name: 'GPT-5 Mini', enabled: true },
+];
+
+const previewPackages = [
+  {
+    id: 'preview-basic',
+    name: 'Starter Pack',
+    description: '适合个人试用和轻量 API 调用。',
+    price: 29,
+    original_price: 49,
+    duration: 30,
+    quota_amount: Q * 6,
+    quota_reset_period: 'never',
+    enabled: true,
+  },
+  {
+    id: 'preview-pro',
+    name: 'Pro Relay',
+    description: '高频调用、自动路由、失败重试的主力套餐。',
+    price: 99,
+    original_price: 149,
+    duration: 30,
+    quota_amount: Q * 24,
+    quota_reset_period: 'never',
+    enabled: true,
+  },
+  {
+    id: 'preview-team',
+    name: 'Team Scale',
+    description: '适合团队共享密钥、模型分组和稳定生产调用。',
+    price: 299,
+    original_price: 399,
+    duration: 30,
+    quota_amount: Q * 90,
+    quota_reset_period: 'never',
+    enabled: true,
+  },
+];
+
+const getPreviewTheme = () => {
+  if (!import.meta.env.DEV || typeof window === 'undefined') return '';
+  return new URLSearchParams(window.location.search).get('preview_theme') || '';
+};
+
+const previewResponse = (data) => Promise.resolve({ data: { success: true, data } });
+
 const api = axios.create({
   baseURL: '',
   timeout: 30000,
@@ -52,10 +106,27 @@ api.interceptors.response.use(
 );
 
 // ===== Public =====
-export const getSiteInfo = () => api.get('/api/dist/site/info');
-export const getSiteModels = () => api.get('/api/dist/site/models');
+export const getSiteInfo = () => {
+  const theme = getPreviewTheme();
+  if (theme) {
+    return previewResponse({
+      name: 'SubRouter Preview',
+      theme_template: theme,
+      enable_topup: true,
+      allow_sub_dist: true,
+      currency: {
+        code: 'CNY',
+        symbol: '¥',
+        exchange_rate: 7,
+        usd_exchange_rate: 7,
+      },
+    });
+  }
+  return api.get('/api/dist/site/info');
+};
+export const getSiteModels = () => getPreviewTheme() ? previewResponse(previewModels) : api.get('/api/dist/site/models');
 export const getSitePricing = () => api.get('/api/dist/site/pricing');
-export const getSitePackages = () => api.get('/api/dist/site/packages');
+export const getSitePackages = () => getPreviewTheme() ? previewResponse(previewPackages) : api.get('/api/dist/site/packages');
 export const getSiteKeyGroups = () => api.get('/api/dist/site/key-groups');
 export const getSiteKeyGroupPricing = (id) => api.get(`/api/dist/site/key-groups/${id}/pricing`);
 export const getSubDistributorInfo = () => api.get('/api/dist/site/sub-distributor/info');
