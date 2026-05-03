@@ -19,6 +19,8 @@ import RotatingEquiv from '../../components/bits/RotatingEquiv';
 import CountUp from '../../components/bits/CountUp';
 import FadeContent from '../../components/bits/FadeContent';
 import ApiEndpoints from '../../components/ApiEndpoints';
+import { getHomeContent } from '../../utils/siteContent';
+import HomeHeroImage from '../shared/HomeHeroImage';
 
 export default function DefaultHome() {
   const { t } = useTranslation();
@@ -36,6 +38,7 @@ export default function DefaultHome() {
   const enabledModels = useMemo(() => models.filter(m => m.enabled !== false), [models]);
   const visiblePackages = useMemo(() => packages.filter(p => p.enabled), [packages]);
   const modelPreview = enabledModels.slice(0, 6);
+  const homeContent = getHomeContent(site, t);
 
   const features = [
     {
@@ -68,14 +71,14 @@ export default function DefaultHome() {
             <div className="max-w-2xl">
               <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 shadow-sm">
                 <Activity className="h-4 w-4 text-emerald-600" />
-                {t('home.heroTagline')}
+                {homeContent.heroTagline}
               </div>
 
               <h1 className="text-4xl font-black tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
                 {site?.name || t('home.defaultHeroTitle')}
               </h1>
               <p className="mt-6 max-w-xl text-base leading-8 text-slate-600 sm:text-lg">
-                {t('home.heroSubtitle')}
+                {homeContent.heroSubtitle}
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -115,7 +118,11 @@ export default function DefaultHome() {
           </FadeContent>
 
           <FadeContent blur duration={700} delay={220}>
-            <HeroConsole models={modelPreview} t={t} />
+            {homeContent.heroImage ? (
+              <HomeHeroImage src={homeContent.heroImage} alt={site?.name} className="aspect-[4/3]" />
+            ) : (
+              <HeroConsole models={modelPreview} t={t} />
+            )}
           </FadeContent>
         </div>
       </section>

@@ -9,6 +9,8 @@ import RotatingEquiv from '../../components/bits/RotatingEquiv';
 import CountUp from '../../components/bits/CountUp';
 import FadeContent from '../../components/bits/FadeContent';
 import ApiEndpoints from '../../components/ApiEndpoints';
+import { getHomeContent } from '../../utils/siteContent';
+import HomeHeroImage from '../shared/HomeHeroImage';
 
 export default function DarkHome() {
   const { t } = useTranslation();
@@ -24,6 +26,7 @@ export default function DarkHome() {
   }, []);
 
   const enabledModels = models.filter(m => m.enabled !== false);
+  const homeContent = getHomeContent(site, t);
 
   return (
     <div className="relative">
@@ -33,14 +36,14 @@ export default function DarkHome() {
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/20 mb-8">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              <span className="text-xs text-emerald-400/80 font-medium tracking-wide">{t('home.heroTagline') || 'All Systems Operational'}</span>
+              <span className="text-xs text-emerald-400/80 font-medium tracking-wide">{homeContent.heroTagline}</span>
             </div>
 
             <h1 className="text-5xl md:text-6xl font-heading font-bold text-white leading-[1.1] tracking-tight">
               {site?.name || t('home.defaultHeroTitle')}
             </h1>
             <p className="text-lg text-neutral-400 mt-6 leading-relaxed max-w-xl">
-              {t('home.heroSubtitle')}
+              {homeContent.heroSubtitle}
             </p>
 
             <div className="flex items-center gap-4 mt-10">
@@ -59,6 +62,10 @@ export default function DarkHome() {
                 </>
               )}
             </div>
+
+            {homeContent.heroImage && (
+              <HomeHeroImage src={homeContent.heroImage} alt={site?.name} variant="dark" className="mt-12 aspect-[16/7]" />
+            )}
           </div>
         </FadeContent>
 
