@@ -9,6 +9,8 @@ import RotatingEquiv from '../../components/bits/RotatingEquiv';
 import CountUp from '../../components/bits/CountUp';
 import FadeContent from '../../components/bits/FadeContent';
 import ApiEndpoints from '../../components/ApiEndpoints';
+import { getHomeContent } from '../../utils/siteContent';
+import HomeHeroImage from '../shared/HomeHeroImage';
 
 export default function CleanHome() {
   const { t } = useTranslation();
@@ -24,6 +26,7 @@ export default function CleanHome() {
   }, []);
 
   const enabledModels = models.filter(m => m.enabled !== false);
+  const homeContent = getHomeContent(site, t);
 
   return (
     <div>
@@ -31,12 +34,12 @@ export default function CleanHome() {
       <section className="max-w-5xl mx-auto px-6 pt-32 pb-20">
         <FadeContent blur duration={800} delay={100}>
           <div className="text-center max-w-3xl mx-auto">
-            <p className="text-sm font-medium text-blue-600 mb-4 tracking-wide">{t('home.heroTagline') || 'AI API Platform'}</p>
+            <p className="text-sm font-medium text-blue-600 mb-4 tracking-wide">{homeContent.heroTagline}</p>
             <h1 className="text-5xl md:text-6xl font-heading font-bold text-gray-900 leading-[1.1] tracking-tight">
               {site?.name || t('home.defaultHeroTitle')}
             </h1>
             <p className="text-lg text-gray-500 mt-6 leading-relaxed max-w-xl mx-auto">
-              {t('home.heroSubtitle')}
+              {homeContent.heroSubtitle}
             </p>
 
             <div className="flex items-center justify-center gap-4 mt-10">
@@ -55,6 +58,10 @@ export default function CleanHome() {
                 </>
               )}
             </div>
+
+            {homeContent.heroImage && (
+              <HomeHeroImage src={homeContent.heroImage} alt={site?.name} className="mt-12 aspect-[16/7]" />
+            )}
           </div>
         </FadeContent>
 

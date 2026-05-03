@@ -10,6 +10,8 @@ import CountUp from '../../components/bits/CountUp';
 import FadeContent from '../../components/bits/FadeContent';
 import RotatingEquiv from '../../components/bits/RotatingEquiv';
 import ApiEndpoints from '../../components/ApiEndpoints';
+import { getHomeContent } from '../../utils/siteContent';
+import HomeHeroImage from '../shared/HomeHeroImage';
 
 const accents = [
   { border: 'border-orange-200', soft: 'bg-orange-50', text: 'text-orange-700', line: 'bg-orange-500' },
@@ -27,6 +29,7 @@ export default function MarketHome() {
   const { fmtCNY } = useCurrency();
   const { enabledModels, visiblePackages } = useHomeData();
   const models = enabledModels.slice(0, 8);
+  const homeContent = getHomeContent(site, t);
 
   return (
     <div className="relative overflow-hidden bg-[#fbfaf7] text-stone-950">
@@ -39,13 +42,13 @@ export default function MarketHome() {
             <div className="max-w-2xl">
               <div className="mb-5 inline-flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-sm font-bold text-stone-700 shadow-sm">
                 <ShoppingBag className="h-4 w-4 text-orange-600" />
-                {t('home.heroTagline')}
+                {homeContent.heroTagline}
               </div>
               <h1 className="text-4xl font-black tracking-tight text-stone-950 sm:text-5xl lg:text-6xl">
                 {site?.name || t('home.defaultHeroTitle')}
               </h1>
               <p className="mt-6 max-w-xl text-base leading-8 text-stone-600 sm:text-lg">
-                {t('home.heroSubtitle')}
+                {homeContent.heroSubtitle}
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -66,7 +69,11 @@ export default function MarketHome() {
           </FadeContent>
 
           <FadeContent blur duration={700} delay={180}>
-            <MarketBoard models={models} t={t} />
+            {homeContent.heroImage ? (
+              <HomeHeroImage src={homeContent.heroImage} alt={site?.name} className="aspect-[4/3]" />
+            ) : (
+              <MarketBoard models={models} t={t} />
+            )}
           </FadeContent>
         </div>
       </section>
@@ -257,7 +264,9 @@ function PackageCard({ pkg, index, models, fmtCNY, t, user }) {
           </p>
         )}
       </div>
-      <MarketButton to={user ? '/packages' : '/register'}>{user ? t('home.subscribe') : t('home.getStarted')}</MarketButton>
+      <div className="mt-5">
+        <MarketButton to={user ? '/packages' : '/register'}>{user ? t('home.subscribe') : t('home.getStarted')}</MarketButton>
+      </div>
     </div>
   );
 }

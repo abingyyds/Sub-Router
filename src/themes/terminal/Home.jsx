@@ -12,6 +12,8 @@ import CountUp from '../../components/bits/CountUp';
 import FadeContent from '../../components/bits/FadeContent';
 import RotatingEquiv from '../../components/bits/RotatingEquiv';
 import ApiEndpoints from '../../components/ApiEndpoints';
+import { getHomeContent } from '../../utils/siteContent';
+import HomeHeroImage from '../shared/HomeHeroImage';
 
 export default function TerminalHome() {
   const { t } = useTranslation();
@@ -20,6 +22,7 @@ export default function TerminalHome() {
   const { fmtCNY } = useCurrency();
   const { enabledModels, visiblePackages } = useHomeData();
   const previewModels = enabledModels.slice(0, 7);
+  const homeContent = getHomeContent(site, t);
 
   return (
     <div className="relative overflow-hidden bg-[#050807] text-emerald-50">
@@ -31,7 +34,7 @@ export default function TerminalHome() {
           <div className="max-w-2xl">
             <div className="mb-5 inline-flex items-center gap-2 rounded-md border border-emerald-400/25 bg-emerald-400/[0.06] px-3 py-1.5 font-mono text-xs font-bold uppercase tracking-[0.22em] text-emerald-200">
               <TerminalSquare className="h-4 w-4" />
-              <ShinyText text={t('home.heroTagline')} color="#a7f3d0" shineColor="#ffffff" speed={3} />
+              <ShinyText text={homeContent.heroTagline} color="#a7f3d0" shineColor="#ffffff" speed={3} />
             </div>
 
             <h1 className="font-mono text-4xl font-black tracking-tight text-emerald-50 sm:text-5xl lg:text-6xl">
@@ -46,7 +49,7 @@ export default function TerminalHome() {
               />
             </h1>
             <p className="mt-6 max-w-xl text-base leading-8 text-emerald-100/70 sm:text-lg">
-              {t('home.heroSubtitle')}
+              {homeContent.heroSubtitle}
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -70,7 +73,11 @@ export default function TerminalHome() {
         </FadeContent>
 
         <FadeContent blur duration={700} delay={180}>
-          <RouteConsole models={previewModels} t={t} />
+          {homeContent.heroImage ? (
+            <HomeHeroImage src={homeContent.heroImage} alt={site?.name} variant="dark" className="aspect-[4/3]" />
+          ) : (
+            <RouteConsole models={previewModels} t={t} />
+          )}
         </FadeContent>
       </section>
 
@@ -233,7 +240,9 @@ function PackageCard({ pkg, index, models, fmtCNY, t, user }) {
           </p>
         )}
       </div>
-      <TerminalButton to={user ? '/packages' : '/register'}>{user ? t('home.subscribe') : t('home.getStarted')}</TerminalButton>
+      <div className="mt-5">
+        <TerminalButton to={user ? '/packages' : '/register'}>{user ? t('home.subscribe') : t('home.getStarted')}</TerminalButton>
+      </div>
     </div>
   );
 }

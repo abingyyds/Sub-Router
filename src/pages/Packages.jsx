@@ -270,7 +270,7 @@ export default function Packages() {
                 <button
                   onClick={() => handleSubscribe(pkg)}
                   disabled={subscribing === pkg.id}
-                  className="btn-primary w-full text-center"
+                  className="btn-primary mt-2 w-full text-center"
                 >
                   {subscribing === pkg.id ? t('packages.processing') : user ? t('packages.subscribeNow') : t('packages.signUpToSubscribe')}
                 </button>
