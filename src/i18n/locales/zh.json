@@ -268,6 +268,8 @@
     "pricing.outputPrice": "输出 / 百万 token",
     "pricing.cacheReadPrice": "缓存读取 / 百万 token",
     "pricing.cacheCreationPrice": "缓存创建 / 百万 token",
+    "pricing.officialPrice": "官方 输入/输出",
+    "pricing.savings": "节省",
     "pricing.cacheCreation5m": "5m",
     "pricing.cacheCreation1h": "1h",
     "pricing.perCall": "按次计费",

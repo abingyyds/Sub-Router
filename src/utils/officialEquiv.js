@@ -1,50 +1,26 @@
 import { Q } from '../api';
 
-// Official prices (input $/1M tokens) for reference models.
-// These are the REAL official API prices from Anthropic, OpenAI, Google etc.
-// IMPORTANT: More specific patterns MUST come before less specific ones
-// (e.g. "claude-opus-4-5" before "claude-opus-4") to avoid false matches.
-// Patterns must match actual backend model_name format (e.g. "claude-opus-4-5-20251101").
-const OFFICIAL_PRICES = [
-  // Claude — order matters: longer/more-specific first
-  { pattern: 'claude-opus-4-7', label: 'Claude Opus 4.7', inputPerMtok: 5, family: 'claudecode' },
-  { pattern: 'claude-opus-4-5', label: 'Claude Opus 4.5', inputPerMtok: 5, family: 'claudecode' },
-  { pattern: 'claude-opus-4-6', label: 'Claude Opus 4.6', inputPerMtok: 5, family: 'claudecode' },
-  { pattern: 'claude-opus-4-1', label: 'Claude Opus 4.1', inputPerMtok: 15, family: 'claudecode' },
-  { pattern: 'claude-opus-4', label: 'Claude Opus 4', inputPerMtok: 15, family: 'claudecode' },
-  { pattern: 'claude-3-opus', label: 'Claude 3 Opus', inputPerMtok: 15, family: 'claudecode' },
-  { pattern: 'claude-sonnet-4-5', label: 'Claude Sonnet 4.5', inputPerMtok: 3, family: 'claudecode' },
-  { pattern: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6', inputPerMtok: 3, family: 'claudecode' },
-  { pattern: 'claude-sonnet-4', label: 'Claude Sonnet 4', inputPerMtok: 3, family: 'claudecode' },
-  { pattern: 'claude-3-7-sonnet', label: 'Claude 3.7 Sonnet', inputPerMtok: 3, family: 'claudecode' },
-  { pattern: 'claude-3-5-sonnet', label: 'Claude 3.5 Sonnet', inputPerMtok: 3, family: 'claudecode' },
-  { pattern: 'claude-haiku-4-5', label: 'Claude Haiku 4.5', inputPerMtok: 1, family: 'claudecode' },
-  { pattern: 'claude-3-5-haiku', label: 'Claude 3.5 Haiku', inputPerMtok: 0.8, family: 'claudecode' },
-  { pattern: 'claude-3-haiku', label: 'Claude 3 Haiku', inputPerMtok: 0.25, family: 'claudecode' },
-  // OpenAI — more specific first
-  { pattern: 'gpt-4o-mini', label: 'GPT-4o Mini', inputPerMtok: 0.15, family: 'gpt' },
-  { pattern: 'gpt-4o-2024-05-13', label: 'GPT-4o', inputPerMtok: 5, family: 'gpt' },
-  { pattern: 'chatgpt-4o-latest', label: 'GPT-4o', inputPerMtok: 5, family: 'gpt' },
-  { pattern: 'gpt-4o', label: 'GPT-4o', inputPerMtok: 2.5, family: 'gpt' },
-  { pattern: 'gpt-4.1-mini', label: 'GPT-4.1 Mini', inputPerMtok: 0.4, family: 'gpt' },
-  { pattern: 'gpt-4.1-nano', label: 'GPT-4.1 Nano', inputPerMtok: 0.1, family: 'gpt' },
-  { pattern: 'gpt-4.1', label: 'GPT-4.1', inputPerMtok: 2, family: 'gpt' },
-  { pattern: 'gpt-5.4', label: 'GPT-5.4', inputPerMtok: 2.5, family: 'gpt' },
-  { pattern: 'gpt-5.3', label: 'GPT-5.3', inputPerMtok: 1.75, family: 'gpt' },
-  { pattern: 'gpt-5.2', label: 'GPT-5.2', inputPerMtok: 1.75, family: 'gpt' },
-  { pattern: 'gpt-5.1', label: 'GPT-5.1', inputPerMtok: 1.25, family: 'gpt' },
-  // Gemini — more specific first
-  { pattern: 'gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash Lite', inputPerMtok: 0.04, family: 'gemini' },
-  { pattern: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', inputPerMtok: 0.15, family: 'gemini' },
-  { pattern: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', inputPerMtok: 1.25, family: 'gemini' },
-  { pattern: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash', inputPerMtok: 0.1, family: 'gemini' },
-  { pattern: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro', inputPerMtok: 1.25, family: 'gemini' },
-  { pattern: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash', inputPerMtok: 0.075, family: 'gemini' },
-  // DeepSeek
-  { pattern: 'deepseek-r1', label: 'DeepSeek R1', inputPerMtok: 0.55 },
-  { pattern: 'deepseek-chat', label: 'DeepSeek V3', inputPerMtok: 0.27 },
-  { pattern: 'deepseek-v3', label: 'DeepSeek V3', inputPerMtok: 0.27 },
-];
+function numberOrNull(value) {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : null;
+}
+
+export function getOfficialPrice(model) {
+  if (!model || typeof model !== 'object') return null;
+
+  const inputPerMtok = Number(model.official_input_price);
+  const outputPerMtok = Number(model.official_output_price);
+  if (!Number.isFinite(inputPerMtok) || inputPerMtok <= 0) return null;
+
+  return {
+    label: model.display_name || model.model_name,
+    inputPerMtok,
+    outputPerMtok: Number.isFinite(outputPerMtok) && outputPerMtok > 0 ? outputPerMtok : null,
+    cacheReadPerMtok: numberOrNull(model.official_cache_read_price),
+    cacheCreationPerMtok: numberOrNull(model.official_cache_creation_price),
+    cacheCreation1hPerMtok: numberOrNull(model.official_cache_creation_price_1h),
+  };
+}
 
 /**
  * Find official equivalents for the three headline families only:
@@ -61,27 +37,24 @@ export function calcOfficialEquivList(models, quotaDollars) {
     const siteInputPrice = Number(m.input_price);
     if (!siteInputPrice || siteInputPrice <= 0) continue;
 
-    const modelName = (m.model_name || '').toLowerCase();
+    const official = getOfficialPrice(m);
+    if (!official) continue;
 
-    for (const official of OFFICIAL_PRICES) {
-      if (modelName.includes(official.pattern.toLowerCase())) {
-        if (!official.family || !familyOrder.includes(official.family)) break;
+    const family = getOfficialFamily(m.model_name || m.display_name || '');
+    if (!family || !familyOrder.includes(family)) continue;
 
-        const sitePricePerMtok = siteInputPrice * 1000;
-        const ratio = official.inputPerMtok / sitePricePerMtok;
-        const equivDollars = quotaDollars * ratio;
+    const sitePricePerMtok = siteInputPrice * 1000;
+    const ratio = official.inputPerMtok / sitePricePerMtok;
+    const equivDollars = quotaDollars * ratio;
 
-        if (equivDollars > quotaDollars) {
-          const currentBest = bestByFamily[official.family];
-          if (!currentBest || equivDollars > currentBest.equivDollars) {
-            bestByFamily[official.family] = {
-              family: official.family,
-              label: official.label,
-              equivDollars,
-            };
-          }
-        }
-        break;
+    if (equivDollars > quotaDollars) {
+      const currentBest = bestByFamily[family];
+      if (!currentBest || equivDollars > currentBest.equivDollars) {
+        bestByFamily[family] = {
+          family,
+          label: official.label,
+          equivDollars,
+        };
       }
     }
   }
@@ -93,6 +66,14 @@ export function calcOfficialEquivList(models, quotaDollars) {
       label: item.label,
       equivDollars: Math.round(item.equivDollars),
     }));
+}
+
+function getOfficialFamily(modelName) {
+  const name = String(modelName).toLowerCase();
+  if (name.includes('gpt')) return 'gpt';
+  if (name.includes('claude')) return 'claudecode';
+  if (name.includes('gemini')) return 'gemini';
+  return null;
 }
 
 /**

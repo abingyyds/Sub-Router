@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getSiteModels } from '../api';
 import { useCurrency } from '../context/SiteContext';
+import { getOfficialPrice } from '../utils/officialEquiv';
 
 export default function Pricing() {
   const { t } = useTranslation();
@@ -73,6 +74,26 @@ export default function Pricing() {
     price != null
       ? `${symbol}${(Number(price) * rate).toFixed(4)}/${t('pricing.perCallUnit')}`
       : '-';
+
+  const formatUsdPrice = (price) => {
+    if (price == null) return '-';
+    const value = Number(price);
+    if (!Number.isFinite(value)) return '-';
+    return `$${Number.isInteger(value) ? value.toFixed(0) : value.toFixed(2).replace(/0+$/, '').replace(/\.$/, '')}`;
+  };
+
+  const formatOfficialPrice = (official) => {
+    if (!official) return '-';
+    return `${formatUsdPrice(official.inputPerMtok)} / ${formatUsdPrice(official.outputPerMtok)}`;
+  };
+
+  const formatSavings = (model, official) => {
+    if (!official || model.is_per_call) return null;
+    const siteInputPerMtok = Number(model.input_price) * 1000;
+    if (!Number.isFinite(siteInputPerMtok) || siteInputPerMtok <= 0 || !official.inputPerMtok) return null;
+    const savings = Math.round((siteInputPerMtok / official.inputPerMtok - 1) * 100);
+    return savings < 0 ? `${savings}%` : `+${savings}%`;
+  };
 
   if (loading) {
     return (
@@ -150,39 +171,62 @@ export default function Pricing() {
                 <th className="text-right px-5 py-3.5 font-medium text-page-secondary">{t('pricing.outputPrice')}</th>
                 <th className="text-right px-5 py-3.5 font-medium text-page-secondary">{t('pricing.cacheReadPrice')}</th>
                 <th className="text-right px-5 py-3.5 font-medium text-page-secondary">{t('pricing.cacheCreationPrice')}</th>
+                <th className="text-right px-5 py-3.5 font-medium text-page-secondary whitespace-nowrap">{t('pricing.officialPrice')}</th>
+                <th className="text-right px-5 py-3.5 font-medium text-page-secondary whitespace-nowrap">{t('pricing.savings')}</th>
                 <th className="text-center px-5 py-3.5 font-medium text-page-secondary">{t('pricing.status')}</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((m, i) => (
-                <tr key={m.model_name || i} className="border-b border-page-divider last:border-0 hover:bg-page-surface transition-colors">
-                  <td className="px-5 py-3.5">
-                    <span className="font-mono text-page">{m.display_name || m.model_name}</span>
-                  </td>
-                  <td className="px-5 py-3.5 text-right font-mono text-page-label">
-                    {m.is_per_call ? t('pricing.perCall') : formatTokenPrice(m.input_price)}
-                  </td>
-                  <td className="px-5 py-3.5 text-right font-mono text-page-label">
-                    {m.is_per_call ? formatPerCallPrice(m.fixed_price) : formatTokenPrice(m.output_price)}
-                  </td>
-                  <td className="px-5 py-3.5 text-right font-mono text-page-label">
-                    {m.is_per_call ? '-' : formatTokenPrice(m.cache_read_price)}
-                  </td>
-                  <td className="px-5 py-3.5 text-right font-mono text-page-label whitespace-nowrap">
-                    {m.is_per_call ? '-' : formatCacheCreationPrice(m.model_name, m.cache_creation_price, m.cache_creation_price_1h)}
-                  </td>
-                  <td className="px-5 py-3.5 text-center">
-                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs border ${
-                      m.status === 'healthy'
-                        ? 'bg-green-500/10 text-page-success border-green-500/20'
-                        : 'bg-page-surface text-page-secondary border-page-divider'
-                    }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${m.status === 'healthy' ? 'bg-green-500' : 'bg-neutral-500'}`} />
-                      {m.status === 'healthy' ? t('pricing.online') : t('pricing.unknown')}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+              {filtered.map((m, i) => {
+                const official = getOfficialPrice(m);
+                const savings = formatSavings(m, official);
+
+                return (
+                  <tr key={m.model_name || i} className="border-b border-page-divider last:border-0 hover:bg-page-surface transition-colors">
+                    <td className="px-5 py-3.5">
+                      <span className="font-mono text-page">{m.display_name || m.model_name}</span>
+                    </td>
+                    <td className="px-5 py-3.5 text-right font-mono text-page-label">
+                      {m.is_per_call ? t('pricing.perCall') : formatTokenPrice(m.input_price)}
+                    </td>
+                    <td className="px-5 py-3.5 text-right font-mono text-page-label">
+                      {m.is_per_call ? formatPerCallPrice(m.fixed_price) : formatTokenPrice(m.output_price)}
+                    </td>
+                    <td className="px-5 py-3.5 text-right font-mono text-page-label">
+                      {m.is_per_call ? '-' : formatTokenPrice(m.cache_read_price)}
+                    </td>
+                    <td className="px-5 py-3.5 text-right font-mono text-page-label whitespace-nowrap">
+                      {m.is_per_call ? '-' : formatCacheCreationPrice(m.model_name, m.cache_creation_price, m.cache_creation_price_1h)}
+                    </td>
+                    <td className="px-5 py-3.5 text-right font-mono text-page-label whitespace-nowrap">
+                      {formatOfficialPrice(official)}
+                    </td>
+                    <td className="px-5 py-3.5 text-right">
+                      {savings ? (
+                        <span className={`inline-flex justify-end rounded-full px-2 py-0.5 font-mono text-xs font-semibold ${
+                          savings.startsWith('-')
+                            ? 'bg-green-500/10 text-page-success'
+                            : 'bg-amber-500/10 text-amber-600'
+                        }`}>
+                          {savings}
+                        </span>
+                      ) : (
+                        <span className="font-mono text-page-muted">-</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3.5 text-center">
+                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs border ${
+                        m.status === 'healthy'
+                          ? 'bg-green-500/10 text-page-success border-green-500/20'
+                          : 'bg-page-surface text-page-secondary border-page-divider'
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${m.status === 'healthy' ? 'bg-green-500' : 'bg-neutral-500'}`} />
+                        {m.status === 'healthy' ? t('pricing.online') : t('pricing.unknown')}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
