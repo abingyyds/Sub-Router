@@ -79,7 +79,8 @@ export default function Pricing() {
     if (price == null) return '-';
     const value = Number(price);
     if (!Number.isFinite(value)) return '-';
-    return `$${Number.isInteger(value) ? value.toFixed(0) : value.toFixed(2).replace(/0+$/, '').replace(/\.$/, '')}`;
+    const decimals = value >= 1 ? 2 : value >= 0.01 ? 3 : 4;
+    return `$${Number.isInteger(value) ? value.toFixed(0) : value.toFixed(decimals).replace(/0+$/, '').replace(/\.$/, '')}`;
   };
 
   const formatOfficialPrice = (official) => {
@@ -92,7 +93,7 @@ export default function Pricing() {
     const siteInputPerMtok = Number(model.input_price) * 1000;
     if (!Number.isFinite(siteInputPerMtok) || siteInputPerMtok <= 0 || !official.inputPerMtok) return null;
     const savings = Math.round((siteInputPerMtok / official.inputPerMtok - 1) * 100);
-    return savings < 0 ? `${savings}%` : `+${savings}%`;
+    return savings < 0 ? `${savings}%` : null;
   };
 
   if (loading) {
