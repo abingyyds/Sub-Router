@@ -9,6 +9,7 @@ import LanguageSwitch from '../../components/LanguageSwitch';
 const configs = {
   aurora: {
     root: 'theme-light theme-aurora min-h-screen flex flex-col bg-[#f6f8fb] text-slate-950',
+    main: 'theme-page-shell flex-1',
     announcement: 'border-b border-slate-800 bg-slate-950 px-4 py-2.5 text-center text-sm font-medium text-slate-100',
     header: 'sticky top-0 z-50 border-b border-slate-200 bg-[#f6f8fb]/88 backdrop-blur-xl',
     logo: 'bg-slate-950 text-white shadow-lg shadow-slate-900/10',
@@ -23,6 +24,7 @@ const configs = {
   },
   terminal: {
     root: 'theme-terminal min-h-screen flex flex-col bg-[#050807] text-emerald-50',
+    main: 'theme-page-shell flex-1',
     announcement: 'border-b border-emerald-400/20 bg-emerald-400/10 px-4 py-2.5 text-center font-mono text-sm text-emerald-200',
     header: 'sticky top-0 z-50 border-b border-emerald-400/15 bg-[#050807]/88 backdrop-blur-xl',
     logo: 'bg-emerald-400 text-black shadow-lg shadow-emerald-400/20',
@@ -37,6 +39,7 @@ const configs = {
   },
   market: {
     root: 'theme-light theme-market min-h-screen flex flex-col bg-[#fbfaf7] text-stone-950',
+    main: 'theme-page-shell flex-1',
     announcement: 'border-b border-stone-800 bg-stone-950 px-4 py-2.5 text-center text-sm font-semibold text-stone-100',
     header: 'sticky top-0 z-50 border-b border-stone-200 bg-[#fbfaf7]/90 backdrop-blur-xl',
     logo: 'bg-stone-950 text-white shadow-lg shadow-stone-900/10',
@@ -184,7 +187,7 @@ export default function BrandLayout({ variant }) {
         )}
       </header>
 
-      <main className="flex-1">
+      <main className={cfg.main || 'flex-1'}>
         <Outlet />
       </main>
 
