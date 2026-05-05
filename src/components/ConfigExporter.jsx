@@ -314,7 +314,7 @@ const ConfigExporter = ({ tokens = [] }) => {
       family: 'openai',
       baseUrl: `${apiServerAddress}/v1`,
       openclawApi: 'openai-completions',
-      openclawProviderId: 'subrouter-openai',
+      openclawProviderId: 'openai',
       opencodeProviderId: 'openai',
     };
   };
