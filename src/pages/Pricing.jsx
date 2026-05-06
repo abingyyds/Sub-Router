@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ChevronDown, ChevronRight, ExternalLink } from 'lucide-react';
 import { getSiteModels } from '../api';
 import { useCurrency } from '../context/SiteContext';
 import { getOfficialPrice } from '../utils/officialEquiv';
@@ -12,6 +13,7 @@ export default function Pricing() {
   const [search, setSearch] = useState('');
   const [vendor, setVendor] = useState('');
   const [loading, setLoading] = useState(true);
+  const [expandedModels, setExpandedModels] = useState(() => new Set());
 
   useEffect(() => {
     getSiteModels()
@@ -43,7 +45,10 @@ export default function Pricing() {
     if (search) {
       const q = search.toLowerCase();
       list = list.filter((m) =>
-        (m.display_name || m.model_name || '').toLowerCase().includes(q)
+        (m.display_name || m.model_name || '').toLowerCase().includes(q) ||
+        (Array.isArray(m.channels) && m.channels.some((ch) =>
+          (ch.provider_name || ch.provider_slug || '').toLowerCase().includes(q)
+        ))
       );
     }
     list = [...list].sort((a, b) => {
@@ -57,6 +62,18 @@ export default function Pricing() {
     });
     return list;
   }, [enabledModels, vendor, search]);
+
+  const toggleModel = (key) => {
+    setExpandedModels((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
 
   const formatTokenPrice = (price) =>
     price != null ? `${symbol}${(Number(price) * 1000 * rate).toFixed(4)}` : '-';
@@ -95,6 +112,11 @@ export default function Pricing() {
     const savings = Math.round((siteInputPerMtok / official.inputPerMtok - 1) * 100);
     return savings < 0 ? `${savings}%` : null;
   };
+
+  const isPerCallPrice = (item) => item?.is_per_call || item?.billing_type === 'per_call';
+
+  const getChannelLabel = (channel, index) =>
+    channel.provider_name || t('pricing.channelFallback', { number: channel.channel_index || index + 1 });
 
   if (loading) {
     return (
@@ -181,51 +203,157 @@ export default function Pricing() {
               {filtered.map((m, i) => {
                 const official = getOfficialPrice(m);
                 const savings = formatSavings(m, official);
+                const channels = Array.isArray(m.channels) ? m.channels : [];
+                const modelKey = `${m.model_name || 'model'}-${m.id || i}`;
+                const expanded = expandedModels.has(modelKey);
+                const canExpand = channels.length > 0;
 
                 return (
-                  <tr key={m.model_name || i} className="border-b border-page-divider last:border-0 hover:bg-page-surface transition-colors">
-                    <td className="px-5 py-3.5">
-                      <span className="font-mono text-page">{m.display_name || m.model_name}</span>
-                    </td>
-                    <td className="px-5 py-3.5 text-right font-mono text-page-label">
-                      {m.is_per_call ? t('pricing.perCall') : formatTokenPrice(m.input_price)}
-                    </td>
-                    <td className="px-5 py-3.5 text-right font-mono text-page-label">
-                      {m.is_per_call ? formatPerCallPrice(m.fixed_price) : formatTokenPrice(m.output_price)}
-                    </td>
-                    <td className="px-5 py-3.5 text-right font-mono text-page-label">
-                      {m.is_per_call ? '-' : formatTokenPrice(m.cache_read_price)}
-                    </td>
-                    <td className="px-5 py-3.5 text-right font-mono text-page-label whitespace-nowrap">
-                      {m.is_per_call ? '-' : formatCacheCreationPrice(m.model_name, m.cache_creation_price, m.cache_creation_price_1h)}
-                    </td>
-                    <td className="px-5 py-3.5 text-right font-mono text-page-label whitespace-nowrap">
-                      {formatOfficialPrice(official)}
-                    </td>
-                    <td className="px-5 py-3.5 text-right">
-                      {savings ? (
-                        <span className={`inline-flex justify-end rounded-full px-2 py-0.5 font-mono text-xs font-semibold ${
-                          savings.startsWith('-')
-                            ? 'bg-green-500/10 text-page-success'
-                            : 'bg-amber-500/10 text-amber-600'
+                  <React.Fragment key={modelKey}>
+                    <tr className="border-b border-page-divider last:border-0 hover:bg-page-surface transition-colors">
+                      <td className="px-5 py-3.5">
+                        <div className="flex min-w-[220px] items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => canExpand && toggleModel(modelKey)}
+                            disabled={!canExpand}
+                            className={`inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md border border-page-divider transition-colors ${
+                              canExpand
+                                ? 'text-page-secondary hover:bg-page-surface-hover hover:text-page'
+                                : 'cursor-default text-page-muted opacity-40'
+                            }`}
+                            aria-label={expanded ? t('pricing.collapseChannels') : t('pricing.expandChannels')}
+                          >
+                            {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                          </button>
+                          <div className="min-w-0">
+                            <span className="block truncate font-mono text-page">{m.display_name || m.model_name}</span>
+                            {canExpand && (
+                              <span className="mt-1 inline-flex rounded-full bg-page-surface px-2 py-0.5 text-[11px] font-medium text-page-secondary">
+                                {t('pricing.channelCount', { count: channels.length })}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3.5 text-right font-mono text-page-label">
+                        {isPerCallPrice(m) ? t('pricing.perCall') : formatTokenPrice(m.input_price)}
+                      </td>
+                      <td className="px-5 py-3.5 text-right font-mono text-page-label">
+                        {isPerCallPrice(m) ? formatPerCallPrice(m.fixed_price) : formatTokenPrice(m.output_price)}
+                      </td>
+                      <td className="px-5 py-3.5 text-right font-mono text-page-label">
+                        {isPerCallPrice(m) ? '-' : formatTokenPrice(m.cache_read_price)}
+                      </td>
+                      <td className="px-5 py-3.5 text-right font-mono text-page-label whitespace-nowrap">
+                        {isPerCallPrice(m) ? '-' : formatCacheCreationPrice(m.model_name, m.cache_creation_price, m.cache_creation_price_1h)}
+                      </td>
+                      <td className="px-5 py-3.5 text-right font-mono text-page-label whitespace-nowrap">
+                        {formatOfficialPrice(official)}
+                      </td>
+                      <td className="px-5 py-3.5 text-right">
+                        {savings ? (
+                          <span className={`inline-flex justify-end rounded-full px-2 py-0.5 font-mono text-xs font-semibold ${
+                            savings.startsWith('-')
+                              ? 'bg-green-500/10 text-page-success'
+                              : 'bg-amber-500/10 text-amber-600'
+                          }`}>
+                            {savings}
+                          </span>
+                        ) : (
+                          <span className="font-mono text-page-muted">-</span>
+                        )}
+                      </td>
+                      <td className="px-5 py-3.5 text-center">
+                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs border ${
+                          m.status === 'healthy'
+                            ? 'bg-green-500/10 text-page-success border-green-500/20'
+                            : 'bg-page-surface text-page-secondary border-page-divider'
                         }`}>
-                          {savings}
+                          <span className={`w-1.5 h-1.5 rounded-full ${m.status === 'healthy' ? 'bg-green-500' : 'bg-neutral-500'}`} />
+                          {m.status === 'healthy' ? t('pricing.online') : t('pricing.unknown')}
                         </span>
-                      ) : (
-                        <span className="font-mono text-page-muted">-</span>
-                      )}
-                    </td>
-                    <td className="px-5 py-3.5 text-center">
-                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs border ${
-                        m.status === 'healthy'
-                          ? 'bg-green-500/10 text-page-success border-green-500/20'
-                          : 'bg-page-surface text-page-secondary border-page-divider'
-                      }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${m.status === 'healthy' ? 'bg-green-500' : 'bg-neutral-500'}`} />
-                        {m.status === 'healthy' ? t('pricing.online') : t('pricing.unknown')}
-                      </span>
-                    </td>
-                  </tr>
+                      </td>
+                    </tr>
+                    {expanded && canExpand && (
+                      <tr className="border-b border-page-divider bg-page-surface">
+                        <td colSpan={8} className="px-5 py-4">
+                          <div className="overflow-hidden rounded-lg border border-page-divider bg-page-inset">
+                            <table className="w-full text-xs">
+                              <thead>
+                                <tr className="border-b border-page-divider text-page-secondary">
+                                  <th className="px-4 py-2.5 text-left font-medium">{t('pricing.channel')}</th>
+                                  <th className="px-4 py-2.5 text-right font-medium">{t('pricing.inputPriceShort')}</th>
+                                  <th className="px-4 py-2.5 text-right font-medium">{t('pricing.outputPriceShort')}</th>
+                                  <th className="px-4 py-2.5 text-right font-medium">{t('pricing.cacheReadShort')}</th>
+                                  <th className="px-4 py-2.5 text-right font-medium">{t('pricing.cacheCreationShort')}</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {channels.map((channel, channelIndex) => {
+                                  const channelIsPerCall = isPerCallPrice(channel);
+                                  return (
+                                    <tr key={`${modelKey}-channel-${channel.provider_slug || channelIndex}`} className="border-b border-page-divider last:border-0">
+                                      <td className="px-4 py-3">
+                                        <div className="flex min-w-[220px] items-center gap-2">
+                                          {channel.provider_logo ? (
+                                            <img
+                                              src={channel.provider_logo}
+                                              alt=""
+                                              className="h-6 w-6 rounded-md object-cover"
+                                              loading="lazy"
+                                            />
+                                          ) : (
+                                            <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-brand-500/10 text-[10px] font-semibold text-brand-600">
+                                              {channel.channel_index || channelIndex + 1}
+                                            </span>
+                                          )}
+                                          <div className="min-w-0">
+                                            <div className="flex items-center gap-1.5">
+                                              {channel.provider_website ? (
+                                                <a
+                                                  href={channel.provider_website}
+                                                  target="_blank"
+                                                  rel="noreferrer"
+                                                  className="truncate font-medium text-page hover:text-brand-500"
+                                                >
+                                                  {getChannelLabel(channel, channelIndex)}
+                                                </a>
+                                              ) : (
+                                                <span className="truncate font-medium text-page">{getChannelLabel(channel, channelIndex)}</span>
+                                              )}
+                                              {channel.provider_website && <ExternalLink size={11} className="flex-shrink-0 text-page-muted" />}
+                                            </div>
+                                            {channel.provider_description && (
+                                              <p className="mt-0.5 max-w-lg truncate text-[11px] text-page-muted">
+                                                {channel.provider_description}
+                                              </p>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </td>
+                                      <td className="px-4 py-3 text-right font-mono text-page-label">
+                                        {channelIsPerCall ? t('pricing.perCall') : formatTokenPrice(channel.input_price)}
+                                      </td>
+                                      <td className="px-4 py-3 text-right font-mono text-page-label">
+                                        {channelIsPerCall ? formatPerCallPrice(channel.fixed_price) : formatTokenPrice(channel.output_price)}
+                                      </td>
+                                      <td className="px-4 py-3 text-right font-mono text-page-label">
+                                        {channelIsPerCall ? '-' : formatTokenPrice(channel.cache_read_price)}
+                                      </td>
+                                      <td className="px-4 py-3 text-right font-mono text-page-label whitespace-nowrap">
+                                        {channelIsPerCall ? '-' : formatCacheCreationPrice(m.model_name, channel.cache_creation_price, channel.cache_creation_price_1h)}
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 );
               })}
             </tbody>
