@@ -28,6 +28,52 @@ function getDevPreviewTheme() {
   return new URLSearchParams(window.location.search).get('preview_theme') || '';
 }
 
+function upsertMeta(name, content) {
+  if (!content) return;
+  let meta = document.querySelector(`meta[name="${name}"]`);
+  if (!meta) {
+    meta = document.createElement('meta');
+    meta.name = name;
+    document.head.appendChild(meta);
+  }
+  meta.content = content;
+}
+
+function upsertLink(rel, href, attrs = {}) {
+  if (!href) return;
+  const sizesSelector = attrs.sizes ? `[sizes="${attrs.sizes}"]` : ':not([sizes])';
+  let link = document.querySelector(`link[rel="${rel}"]${sizesSelector}`);
+  if (!link) {
+    link = document.createElement('link');
+    document.head.appendChild(link);
+  }
+  link.rel = rel;
+  link.href = href;
+  Object.entries(attrs).forEach(([key, value]) => {
+    if (value) link.setAttribute(key, value);
+  });
+}
+
+function applySiteDocumentMeta(site) {
+  const siteName = site?.name;
+  const iconUrl = site?.favicon || site?.logo;
+
+  if (siteName) {
+    document.title = siteName;
+    upsertMeta('application-name', siteName);
+    upsertMeta('apple-mobile-web-app-title', siteName);
+  }
+
+  if (iconUrl) {
+    upsertLink('icon', iconUrl);
+    upsertLink('shortcut icon', iconUrl);
+    upsertLink('apple-touch-icon', iconUrl);
+    upsertLink('apple-touch-icon', iconUrl, { sizes: '180x180' });
+  }
+
+  upsertLink('manifest', '/site.webmanifest');
+}
+
 export function SiteProvider({ children }) {
   const [site, setSite] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -49,7 +95,7 @@ export function SiteProvider({ children }) {
       };
       setSite(previewSite);
       applyThemeClass(previewTheme);
-      document.title = `${previewSite.name} · ${previewTheme}`;
+      applySiteDocumentMeta({ ...previewSite, name: `${previewSite.name} · ${previewTheme}` });
       setLoading(false);
       return;
     }
@@ -60,17 +106,7 @@ export function SiteProvider({ children }) {
           setSite(res.data.data);
           // Apply theme class to body immediately
           applyThemeClass(res.data.data?.theme_template);
-          // Update page title
-          if (res.data.data?.name) {
-            document.title = res.data.data.name;
-          }
-          // Update favicon
-          if (res.data.data?.favicon) {
-            const link = document.querySelector("link[rel~='icon']") || document.createElement('link');
-            link.rel = 'icon';
-            link.href = res.data.data.favicon;
-            document.head.appendChild(link);
-          }
+          applySiteDocumentMeta(res.data.data);
         }
       })
       .catch(() => {})
