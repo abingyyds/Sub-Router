@@ -6,6 +6,11 @@ import { createSubDistributorOrder, getSubDistributorInfo } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useSite, useCurrency } from '../context/SiteContext';
 
+function normalizeHost(value) {
+  if (!value) return '';
+  return String(value).replace(/^https?:\/\//, '').replace(/\/+$/, '');
+}
+
 function submitEpayForm(resData) {
   const params = resData.data;
   const url = resData.url;
@@ -73,6 +78,13 @@ export default function SubDistributor() {
     () => new URLSearchParams(location.search).get('payment') === 'return',
     [location.search]
   );
+  const currentSiteName = site?.name || t('subDist.defaultSiteName');
+  const currentSiteDomain = useMemo(() => {
+    const configuredDomain = normalizeHost(site?.domain);
+    if (configuredDomain) return configuredDomain;
+    if (typeof window !== 'undefined') return window.location.host;
+    return '';
+  }, [site?.domain]);
 
   useEffect(() => {
     if (!paymentReturned || authLoading) return;
@@ -179,8 +191,40 @@ export default function SubDistributor() {
             <p className="text-sm text-page-link font-medium mb-3">{t('subDist.badge')}</p>
             <h1 className="text-3xl font-heading font-bold text-page mb-3">{t('subDist.title')}</h1>
             <p className="text-sm text-page-secondary leading-6">
-              {t('subDist.subtitle', { name: site?.name || t('subDist.defaultSiteName') })}
+              {t('subDist.subtitle', { name: currentSiteName })}
             </p>
+          </div>
+
+          <div className="mb-8 rounded-2xl border border-page-divider bg-page-surface/60 p-5">
+            <div className="mb-4">
+              <p className="text-sm font-semibold text-page">{t('subDist.exampleTitle')}</p>
+              <p className="mt-1 text-xs text-page-secondary leading-5">
+                {t('subDist.exampleDesc', { name: currentSiteName })}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-page-divider bg-page-inset/40 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-page">{currentSiteDomain || currentSiteName}</p>
+                  <p className="mt-1 text-xs text-page-muted">
+                    {t('subDist.exampleCategory', { name: currentSiteName })}
+                  </p>
+                </div>
+                <span className="shrink-0 rounded-full bg-brand-500/10 px-2.5 py-1 text-[11px] font-medium text-page-link">
+                  {t('subDist.exampleStatus')}
+                </span>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {['subDist.featureDomain', 'subDist.featureBrand', 'subDist.featureRecharge'].map((key) => (
+                  <span key={key} className="rounded-full bg-page-surface px-2.5 py-1 text-[11px] text-page-secondary">
+                    {t(key)}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="mt-4 rounded-xl border border-page-divider bg-page-link/5 p-3">
+              <p className="text-xs text-page-secondary leading-relaxed">{t('subDist.exampleNote')}</p>
+            </div>
           </div>
 
           {!subInfo?.enabled ? (
