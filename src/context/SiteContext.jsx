@@ -15,6 +15,7 @@ const themeClassMap = {
   aurora: 'theme-light theme-aurora',
   terminal: 'theme-terminal',
   market: 'theme-light theme-market',
+  maoqiu: 'theme-light theme-maoqiu',
 };
 
 function applyThemeClass(themeName) {

@@ -45,6 +45,10 @@ const themeRegistry = {
     Home: React.lazy(() => import('../themes/market/Home')),
     Layout: React.lazy(() => import('../themes/market/Layout')),
   },
+  maoqiu: {
+    Home: React.lazy(() => import('../themes/maoqiu/Home')),
+    Layout: React.lazy(() => import('../themes/maoqiu/Layout')),
+  },
 };
 
 // Full-screen loading spinner shown while site info is being fetched
