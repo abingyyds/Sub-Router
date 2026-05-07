@@ -1,33 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import maoqiuAiImage from '../../assets/maoqiu-ai.png';
 
-const SPLASH_KEY = 'maoqiu-splash-seen';
-
 export default function MaoqiuSplash() {
-  const [visible, setVisible] = useState(() => {
-    try {
-      return sessionStorage.getItem(SPLASH_KEY) !== '1';
-    } catch (e) {
-      return true;
-    }
-  });
+  const [visible, setVisible] = useState(true);
   const [leaving, setLeaving] = useState(false);
 
   useEffect(() => {
-    if (!visible) return undefined;
     const leaveTimer = window.setTimeout(() => setLeaving(true), 1450);
-    const hideTimer = window.setTimeout(() => {
-      try {
-        sessionStorage.setItem(SPLASH_KEY, '1');
-      } catch (e) {}
-      setVisible(false);
-    }, 2000);
+    const hideTimer = window.setTimeout(() => setVisible(false), 2000);
 
     return () => {
       window.clearTimeout(leaveTimer);
       window.clearTimeout(hideTimer);
     };
-  }, [visible]);
+  }, []);
 
   if (!visible) return null;
 
