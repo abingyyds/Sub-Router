@@ -106,7 +106,7 @@ export default function Pricing() {
   };
 
   const formatSavings = (model, official) => {
-    if (!official || model.is_per_call) return null;
+    if (!official || isPerCallPrice(model)) return null;
     const siteInputPerMtok = Number(model.input_price) * 1000;
     if (!Number.isFinite(siteInputPerMtok) || siteInputPerMtok <= 0 || !official.inputPerMtok) return null;
     const savings = Math.round((siteInputPerMtok / official.inputPerMtok - 1) * 100);
