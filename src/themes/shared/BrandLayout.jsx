@@ -5,6 +5,7 @@ import { ArrowRight, LogOut, Menu, UserCircle, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useSite } from '../../context/SiteContext';
 import LanguageSwitch from '../../components/LanguageSwitch';
+import maoqiuAiImage from '../../assets/maoqiu-ai.png';
 
 const configs = {
   aurora: {
@@ -66,7 +67,7 @@ const configs = {
     mobileActive: 'bg-[#eef5ff] text-[#2352ff]',
     mobileIdle: 'text-slate-600 hover:bg-[#f4f7ff] hover:text-[#071337]',
     footer: 'mt-auto border-t border-slate-200 bg-white',
-    logoImage: '/maoqiu-ai.png',
+    logoImage: maoqiuAiImage,
   },
 };
 
@@ -105,7 +106,15 @@ export default function BrandLayout({ variant }) {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
           <Link to="/" className="flex min-w-0 items-center gap-3 group">
             {site?.logo ? (
-              <img src={site.logo} alt={siteName} className="h-8 w-auto max-w-[150px] object-contain" />
+              <img
+                src={site.logo}
+                alt={siteName}
+                className="h-8 w-auto max-w-[150px] object-contain"
+                onError={(event) => {
+                  if (!cfg.logoImage || event.currentTarget.src === cfg.logoImage) return;
+                  event.currentTarget.src = cfg.logoImage;
+                }}
+              />
             ) : cfg.logoImage ? (
               <div className={`flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl ${cfg.logo}`}>
                 <img src={cfg.logoImage} alt={siteName} className="h-full w-full object-cover" />

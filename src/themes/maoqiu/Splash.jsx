@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import maoqiuAiImage from '../../assets/maoqiu-ai.png';
 
 const SPLASH_KEY = 'maoqiu-splash-seen';
 
@@ -34,7 +35,7 @@ export default function MaoqiuSplash() {
     <div className={`maoqiu-splash ${leaving ? 'maoqiu-splash--leaving' : ''}`}>
       <div className="maoqiu-splash__halo" />
       <div className="maoqiu-splash__mark">
-        <img src="/maoqiu-ai.png" alt="Maoqiu AI" />
+        <img src={maoqiuAiImage} alt="Maoqiu AI" />
       </div>
       <div className="maoqiu-splash__title">毛球</div>
       <div className="maoqiu-splash__subtitle">智能 · 创造 · 无限可能</div>

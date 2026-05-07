@@ -21,8 +21,7 @@ import CountUp from '../../components/bits/CountUp';
 import FadeContent from '../../components/bits/FadeContent';
 import RotatingEquiv from '../../components/bits/RotatingEquiv';
 import { packageQuotaDollars, useHomeData } from '../shared/useHomeData';
-
-const heroImage = '/maoqiu-ai.png';
+import heroImage from '../../assets/maoqiu-ai.png';
 
 const features = [
   { icon: Gauge, title: 'lightningFast', desc: 'lightningFastDesc', color: 'from-[#0788ff] to-[#2250ff]' },
