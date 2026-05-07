@@ -10,7 +10,6 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Tokens = lazy(() => import('./pages/Tokens'));
 const Packages = lazy(() => import('./pages/Packages'));
 const Pricing = lazy(() => import('./pages/Pricing'));
-const Downloads = lazy(() => import('./pages/Downloads'));
 const Topup = lazy(() => import('./pages/Topup'));
 const Logs = lazy(() => import('./pages/Logs'));
 const SubDistributor = lazy(() => import('./pages/SubDistributor'));
@@ -33,7 +32,6 @@ function ThemedRoutes() {
           <Route path="/" element={<Home />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/packages" element={<Packages />} />
-          <Route path="/downloads" element={<Downloads />} />
           <Route path="/sub-site" element={<SubDistributor />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />

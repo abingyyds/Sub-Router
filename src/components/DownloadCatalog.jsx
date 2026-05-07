@@ -10,31 +10,24 @@ const iconMap = {
   nodejs: Download,
 };
 
-export default function Downloads() {
+export default function DownloadCatalog() {
   const { t, i18n } = useTranslation();
   const isZh = i18n.resolvedLanguage?.startsWith('zh');
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-      <section className="glass mb-6 rounded-xl p-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-brand-500/20 bg-brand-500/10 px-3 py-1 text-xs font-semibold text-brand-400">
-              <ShieldCheck className="h-3.5 w-3.5" />
-              {t('downloads.badge')}
-            </div>
-            <h1 className="text-2xl font-black tracking-tight text-page md:text-3xl">
-              {t('downloads.title')}
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-page-secondary">
-              {t('downloads.subtitle')}
-            </p>
-          </div>
-          <a href="/tokens" className="btn-primary inline-flex justify-center">
-            {t('downloads.backToConfig')}
-          </a>
+    <section className="space-y-6">
+      <div className="glass rounded-xl p-6">
+        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-brand-500/20 bg-brand-500/10 px-3 py-1 text-xs font-semibold text-brand-400">
+          <ShieldCheck className="h-3.5 w-3.5" />
+          {t('downloads.badge')}
         </div>
-      </section>
+        <h2 className="text-2xl font-black tracking-tight text-page md:text-3xl">
+          {t('downloads.title')}
+        </h2>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-page-secondary">
+          {t('downloads.subtitle')}
+        </p>
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         {DOWNLOAD_TOOLS.map((tool) => {
@@ -54,7 +47,7 @@ export default function Downloads() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-lg font-bold text-page">{tool.title}</h2>
+                    <h3 className="text-lg font-bold text-page">{tool.title}</h3>
                     <span className="rounded-full bg-page-inset/70 px-2 py-0.5 text-xs text-page-muted">
                       {tool.version}
                     </span>
@@ -111,6 +104,6 @@ export default function Downloads() {
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }

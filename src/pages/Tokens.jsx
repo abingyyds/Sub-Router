@@ -10,6 +10,7 @@ import {
   getTokenSupportedModels,
 } from '../api';
 import ConfigExporter from '../components/ConfigExporter';
+import DownloadCatalog from '../components/DownloadCatalog';
 import { useCurrency } from '../context/SiteContext';
 import toast from 'react-hot-toast';
 
@@ -523,6 +524,10 @@ export default function Tokens() {
 
       <div className="mt-8">
         <ConfigExporter tokens={tokens} />
+      </div>
+
+      <div className="mt-10">
+        <DownloadCatalog />
       </div>
     </div>
   );

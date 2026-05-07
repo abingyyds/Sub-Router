@@ -84,7 +84,6 @@ export default function BrandLayout({ variant }) {
     { to: '/', label: t('nav.home'), auth: false },
     { to: '/pricing', label: t('nav.pricing'), auth: false },
     { to: '/packages', label: t('nav.packages'), auth: false },
-    { to: '/downloads', label: t('nav.downloads'), auth: false },
     ...(site?.allow_sub_dist ? [{ to: '/sub-site', label: t('subDist.nav'), auth: false }] : []),
     { to: '/dashboard', label: t('nav.dashboard'), auth: true },
     { to: '/tokens', label: t('nav.apiKeys'), auth: true },
