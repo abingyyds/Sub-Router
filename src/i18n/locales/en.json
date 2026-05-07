@@ -3,6 +3,7 @@
     "nav.home": "Home",
     "nav.pricing": "Pricing",
     "nav.packages": "Packages",
+    "nav.downloads": "Downloads",
     "nav.dashboard": "Dashboard",
     "nav.apiKeys": "API Keys",
     "nav.login": "Login",
@@ -266,6 +267,15 @@
     "config.ccswitchNotInstalledDesc": "If CC Switch did not open automatically, it may not be installed on this device yet. Install it first, then try the quick import again.",
     "config.downloadCCSwitch": "Download CC Switch",
     "config.openCCSwitchRepo": "Open project page",
+
+    "downloads.badge": "Relayed downloads",
+    "downloads.title": "Quick Installers",
+    "downloads.subtitle": "Common client installers are served through this site via /downloads, avoiding direct browser jumps to GitHub releases and improving reliability for restricted networks.",
+    "downloads.backToConfig": "Back to config",
+    "downloads.officialRepo": "Project",
+    "downloads.installGuide": "Install guide",
+    "downloads.providerDocs": "Provider docs",
+    "downloads.releases": "Official releases",
 
     "pricing.title": "Model Pricing",
     "pricing.subtitle": "Transparent, pay-as-you-go pricing for all available models. Prices shown per 1M tokens.",

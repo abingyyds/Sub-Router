@@ -3,6 +3,7 @@
     "nav.home": "首页",
     "nav.pricing": "定价",
     "nav.packages": "套餐",
+    "nav.downloads": "下载",
     "nav.dashboard": "控制台",
     "nav.apiKeys": "API 密钥",
     "nav.login": "登录",
@@ -266,6 +267,15 @@
     "config.ccswitchNotInstalledDesc": "如果没有自动唤起 CC Switch，说明本机可能还未安装。可以先下载安装，再回来继续一键导入。",
     "config.downloadCCSwitch": "下载 CC Switch",
     "config.openCCSwitchRepo": "打开项目主页",
+
+    "downloads.badge": "站内中转下载",
+    "downloads.title": "快捷安装与下载",
+    "downloads.subtitle": "常用客户端安装包走本站 /downloads 中转下载，避免浏览器直接跳转 GitHub release，国内网络也更容易下载。",
+    "downloads.backToConfig": "返回配置生成",
+    "downloads.officialRepo": "项目主页",
+    "downloads.installGuide": "安装说明",
+    "downloads.providerDocs": "接入文档",
+    "downloads.releases": "官方 Releases",
 
     "pricing.title": "模型定价",
     "pricing.subtitle": "透明的按量付费定价。价格以每百万 token 计。",

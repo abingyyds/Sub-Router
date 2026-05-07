@@ -3,6 +3,10 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { getTokenSupportedModels } from '../api';
 import { useSite } from '../context/SiteContext';
+import {
+  CCSWITCH_PRIMARY_DOWNLOAD,
+  CCSWITCH_REPO_URL,
+} from '../constants/downloads';
 
 const TOOLS = [
   { id: 'claudecode', name: 'Claude Code', path: '~/.claude/settings.json' },
@@ -44,10 +48,6 @@ const API_ENDPOINTS = [
     descKey: 'config.apiEndpointWorldDesc',
   },
 ];
-
-const CCSWITCH_RELEASE_URL =
-  'https://github.com/farion1231/cc-switch/releases/latest';
-const CCSWITCH_REPO_URL = 'https://github.com/farion1231/cc-switch';
 
 function ThemedSelect({
   value,
@@ -1037,9 +1037,7 @@ print(message.content[0].text)`;
             </p>
             <div className="space-y-3">
               <a
-                href={CCSWITCH_RELEASE_URL}
-                target="_blank"
-                rel="noreferrer"
+                href={CCSWITCH_PRIMARY_DOWNLOAD}
                 className="btn-primary w-full text-center block"
               >
                 {t('config.downloadCCSwitch')}
