@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, RotateCcw, Search } from 'lucide-react';
 import { getUserLogs, Q } from '../api';
 import { useCurrency } from '../context/SiteContext';
 
@@ -9,6 +9,18 @@ function formatTime(unix) {
   const d = new Date(unix * 1000);
   const pad = (n) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+function formatDateTimeLocal(date) {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function parseDatetimeLocal(value) {
+  if (!value) return 0;
+  const parsed = Date.parse(value);
+  if (Number.isNaN(parsed)) return 0;
+  return Math.floor(parsed / 1000);
 }
 
 function getLogOther(otherStr) {
@@ -44,6 +56,18 @@ function getBillingSourceLabel(other, t) {
     return t('钱包');
   }
   return '';
+}
+
+function getLogTypeLabel(type, t) {
+  const labels = {
+    1: t('logs.typeTopup'),
+    2: t('logs.typeConsume'),
+    3: t('logs.typeManage'),
+    4: t('logs.typeSystem'),
+    5: t('logs.typeError'),
+    6: t('logs.typeRefund'),
+  };
+  return labels[type] || t('logs.typeUnknown');
 }
 
 function getSitePricingDetails(other, symbol, rate, t) {
@@ -110,15 +134,23 @@ export default function Logs() {
   const [loading, setLoading] = useState(true);
   const [modelFilter, setModelFilter] = useState('');
   const [tokenFilter, setTokenFilter] = useState('');
+  const [requestIdFilter, setRequestIdFilter] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
+  const [logType, setLogType] = useState('2');
+  const [appliedFilters, setAppliedFilters] = useState({ type: '2' });
   const [expandedRows, setExpandedRows] = useState({});
   const pageSize = 20;
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params = { p: page, page_size: pageSize, type: 2 }; // type=2 consume only
-      if (modelFilter) params.model_name = modelFilter;
-      if (tokenFilter) params.token_name = tokenFilter;
+      const params = { p: page, page_size: pageSize, type: appliedFilters.type || '2' };
+      if (appliedFilters.model_name) params.model_name = appliedFilters.model_name;
+      if (appliedFilters.token_name) params.token_name = appliedFilters.token_name;
+      if (appliedFilters.request_id) params.request_id = appliedFilters.request_id;
+      if (appliedFilters.start_timestamp) params.start_timestamp = appliedFilters.start_timestamp;
+      if (appliedFilters.end_timestamp) params.end_timestamp = appliedFilters.end_timestamp;
       const res = await getUserLogs(params);
       if (res.data.success) {
         setLogs(res.data.data?.items || []);
@@ -126,11 +158,48 @@ export default function Logs() {
       }
     } catch (e) { /* interceptor */ }
     setLoading(false);
-  }, [page, modelFilter, tokenFilter]);
+  }, [page, appliedFilters]);
 
   useEffect(() => { load(); }, [load]);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  const applyFilters = useCallback(() => {
+    setExpandedRows({});
+    setPage(1);
+    setAppliedFilters({
+      type: logType,
+      model_name: modelFilter.trim(),
+      token_name: tokenFilter.trim(),
+      request_id: requestIdFilter.trim(),
+      start_timestamp: parseDatetimeLocal(startTime),
+      end_timestamp: parseDatetimeLocal(endTime),
+    });
+  }, [endTime, logType, modelFilter, requestIdFilter, startTime, tokenFilter]);
+
+  const resetFilters = useCallback(() => {
+    setModelFilter('');
+    setTokenFilter('');
+    setRequestIdFilter('');
+    setStartTime('');
+    setEndTime('');
+    setLogType('2');
+    setExpandedRows({});
+    setPage(1);
+    setAppliedFilters({ type: '2' });
+  }, []);
+
+  const setQuickRange = useCallback((days) => {
+    const now = new Date();
+    const start = new Date(now);
+    if (days === 0) {
+      start.setHours(0, 0, 0, 0);
+    } else {
+      start.setDate(start.getDate() - days);
+    }
+    setStartTime(formatDateTimeLocal(start));
+    setEndTime(formatDateTimeLocal(now));
+  }, []);
 
   const toggleRow = (logId) => {
     setExpandedRows(prev => ({ ...prev, [logId]: !prev[logId] }));
@@ -150,6 +219,10 @@ export default function Logs() {
 
     if (billingSourceLabel) {
       data.push({ key: t('实际扣费来源'), value: billingSourceLabel });
+    }
+
+    if (log.content) {
+      data.push({ key: t('logs.content'), value: log.content });
     }
 
     data.push(...getSitePricingDetails(other, symbol, rate, t));
@@ -195,31 +268,99 @@ export default function Logs() {
       </div>
 
       {/* Filters */}
-      <div className="glass rounded-2xl p-4 mb-6">
-        <div className="flex flex-wrap gap-3">
-          <div className="flex-1 min-w-[180px]">
+      <form
+        className="glass rounded-2xl p-4 mb-6"
+        onSubmit={(event) => {
+          event.preventDefault();
+          applyFilters();
+        }}
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <input
+            type="datetime-local"
+            value={startTime}
+            onChange={(e) => setStartTime(e.target.value)}
+            className="input w-full"
+            aria-label={t('logs.startTime')}
+            title={t('logs.startTime')}
+          />
+          <input
+            type="datetime-local"
+            value={endTime}
+            onChange={(e) => setEndTime(e.target.value)}
+            className="input w-full"
+            aria-label={t('logs.endTime')}
+            title={t('logs.endTime')}
+          />
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-page-muted" />
             <input
               type="text"
               value={modelFilter}
-              onChange={(e) => { setModelFilter(e.target.value); setPage(1); }}
-              className="input w-full"
+              onChange={(e) => setModelFilter(e.target.value)}
+              className="input w-full pl-10"
               placeholder={t('logs.filterModel')}
             />
           </div>
-          <div className="flex-1 min-w-[180px]">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-page-muted" />
             <input
               type="text"
               value={tokenFilter}
-              onChange={(e) => { setTokenFilter(e.target.value); setPage(1); }}
-              className="input w-full"
+              onChange={(e) => setTokenFilter(e.target.value)}
+              className="input w-full pl-10"
               placeholder={t('logs.filterToken')}
             />
           </div>
-          <button onClick={() => { setModelFilter(''); setTokenFilter(''); setPage(1); }} className="btn-secondary text-sm">
+        </div>
+        <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <select
+            value={logType}
+            onChange={(e) => setLogType(e.target.value)}
+            className="input input-solid w-full"
+            aria-label={t('logs.type')}
+          >
+            <option value="0">{t('logs.typeAll')}</option>
+            <option value="2">{t('logs.typeConsume')}</option>
+            <option value="5">{t('logs.typeError')}</option>
+            <option value="1">{t('logs.typeTopup')}</option>
+            <option value="6">{t('logs.typeRefund')}</option>
+            <option value="3">{t('logs.typeManage')}</option>
+            <option value="4">{t('logs.typeSystem')}</option>
+          </select>
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-page-muted" />
+            <input
+              type="text"
+              value={requestIdFilter}
+              onChange={(e) => setRequestIdFilter(e.target.value)}
+              className="input w-full pl-10"
+              placeholder={t('logs.filterRequestId')}
+            />
+          </div>
+          <div className="flex gap-2 lg:col-span-2">
+            <button type="button" onClick={() => setQuickRange(0)} className="btn-secondary flex-1 px-3 text-xs">
+              {t('logs.today')}
+            </button>
+            <button type="button" onClick={() => setQuickRange(7)} className="btn-secondary flex-1 px-3 text-xs">
+              {t('logs.last7Days')}
+            </button>
+            <button type="button" onClick={() => setQuickRange(30)} className="btn-secondary flex-1 px-3 text-xs">
+              {t('logs.last30Days')}
+            </button>
+          </div>
+        </div>
+        <div className="mt-3 flex flex-wrap justify-end gap-2">
+          <button type="submit" className="btn-primary inline-flex items-center gap-2 text-sm" disabled={loading}>
+            <Search className="h-4 w-4" />
+            {t('logs.search')}
+          </button>
+          <button type="button" onClick={resetFilters} className="btn-secondary inline-flex items-center gap-2 text-sm">
+            <RotateCcw className="h-4 w-4" />
             {t('logs.clearFilter')}
           </button>
         </div>
-      </div>
+      </form>
 
       {/* Table */}
       <div className="glass rounded-2xl overflow-hidden">
@@ -242,6 +383,7 @@ export default function Logs() {
                     <th className="text-left px-4 py-3 font-medium text-page-secondary">{t('logs.time')}</th>
                     <th className="text-left px-4 py-3 font-medium text-page-secondary">{t('logs.model')}</th>
                     <th className="text-left px-4 py-3 font-medium text-page-secondary">{t('logs.token')}</th>
+                    <th className="text-left px-4 py-3 font-medium text-page-secondary">{t('logs.type')}</th>
                     <th className="text-right px-4 py-3 font-medium text-page-secondary">{t('logs.promptTokens')}</th>
                     <th className="text-right px-4 py-3 font-medium text-page-secondary">{t('logs.completionTokens')}</th>
                     <th className="text-right px-4 py-3 font-medium text-page-secondary">{t('logs.cost')}</th>
@@ -270,6 +412,11 @@ export default function Logs() {
                             <span className="font-mono text-xs text-page">{log.model_name || '-'}</span>
                           </td>
                           <td className="px-4 py-3 text-xs text-page-secondary">{log.token_name || '-'}</td>
+                          <td className="px-4 py-3">
+                            <span className="inline-flex rounded-full border border-page-divider px-2 py-0.5 text-[11px] text-page-secondary">
+                              {getLogTypeLabel(log.type, t)}
+                            </span>
+                          </td>
                           <td className="px-4 py-3 text-right font-mono text-xs text-page-label">{log.prompt_tokens?.toLocaleString() || '0'}</td>
                           <td className="px-4 py-3 text-right font-mono text-xs text-page-label">{log.completion_tokens?.toLocaleString() || '0'}</td>
                           <td className="px-4 py-3 text-right">
@@ -290,7 +437,7 @@ export default function Logs() {
                         </tr>
                         {isExpanded && hasExpandData && (
                           <tr className="border-b border-page-divider last:border-0 bg-page-surface/50">
-                            <td colSpan="8" className="px-4 py-3">
+                            <td colSpan="9" className="px-4 py-3">
                               <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-2 text-sm">
                                 {expandData.map((item, idx) => (
                                   <div key={idx} className="flex flex-col">
@@ -327,6 +474,9 @@ export default function Logs() {
                           isExpanded ? <ChevronDown className="w-4 h-4 text-page-secondary" /> : <ChevronRight className="w-4 h-4 text-page-secondary" />
                         )}
                         <span className="font-mono text-xs text-page font-medium">{log.model_name || '-'}</span>
+                        <span className="rounded-full border border-page-divider px-2 py-0.5 text-[10px] text-page-secondary">
+                          {getLogTypeLabel(log.type, t)}
+                        </span>
                       </div>
                       <div className="flex flex-col items-end">
                         <span className="font-mono text-xs text-page-warning">
