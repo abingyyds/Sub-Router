@@ -22,7 +22,7 @@ export default function NotificationBell() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 z-[80] flex h-14 w-14 items-center justify-center rounded-full border border-brand-500/30 bg-brand-500 text-white shadow-2xl shadow-brand-500/30 transition hover:scale-105 hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-400"
+        className="fixed bottom-6 right-6 z-[80] flex h-14 w-14 items-center justify-center rounded-full border border-brand-500/30 bg-brand-500 text-white shadow-2xl shadow-brand-500/30 transition hover:scale-105 hover:bg-brand-600 hover:opacity-50 focus:outline-none focus:ring-2 focus:ring-brand-400"
         aria-label={t('notifications.open')}
       >
         <Bell size={22} />
