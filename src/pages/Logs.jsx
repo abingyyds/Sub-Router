@@ -33,7 +33,20 @@ function getLogOther(otherStr) {
 }
 
 function formatAmount(symbol, rate, amount) {
-  return `${symbol}${(Number(amount || 0) * rate).toFixed(6)}`;
+  const value = Number(amount || 0) * rate;
+  return `${symbol}${value.toLocaleString(undefined, {
+    minimumFractionDigits: value > 0 && value < 0.01 ? 4 : 2,
+    maximumFractionDigits: 6,
+  })}`;
+}
+
+function formatQuotaAmount(symbol, rate, quota) {
+  const value = (Number(quota || 0) / Q) * rate;
+  if (value <= 0) return '-';
+  return `${symbol}${value.toLocaleString(undefined, {
+    minimumFractionDigits: value < 0.01 ? 4 : 2,
+    maximumFractionDigits: 6,
+  })}`;
 }
 
 function getProviderSummary(other) {
@@ -422,7 +435,7 @@ export default function Logs() {
                           <td className="px-4 py-3 text-right">
                             <div className="flex flex-col items-end">
                               <span className="font-mono text-xs text-page-warning">
-                                {log.quota > 0 ? `${symbol}${(log.quota / Q * rate).toFixed(6)}` : '-'}
+                                {formatQuotaAmount(symbol, rate, log.quota)}
                               </span>
                               {billingSourceLabel && (
                                 <span className="text-[10px] text-page-secondary mt-1">
@@ -480,7 +493,7 @@ export default function Logs() {
                       </div>
                       <div className="flex flex-col items-end">
                         <span className="font-mono text-xs text-page-warning">
-                          {log.quota > 0 ? `${symbol}${(log.quota / Q * rate).toFixed(6)}` : '-'}
+                          {formatQuotaAmount(symbol, rate, log.quota)}
                         </span>
                         {billingSourceLabel && (
                           <span className="text-[10px] text-page-secondary mt-1">

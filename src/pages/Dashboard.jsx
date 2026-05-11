@@ -316,7 +316,7 @@ export default function Dashboard() {
           <p className="text-sm text-page-secondary mb-2">{t('dashboard.balance')}</p>
           <div className="text-3xl font-bold text-page">
             {symbol}
-            <CountUp from={0} to={Math.round(balanceDollars * 100) / 100} duration={1.5} />
+            <CountUp from={0} to={balanceDollars} duration={1.5} decimals={2} />
           </div>
           <p className="text-xs text-page-muted mt-1">{t('dashboard.quotaUnits', { count: quota.toLocaleString() })}</p>
         </div>
@@ -325,7 +325,7 @@ export default function Dashboard() {
           <p className="text-sm text-page-secondary mb-2">{t('dashboard.used')}</p>
           <div className="text-3xl font-bold text-page">
             {symbol}
-            <CountUp from={0} to={Math.round((usedQuota / Q) * rate * 100) / 100} duration={1.5} />
+            <CountUp from={0} to={(usedQuota / Q) * rate} duration={1.5} decimals={2} />
           </div>
           <p className="text-xs text-page-muted mt-1">{t('dashboard.quotaUnits', { count: usedQuota.toLocaleString() })}</p>
         </div>

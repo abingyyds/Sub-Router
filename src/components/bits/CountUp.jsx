@@ -10,6 +10,7 @@ export default function CountUp({
   className = '',
   startWhen = true,
   separator = '',
+  decimals,
   onStart,
   onEnd
 }) {
@@ -40,7 +41,10 @@ export default function CountUp({
     return 0;
   };
 
-  const maxDecimals = Math.max(getDecimalPlaces(from), getDecimalPlaces(to));
+  const maxDecimals =
+    typeof decimals === 'number'
+      ? decimals
+      : Math.max(getDecimalPlaces(from), getDecimalPlaces(to));
 
   const formatValue = useCallback(
     latest => {
