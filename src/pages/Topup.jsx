@@ -336,7 +336,7 @@ export default function Topup() {
         <div className="glass rounded-2xl p-6">
           <p className="text-sm text-page-secondary mb-2">{t('dashboard.balance')}</p>
           <div className="text-3xl font-bold text-page">
-            {symbol}<CountUp from={0} to={balanceDollars} duration={1.5} />
+            {symbol}<CountUp from={0} to={balanceDollars} duration={1.5} decimals={2} />
           </div>
           <p className="text-xs text-page-muted mt-1">{t('dashboard.quotaUnits', { count: quota.toLocaleString() })}</p>
         </div>
@@ -344,7 +344,7 @@ export default function Topup() {
         <div className="glass rounded-2xl p-6">
           <p className="text-sm text-page-secondary mb-2">{t('dashboard.used')}</p>
           <div className="text-3xl font-bold text-page">
-            {symbol}<CountUp from={0} to={usedQuota / Q * rate} duration={1.5} />
+            {symbol}<CountUp from={0} to={usedQuota / Q * rate} duration={1.5} decimals={2} />
           </div>
         </div>
 
