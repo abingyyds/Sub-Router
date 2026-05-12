@@ -113,6 +113,7 @@ export const getSiteInfo = () => {
       name: 'SubRouter Preview',
       theme_template: theme,
       enable_topup: true,
+      top_up_link: 'https://example.com/redeem-codes',
       allow_sub_dist: true,
       currency: {
         code: 'CNY',
