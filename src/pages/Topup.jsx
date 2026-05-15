@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useSite } from '../context/SiteContext';
+import { ExternalLink, TicketPercent } from 'lucide-react';
 import {
   getUserUsage, redeemCode, getTopupInfo,
   createEpayOrder, createStripeOrder, createCreemOrder,
@@ -11,6 +12,23 @@ import {
 import { useCurrency } from '../context/SiteContext';
 import CountUp from '../components/bits/CountUp';
 import toast from 'react-hot-toast';
+
+function normalizeExternalUrl(value) {
+  const trimmed = String(value || '').trim();
+  if (!trimmed) return '';
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed) && !/^https?:\/\//i.test(trimmed)) {
+    return '';
+  }
+  const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  try {
+    const parsed = new URL(withProtocol);
+    if (!['http:', 'https:'].includes(parsed.protocol) || !parsed.hostname) return '';
+    if (parsed.host.includes(':') && !parsed.port && !parsed.host.startsWith('[')) return '';
+    return parsed.href;
+  } catch {
+    return '';
+  }
+}
 
 export default function Topup() {
   const { t } = useTranslation();
@@ -57,6 +75,10 @@ export default function Topup() {
   const enableCreem = topupInfo?.enable_creem_topup;
   const enableCrypto = topupInfo?.enable_crypto_topup;
   const hasAnyPayment = enableOnline || enableStripe || enableCreem || enableCrypto;
+  const redeemCodeShopUrl = useMemo(
+    () => normalizeExternalUrl(site?.top_up_link || topupConfig?.top_up_link || topupInfo?.top_up_link),
+    [site?.top_up_link, topupConfig?.top_up_link, topupInfo?.top_up_link],
+  );
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -642,8 +664,27 @@ export default function Topup() {
 
       {/* Redeem Code */}
       <div className="glass rounded-2xl p-6">
-        <h2 className="text-lg font-semibold text-page mb-4">{t('topup.redeemTitle')}</h2>
-        <form onSubmit={handleRedeem} className="flex gap-3">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <h2 className="text-lg font-semibold text-page">{t('topup.redeemTitle')}</h2>
+            <p className="mt-1 text-sm text-page-secondary">
+              {redeemCodeShopUrl ? t('topup.redeemShopHint') : t('topup.redeemHint')}
+            </p>
+          </div>
+          {redeemCodeShopUrl && (
+            <a
+              href={redeemCodeShopUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-brand-500/20 transition-all hover:bg-brand-600"
+            >
+              <TicketPercent size={16} />
+              {t('topup.buyRedeemCode')}
+              <ExternalLink size={14} />
+            </a>
+          )}
+        </div>
+        <form onSubmit={handleRedeem} className="flex flex-col gap-3 sm:flex-row">
           <input
             type="text"
             value={redeemInput}
@@ -651,7 +692,7 @@ export default function Topup() {
             className="input flex-1"
             placeholder={t('topup.enterRedeemCode')}
           />
-          <button type="submit" disabled={redeeming} className="btn-primary whitespace-nowrap">
+          <button type="submit" disabled={redeeming} className="btn-primary justify-center whitespace-nowrap">
             {redeeming ? t('topup.redeeming') : t('topup.redeem')}
           </button>
         </form>

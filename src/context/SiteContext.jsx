@@ -86,6 +86,7 @@ export function SiteProvider({ children }) {
         name: 'SubRouter Preview',
         theme_template: previewTheme,
         enable_topup: true,
+        top_up_link: 'https://example.com/redeem-codes',
         allow_sub_dist: true,
         currency: {
           code: 'CNY',
