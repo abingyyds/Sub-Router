@@ -491,6 +491,7 @@
     "logs.cost": "消费",
     "logs.duration": "耗时",
     "logs.content": "内容",
+    "logs.usedQuota": "消耗额度",
     "logs.showing": "第 {{from}}-{{to}} 条，共 {{total}} 条",
     "logs.prev": "上一页",
     "logs.next": "下一页",

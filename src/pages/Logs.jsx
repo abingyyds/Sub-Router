@@ -49,6 +49,14 @@ function formatQuotaAmount(symbol, rate, quota) {
   })}`;
 }
 
+function formatStatQuotaAmount(symbol, rate, quota) {
+  const value = (Number(quota || 0) / Q) * rate;
+  return `${symbol}${value.toLocaleString(undefined, {
+    minimumFractionDigits: value > 0 && value < 0.01 ? 4 : 2,
+    maximumFractionDigits: 6,
+  })}`;
+}
+
 function getProviderSummary(other) {
   if (!other?.provider_name) return '';
   if (other.provider_description) {
@@ -153,6 +161,7 @@ export default function Logs() {
   const [logType, setLogType] = useState('2');
   const [appliedFilters, setAppliedFilters] = useState({ type: '2' });
   const [expandedRows, setExpandedRows] = useState({});
+  const [stat, setStat] = useState({ quota: 0, rpm: 0, tpm: 0 });
   const pageSize = 20;
 
   const load = useCallback(async () => {
@@ -166,8 +175,10 @@ export default function Logs() {
       if (appliedFilters.end_timestamp) params.end_timestamp = appliedFilters.end_timestamp;
       const res = await getUserLogs(params);
       if (res.data.success) {
-        setLogs(res.data.data?.items || []);
-        setTotal(res.data.data?.total || 0);
+        const data = res.data.data || {};
+        setLogs(data.items || []);
+        setTotal(data.total || 0);
+        setStat(data.stat || { quota: 0, rpm: 0, tpm: 0 });
       }
     } catch (e) { /* interceptor */ }
     setLoading(false);
@@ -374,6 +385,29 @@ export default function Logs() {
           </button>
         </div>
       </form>
+
+      <div className="glass rounded-2xl p-3 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div className="rounded-xl border border-page-divider bg-page-surface/60 px-4 py-3">
+            <div className="text-xs text-page-secondary mb-1">{t('logs.usedQuota')}</div>
+            <div className="font-mono text-sm font-semibold text-page-warning">
+              {formatStatQuotaAmount(symbol, rate, stat.quota)}
+            </div>
+          </div>
+          <div className="rounded-xl border border-page-divider bg-page-surface/60 px-4 py-3">
+            <div className="text-xs text-page-secondary mb-1">RPM</div>
+            <div className="font-mono text-sm font-semibold text-page">
+              {Number(stat.rpm || 0).toLocaleString()}
+            </div>
+          </div>
+          <div className="rounded-xl border border-page-divider bg-page-surface/60 px-4 py-3">
+            <div className="text-xs text-page-secondary mb-1">TPM</div>
+            <div className="font-mono text-sm font-semibold text-page">
+              {Number(stat.tpm || 0).toLocaleString()}
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Table */}
       <div className="glass rounded-2xl overflow-hidden">

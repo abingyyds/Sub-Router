@@ -491,6 +491,7 @@
     "logs.cost": "Cost",
     "logs.duration": "Duration",
     "logs.content": "Content",
+    "logs.usedQuota": "Used Quota",
     "logs.showing": "{{from}}-{{to}} of {{total}}",
     "logs.prev": "Prev",
     "logs.next": "Next",
