@@ -262,8 +262,8 @@
     "config.launchingCCSwitch": "正在唤起 CC Switch...",
     "config.copyImportLink": "复制导入链接",
     "config.importLinkCopied": "CC Switch 导入链接已复制",
-    "config.ccswitchNotInstalledTitle": "未检测到 CC Switch",
-    "config.ccswitchNotInstalledDesc": "如果没有自动唤起 CC Switch，说明本机可能还未安装。可以先下载安装，再回来继续一键导入。",
+    "config.ccswitchNotInstalledTitle": "未自动唤起 CC Switch",
+    "config.ccswitchNotInstalledDesc": "如果 CC Switch 已经打开，可以忽略此提示；否则可以先下载安装，再回来继续一键导入。",
     "config.downloadCCSwitch": "下载 CC Switch",
     "config.openCCSwitchRepo": "打开项目主页",
 

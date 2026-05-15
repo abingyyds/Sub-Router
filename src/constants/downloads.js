@@ -4,9 +4,9 @@ export const DOWNLOAD_TOOLS = [
   {
     id: 'cc-switch',
     title: 'CC Switch',
-    version: 'v3.13.0',
-    descZh: '统一管理 Claude Code、Gemini CLI、Codex、OpenCode 等客户端，支持一键导入 Provider。',
-    descEn: 'Manage Claude Code, Gemini CLI, Codex, OpenCode and more in one place, with one-click provider import.',
+    version: 'v3.14.1',
+    descZh: '统一管理 Claude Code、Codex、Gemini CLI、OpenCode、OpenClaw、Hermes 等客户端，支持一键导入 Provider。',
+    descEn: 'Manage Claude Code, Codex, Gemini CLI, OpenCode, OpenClaw, Hermes and more in one place, with one-click provider import.',
     officialRepo: 'https://github.com/farion1231/cc-switch',
     releases: 'https://github.com/farion1231/cc-switch/releases/latest',
     groups: [
@@ -21,6 +21,8 @@ export const DOWNLOAD_TOOLS = [
         title: 'macOS',
         links: [
           { label: 'macOS Universal DMG', href: localDownload('cc-switch-macos-universal-dmg'), recommended: true },
+          { label: 'macOS Universal ZIP', href: localDownload('cc-switch-macos-universal-zip') },
+          { label: 'macOS Universal TAR.GZ', href: localDownload('cc-switch-macos-universal-tar-gz') },
         ],
       },
       {
@@ -28,6 +30,8 @@ export const DOWNLOAD_TOOLS = [
         links: [
           { label: 'Linux x64 DEB', href: localDownload('cc-switch-linux-x64-deb'), recommended: true },
           { label: 'Linux ARM64 DEB', href: localDownload('cc-switch-linux-arm64-deb') },
+          { label: 'Linux x64 RPM', href: localDownload('cc-switch-linux-x64-rpm') },
+          { label: 'Linux ARM64 RPM', href: localDownload('cc-switch-linux-arm64-rpm') },
           { label: 'Linux x64 AppImage', href: localDownload('cc-switch-linux-x64-appimage') },
           { label: 'Linux ARM64 AppImage', href: localDownload('cc-switch-linux-arm64-appimage') },
         ],

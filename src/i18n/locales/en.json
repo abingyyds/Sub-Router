@@ -262,8 +262,8 @@
     "config.launchingCCSwitch": "Launching CC Switch...",
     "config.copyImportLink": "Copy import link",
     "config.importLinkCopied": "CC Switch import link copied",
-    "config.ccswitchNotInstalledTitle": "CC Switch Not Detected",
-    "config.ccswitchNotInstalledDesc": "If CC Switch did not open automatically, it may not be installed on this device yet. Install it first, then try the quick import again.",
+    "config.ccswitchNotInstalledTitle": "CC Switch did not open",
+    "config.ccswitchNotInstalledDesc": "If CC Switch already opened, you can ignore this. Otherwise, install it first and try the quick import again.",
     "config.downloadCCSwitch": "Download CC Switch",
     "config.openCCSwitchRepo": "Open project page",
 
