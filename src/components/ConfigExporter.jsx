@@ -38,16 +38,16 @@ const CCSWITCH_APPS = [
 
 const API_ENDPOINTS = [
   {
-    id: 'china',
-    url: 'https://china.claudecoder.me',
-    nameKey: 'config.apiEndpointChinaName',
-    descKey: 'config.apiEndpointChinaDesc',
+    id: 'overseas-direct',
+    url: 'https://aiapi.up.railway.app',
+    nameKey: 'config.apiEndpointOverseasDirectName',
+    descKey: 'config.apiEndpointOverseasDirectDesc',
   },
   {
-    id: 'world',
-    url: 'https://world.claudecoder.me',
-    nameKey: 'config.apiEndpointWorldName',
-    descKey: 'config.apiEndpointWorldDesc',
+    id: 'overseas-cdn',
+    url: 'https://ai.orbitlink.me',
+    nameKey: 'config.apiEndpointOverseasCdnName',
+    descKey: 'config.apiEndpointOverseasCdnDesc',
   },
 ];
 
@@ -200,7 +200,7 @@ const ConfigExporter = ({ tokens = [] }) => {
   const [selectedModel, setSelectedModel] = useState('');
   const [selectedTool, setSelectedTool] = useState('claudecode');
   const [selectedCCSwitchApp, setSelectedCCSwitchApp] = useState('codex');
-  const [selectedEndpointId, setSelectedEndpointId] = useState('china');
+  const [selectedEndpointId, setSelectedEndpointId] = useState('overseas-direct');
   const [loadingModels, setLoadingModels] = useState(false);
   const [modelsError, setModelsError] = useState(false);
   const [copied, setCopied] = useState(false);

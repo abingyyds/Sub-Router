@@ -5,14 +5,14 @@ import { useSite } from '../context/SiteContext';
 
 const SHARED_API_ENDPOINTS = [
   {
-    id: 'world',
-    labelKey: 'home.apiEndpointWorld',
-    url: 'https://world.claudecoder.me',
+    id: 'overseas-direct',
+    labelKey: 'home.apiEndpointOverseasDirect',
+    url: 'https://aiapi.up.railway.app',
   },
   {
-    id: 'china',
-    labelKey: 'home.apiEndpointChina',
-    url: 'https://china.claudecoder.me',
+    id: 'overseas-cdn',
+    labelKey: 'home.apiEndpointOverseasCdn',
+    url: 'https://ai.orbitlink.me',
   },
 ];
 
