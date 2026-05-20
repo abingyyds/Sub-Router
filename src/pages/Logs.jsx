@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronRight, RotateCcw, Search } from 'lucide-react';
-import { getUserLogs, Q } from '../api';
+import { getUserLogs, getUserLogsStat, Q } from '../api';
 import { useCurrency } from '../context/SiteContext';
 
 function formatTime(unix) {
@@ -40,13 +40,17 @@ function formatAmount(symbol, rate, amount) {
   })}`;
 }
 
-function formatQuotaAmount(symbol, rate, quota) {
+function formatQuotaAmount(symbol, rate, quota, emptyZero = true) {
   const value = (Number(quota || 0) / Q) * rate;
-  if (value <= 0) return '-';
+  if (value <= 0 && emptyZero) return '-';
   return `${symbol}${value.toLocaleString(undefined, {
-    minimumFractionDigits: value < 0.01 ? 4 : 2,
+    minimumFractionDigits: value > 0 && value < 0.01 ? 4 : 2,
     maximumFractionDigits: 6,
   })}`;
+}
+
+function formatTokens(value) {
+  return Number(value || 0).toLocaleString();
 }
 
 function getProviderSummary(other) {
@@ -145,6 +149,8 @@ export default function Logs() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [loadingStat, setLoadingStat] = useState(true);
+  const [stat, setStat] = useState({ quota: 0, rpm: 0, tpm: 0 });
   const [modelFilter, setModelFilter] = useState('');
   const [tokenFilter, setTokenFilter] = useState('');
   const [requestIdFilter, setRequestIdFilter] = useState('');
@@ -155,15 +161,20 @@ export default function Logs() {
   const [expandedRows, setExpandedRows] = useState({});
   const pageSize = 20;
 
+  const getAppliedParams = useCallback(() => {
+    const params = { type: appliedFilters.type || '2' };
+    if (appliedFilters.model_name) params.model_name = appliedFilters.model_name;
+    if (appliedFilters.token_name) params.token_name = appliedFilters.token_name;
+    if (appliedFilters.request_id) params.request_id = appliedFilters.request_id;
+    if (appliedFilters.start_timestamp) params.start_timestamp = appliedFilters.start_timestamp;
+    if (appliedFilters.end_timestamp) params.end_timestamp = appliedFilters.end_timestamp;
+    return params;
+  }, [appliedFilters]);
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params = { p: page, page_size: pageSize, type: appliedFilters.type || '2' };
-      if (appliedFilters.model_name) params.model_name = appliedFilters.model_name;
-      if (appliedFilters.token_name) params.token_name = appliedFilters.token_name;
-      if (appliedFilters.request_id) params.request_id = appliedFilters.request_id;
-      if (appliedFilters.start_timestamp) params.start_timestamp = appliedFilters.start_timestamp;
-      if (appliedFilters.end_timestamp) params.end_timestamp = appliedFilters.end_timestamp;
+      const params = { p: page, page_size: pageSize, ...getAppliedParams() };
       const res = await getUserLogs(params);
       if (res.data.success) {
         setLogs(res.data.data?.items || []);
@@ -171,9 +182,21 @@ export default function Logs() {
       }
     } catch (e) { /* interceptor */ }
     setLoading(false);
-  }, [page, appliedFilters]);
+  }, [getAppliedParams, page]);
+
+  const loadStat = useCallback(async () => {
+    setLoadingStat(true);
+    try {
+      const res = await getUserLogsStat(getAppliedParams());
+      if (res.data.success) {
+        setStat(res.data.data || { quota: 0, rpm: 0, tpm: 0 });
+      }
+    } catch (e) { /* interceptor */ }
+    setLoadingStat(false);
+  }, [getAppliedParams]);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { loadStat(); }, [loadStat]);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
@@ -374,6 +397,28 @@ export default function Logs() {
           </button>
         </div>
       </form>
+
+      <div className="glass rounded-2xl p-3 mb-6 flex flex-wrap gap-2">
+        {loadingStat ? (
+          <>
+            <div className="h-8 w-32 rounded-lg bg-page-surface animate-pulse" />
+            <div className="h-8 w-24 rounded-lg bg-page-surface animate-pulse" />
+            <div className="h-8 w-24 rounded-lg bg-page-surface animate-pulse" />
+          </>
+        ) : (
+          <>
+            <span className="rounded-lg border border-page-divider bg-page-surface px-3 py-1.5 text-sm font-medium text-page">
+              {t('logs.totalCost')}: {formatQuotaAmount(symbol, rate, stat.quota, false)}
+            </span>
+            <span className="rounded-lg border border-page-divider bg-page-surface px-3 py-1.5 text-sm font-medium text-page">
+              RPM: {formatTokens(stat.rpm)}
+            </span>
+            <span className="rounded-lg border border-page-divider bg-page-surface px-3 py-1.5 text-sm font-medium text-page">
+              TPM: {formatTokens(stat.tpm)}
+            </span>
+          </>
+        )}
+      </div>
 
       {/* Table */}
       <div className="glass rounded-2xl overflow-hidden">

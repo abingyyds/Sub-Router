@@ -493,6 +493,7 @@
     "logs.promptTokens": "输入",
     "logs.completionTokens": "输出",
     "logs.cost": "消费",
+    "logs.totalCost": "消耗额度",
     "logs.duration": "耗时",
     "logs.content": "内容",
     "logs.showing": "第 {{from}}-{{to}} 条，共 {{total}} 条",

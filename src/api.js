@@ -141,6 +141,7 @@ export const logout = () => api.post('/api/dist/user/logout');
 export const getUserSelf = (config) => api.get('/api/dist/user/self', config);
 export const getUserUsage = () => api.get('/api/dist/user/usage');
 export const getUserLogs = (params) => api.get('/api/dist/user/logs', { params });
+export const getUserLogsStat = (params) => api.get('/api/dist/user/logs/stat', { params });
 
 // ===== Tokens =====
 export const getTokens = () => api.get('/api/dist/token/list');
