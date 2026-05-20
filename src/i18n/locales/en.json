@@ -86,6 +86,7 @@
     "dashboard.balance": "Balance",
     "dashboard.quotaUnits": "{{count}} quota units",
     "dashboard.used": "Used",
+    "dashboard.packageUsed": "Package Used",
     "dashboard.totalRequests": "Total Requests",
     "dashboard.redeemCode": "Redeem Code",
     "dashboard.enterCode": "Enter redemption code",

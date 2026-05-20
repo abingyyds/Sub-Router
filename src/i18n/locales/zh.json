@@ -86,6 +86,7 @@
     "dashboard.balance": "余额",
     "dashboard.quotaUnits": "{{count}} 额度单位",
     "dashboard.used": "已使用",
+    "dashboard.packageUsed": "已消耗套餐",
     "dashboard.totalRequests": "总请求数",
     "dashboard.redeemCode": "兑换码",
     "dashboard.enterCode": "请输入兑换码",

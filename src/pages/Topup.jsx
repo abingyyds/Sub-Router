@@ -97,6 +97,7 @@ export default function Topup() {
 
   const quota = usage?.quota ?? user?.quota ?? 0;
   const usedQuota = usage?.used_quota ?? user?.used_quota ?? 0;
+  const packageUsedQuota = usage?.package_used_quota ?? user?.package_used_quota ?? 0;
   const requestCount = usage?.request_count ?? user?.request_count ?? 0;
   const balanceDollars = quota / Q * rate;
 
@@ -354,7 +355,7 @@ export default function Topup() {
       </div>
 
       {/* Balance Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
         <div className="glass rounded-2xl p-6">
           <p className="text-sm text-page-secondary mb-2">{t('dashboard.balance')}</p>
           <div className="text-3xl font-bold text-page">
@@ -368,6 +369,15 @@ export default function Topup() {
           <div className="text-3xl font-bold text-page">
             {symbol}<CountUp from={0} to={usedQuota / Q * rate} duration={1.5} decimals={2} />
           </div>
+          <p className="text-xs text-page-muted mt-1">{t('dashboard.quotaUnits', { count: usedQuota.toLocaleString() })}</p>
+        </div>
+
+        <div className="glass rounded-2xl p-6">
+          <p className="text-sm text-page-secondary mb-2">{t('dashboard.packageUsed')}</p>
+          <div className="text-3xl font-bold text-page">
+            {symbol}<CountUp from={0} to={packageUsedQuota / Q * rate} duration={1.5} decimals={2} />
+          </div>
+          <p className="text-xs text-page-muted mt-1">{t('dashboard.quotaUnits', { count: packageUsedQuota.toLocaleString() })}</p>
         </div>
 
         <div className="glass rounded-2xl p-6">
