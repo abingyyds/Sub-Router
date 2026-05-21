@@ -150,7 +150,7 @@ export default function Logs() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [loadingStat, setLoadingStat] = useState(true);
-  const [stat, setStat] = useState({ quota: 0, rpm: 0, tpm: 0 });
+  const [stat, setStat] = useState({ quota: 0, rpm: 0, tpm: 0, token: 0 });
   const [modelFilter, setModelFilter] = useState('');
   const [tokenFilter, setTokenFilter] = useState('');
   const [requestIdFilter, setRequestIdFilter] = useState('');
@@ -189,7 +189,7 @@ export default function Logs() {
     try {
       const res = await getUserLogsStat(getAppliedParams());
       if (res.data.success) {
-        setStat(res.data.data || { quota: 0, rpm: 0, tpm: 0 });
+        setStat(res.data.data || { quota: 0, rpm: 0, tpm: 0, token: 0 });
       }
     } catch (e) { /* interceptor */ }
     setLoadingStat(false);
@@ -404,6 +404,7 @@ export default function Logs() {
             <div className="h-8 w-32 rounded-lg bg-page-surface animate-pulse" />
             <div className="h-8 w-24 rounded-lg bg-page-surface animate-pulse" />
             <div className="h-8 w-24 rounded-lg bg-page-surface animate-pulse" />
+            <div className="h-8 w-32 rounded-lg bg-page-surface animate-pulse" />
           </>
         ) : (
           <>
@@ -415,6 +416,9 @@ export default function Logs() {
             </span>
             <span className="rounded-lg border border-page-divider bg-page-surface px-3 py-1.5 text-sm font-medium text-page">
               TPM: {formatTokens(stat.tpm)}
+            </span>
+            <span className="rounded-lg border border-page-divider bg-page-surface px-3 py-1.5 text-sm font-medium text-page">
+              {t('logs.totalTokens')}: {formatTokens(stat.token)}
             </span>
           </>
         )}

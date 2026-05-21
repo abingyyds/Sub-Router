@@ -494,6 +494,7 @@
     "logs.completionTokens": "Output",
     "logs.cost": "Cost",
     "logs.totalCost": "Total Cost",
+    "logs.totalTokens": "Total Tokens",
     "logs.duration": "Duration",
     "logs.content": "Content",
     "logs.showing": "{{from}}-{{to}} of {{total}}",
