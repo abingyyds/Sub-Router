@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronRight, RotateCcw, Search } from 'lucide-react';
 import { getUserLogs, getUserLogsStat, Q } from '../api';
 import { useCurrency } from '../context/SiteContext';
+import LogSubnav from '../components/LogSubnav';
 
 function formatTime(unix) {
   if (!unix) return '-';
@@ -302,6 +303,7 @@ export default function Logs() {
         <h1 className="text-2xl font-heading font-bold text-page mb-1">{t('logs.title')}</h1>
         <p className="text-sm text-page-secondary">{t('logs.subtitle')}</p>
       </div>
+      <LogSubnav active="logs" />
 
       {/* Filters */}
       <form

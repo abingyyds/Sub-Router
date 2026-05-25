@@ -142,6 +142,8 @@ export const getUserSelf = (config) => api.get('/api/dist/user/self', config);
 export const getUserUsage = () => api.get('/api/dist/user/usage');
 export const getUserLogs = (params) => api.get('/api/dist/user/logs', { params });
 export const getUserLogsStat = (params) => api.get('/api/dist/user/logs/stat', { params });
+export const getUserTasks = (params) => api.get('/api/dist/user/tasks', { params });
+export const getUserMjTasks = (params) => api.get('/api/dist/user/mj', { params });
 
 // ===== Tokens =====
 export const getTokens = () => api.get('/api/dist/token/list');

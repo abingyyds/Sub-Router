@@ -27,6 +27,7 @@ export default function CorporateLayout() {
   ];
 
   const visibleNavItems = navItems.filter((n) => !n.auth || user);
+  const isNavActive = (to) => location.pathname === to || (to === '/logs' && location.pathname === '/tasks');
 
   return (
     <div className="theme-light min-h-screen flex flex-col bg-white text-gray-900">
@@ -59,7 +60,7 @@ export default function CorporateLayout() {
                 key={n.to}
                 to={n.to}
                 className={`px-4 py-2 text-sm font-medium transition-colors ${
-                  location.pathname === n.to
+                  isNavActive(n.to)
                     ? 'text-slate-900 border-b-2 border-slate-900'
                     : 'text-slate-500 hover:text-slate-900'
                 }`}
@@ -120,7 +121,7 @@ export default function CorporateLayout() {
                   to={n.to}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`px-4 py-3 text-sm font-medium border-b border-gray-100 last:border-0 transition-colors ${
-                    location.pathname === n.to
+                    isNavActive(n.to)
                       ? 'text-slate-900 bg-slate-50'
                       : 'text-slate-500 hover:text-slate-900'
                   }`}

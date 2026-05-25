@@ -27,6 +27,7 @@ export default function DarkLayout() {
   ];
 
   const visibleNavItems = navItems.filter((n) => !n.auth || user);
+  const isNavActive = (to) => location.pathname === to || (to === '/logs' && location.pathname === '/tasks');
 
   return (
     <div className="min-h-screen flex flex-col bg-[#030712] text-white">
@@ -59,7 +60,7 @@ export default function DarkLayout() {
                 key={n.to}
                 to={n.to}
                 className={`px-3 py-1.5 text-sm font-mono rounded transition-all ${
-                  location.pathname === n.to
+                  isNavActive(n.to)
                     ? 'text-emerald-400 bg-emerald-500/10'
                     : 'text-neutral-500 hover:text-emerald-400'
                 }`}
@@ -102,7 +103,7 @@ export default function DarkLayout() {
             <nav className="max-w-7xl mx-auto px-6 py-3 flex flex-col gap-1">
               {visibleNavItems.map((n) => (
                 <Link key={n.to} to={n.to} onClick={() => setMobileMenuOpen(false)}
-                  className={`px-3 py-2 text-sm font-mono rounded transition-colors ${location.pathname === n.to ? 'text-emerald-400 bg-emerald-500/10' : 'text-neutral-500 hover:text-emerald-400'}`}>
+                  className={`px-3 py-2 text-sm font-mono rounded transition-colors ${isNavActive(n.to) ? 'text-emerald-400 bg-emerald-500/10' : 'text-neutral-500 hover:text-emerald-400'}`}>
                   {n.label}
                 </Link>
               ))}

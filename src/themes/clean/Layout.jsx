@@ -27,6 +27,7 @@ export default function CleanLayout() {
   ];
 
   const visibleNavItems = navItems.filter((n) => !n.auth || user);
+  const isNavActive = (to) => location.pathname === to || (to === '/logs' && location.pathname === '/tasks');
 
   return (
     <div className="theme-light min-h-screen flex flex-col bg-white text-gray-900">
@@ -59,7 +60,7 @@ export default function CleanLayout() {
                 key={n.to}
                 to={n.to}
                 className={`px-3.5 py-2 text-sm rounded-lg transition-all ${
-                  location.pathname === n.to
+                  isNavActive(n.to)
                     ? 'text-blue-600 bg-blue-50 font-medium'
                     : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
                 }`}
@@ -118,7 +119,7 @@ export default function CleanLayout() {
                   to={n.to}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`px-3 py-2.5 text-sm rounded-lg transition-colors ${
-                    location.pathname === n.to
+                    isNavActive(n.to)
                       ? 'text-blue-600 bg-blue-50 font-medium'
                       : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
                   }`}

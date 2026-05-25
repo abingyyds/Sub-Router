@@ -28,6 +28,7 @@ export default function DefaultLayout() {
   ];
 
   const visibleNavItems = navItems.filter((n) => !n.auth || user);
+  const isNavActive = (to) => location.pathname === to || (to === '/logs' && location.pathname === '/tasks');
 
   const handleLogout = async () => {
     await logout();
@@ -59,7 +60,7 @@ export default function DefaultLayout() {
 
           <nav className="hidden items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1 md:flex">
             {visibleNavItems.map((n) => (
-              <NavLink key={n.to} to={n.to} active={location.pathname === n.to}>
+              <NavLink key={n.to} to={n.to} active={isNavActive(n.to)}>
                 {n.label}
               </NavLink>
             ))}
@@ -117,7 +118,7 @@ export default function DefaultLayout() {
                   to={n.to}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                    location.pathname === n.to
+                    isNavActive(n.to)
                       ? 'bg-indigo-50 text-indigo-700'
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950'
                   }`}

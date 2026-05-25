@@ -27,6 +27,7 @@ export default function MinimalLayout() {
   ];
 
   const visibleNavItems = navItems.filter((n) => !n.auth || user);
+  const isNavActive = (to) => location.pathname === to || (to === '/logs' && location.pathname === '/tasks');
 
   return (
     <div className="min-h-screen flex flex-col bg-neutral-950 text-white">
@@ -57,7 +58,7 @@ export default function MinimalLayout() {
                 key={n.to}
                 to={n.to}
                 className={`text-sm transition-colors ${
-                  location.pathname === n.to
+                  isNavActive(n.to)
                     ? 'text-white'
                     : 'text-neutral-500 hover:text-white'
                 }`}
@@ -100,7 +101,7 @@ export default function MinimalLayout() {
             <nav className="max-w-5xl mx-auto px-6 py-3 flex flex-col gap-1">
               {visibleNavItems.map((n) => (
                 <Link key={n.to} to={n.to} onClick={() => setMobileMenuOpen(false)}
-                  className={`px-3 py-2 text-sm rounded transition-colors ${location.pathname === n.to ? 'text-white' : 'text-neutral-500 hover:text-white'}`}>
+                  className={`px-3 py-2 text-sm rounded transition-colors ${isNavActive(n.to) ? 'text-white' : 'text-neutral-500 hover:text-white'}`}>
                   {n.label}
                 </Link>
               ))}

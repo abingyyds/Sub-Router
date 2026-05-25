@@ -12,6 +12,7 @@ const Packages = lazy(() => import('./pages/Packages'));
 const Pricing = lazy(() => import('./pages/Pricing'));
 const Topup = lazy(() => import('./pages/Topup'));
 const Logs = lazy(() => import('./pages/Logs'));
+const Tasks = lazy(() => import('./pages/Tasks'));
 const SubDistributor = lazy(() => import('./pages/SubDistributor'));
 
 const Loading = () => (
@@ -41,6 +42,7 @@ function ThemedRoutes() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/tokens" element={<Tokens />} />
             <Route path="/logs" element={<Logs />} />
+            <Route path="/tasks" element={<Tasks />} />
             <Route path="/topup" element={<Topup />} />
           </Route>
         </Route>

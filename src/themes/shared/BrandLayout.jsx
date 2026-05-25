@@ -92,6 +92,7 @@ export default function BrandLayout({ variant }) {
     ...(site?.enable_topup ? [{ to: '/topup', label: t('nav.topup'), auth: true }] : []),
   ];
   const visibleNavItems = navItems.filter((n) => !n.auth || user);
+  const isNavActive = (to) => location.pathname === to || (to === '/logs' && location.pathname === '/tasks');
 
   const handleLogout = async () => {
     await logout();
@@ -133,7 +134,7 @@ export default function BrandLayout({ variant }) {
                 key={n.to}
                 to={n.to}
                 className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors ${
-                  location.pathname === n.to ? cfg.navActive : cfg.navIdle
+                  isNavActive(n.to) ? cfg.navActive : cfg.navIdle
                 }`}
               >
                 {n.label}
@@ -188,7 +189,7 @@ export default function BrandLayout({ variant }) {
                   to={n.to}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
-                    location.pathname === n.to ? cfg.mobileActive : cfg.mobileIdle
+                    isNavActive(n.to) ? cfg.mobileActive : cfg.mobileIdle
                   }`}
                 >
                   {n.label}

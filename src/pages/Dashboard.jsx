@@ -108,6 +108,8 @@ export default function Dashboard() {
     });
   };
 
+  const getAffEarningUsername = (item) => item.username || item.display_name || (item.user_id ? `ID ${item.user_id}` : '-');
+
   const handleTransfer = async () => {
     const val = parseInt(transferAmount);
     if (!val || val <= 0) {
@@ -496,13 +498,13 @@ export default function Dashboard() {
                   <div className="space-y-2">
                     {affEarnings.map((item, i) => (
                       <div key={i} className="flex items-center justify-between glass-sm rounded-xl px-4 py-3">
-                        <div>
-                          <p className="text-sm text-page">{item.model_name}</p>
-                          <p className="text-xs text-page-muted">
-                            {new Date(item.created_time * 1000).toLocaleString()} · {(item.commission_rate * 100).toFixed(1)}%
+                        <div className="min-w-0">
+                          <p className="truncate text-sm text-page">{getAffEarningUsername(item)}</p>
+                          <p className="truncate text-xs text-page-muted">
+                            {item.model_name || '-'} · {new Date(item.created_time * 1000).toLocaleString()} · {(item.commission_rate * 100).toFixed(1)}%
                           </p>
                         </div>
-                        <span className="text-sm font-medium text-page-success">
+                        <span className="shrink-0 text-sm font-medium text-page-success">
                           +{symbol}{((item.commission_quota / Q) * rate).toFixed(4)}
                         </span>
                       </div>

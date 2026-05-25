@@ -27,6 +27,7 @@ export default function ClaudeLayout() {
   ];
 
   const visibleNavItems = navItems.filter((n) => !n.auth || user);
+  const isNavActive = (to) => location.pathname === to || (to === '/logs' && location.pathname === '/tasks');
 
   return (
     <div className="theme-light theme-claude min-h-screen flex flex-col bg-[#FAF6F1] text-[#3D3024]">
@@ -59,7 +60,7 @@ export default function ClaudeLayout() {
                 key={n.to}
                 to={n.to}
                 className={`px-3.5 py-2 text-sm rounded-lg transition-all ${
-                  location.pathname === n.to
+                  isNavActive(n.to)
                     ? 'text-[#D97757] bg-[#D97757]/8 font-medium'
                     : 'text-[#6B5D4F] hover:text-[#3D3024] hover:bg-[#E8DDD0]/50'
                 }`}
@@ -118,7 +119,7 @@ export default function ClaudeLayout() {
                   to={n.to}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`px-3 py-2.5 text-sm rounded-lg transition-colors ${
-                    location.pathname === n.to
+                    isNavActive(n.to)
                       ? 'text-[#D97757] bg-[#D97757]/8 font-medium'
                       : 'text-[#6B5D4F] hover:text-[#3D3024] hover:bg-[#E8DDD0]/50'
                   }`}
