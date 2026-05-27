@@ -380,6 +380,8 @@
     "topup.calculating": "计算中...",
     "topup.payAmountLabel": "实付金额",
     "topup.enterAmount": "请输入充值金额",
+    "topup.minimumAmount": "充值金额不能低于 {{min}}",
+    "topup.creemUnsupportedAmount": "当前充值数量不支持 Creem，请调整为 Creem 产品额度的整数倍",
     "topup.paymentSuccess": "支付成功！余额已更新。",
     "topup.orderExpired": "支付订单已过期",
     "topup.viewHistory": "查看记录",

@@ -380,6 +380,8 @@
     "topup.calculating": "Calculating...",
     "topup.payAmountLabel": "Amount to pay",
     "topup.enterAmount": "Please enter a top-up amount",
+    "topup.minimumAmount": "Top-up amount cannot be lower than {{min}}",
+    "topup.creemUnsupportedAmount": "Current amount is not supported by Creem. Use a multiple of the configured Creem product quota.",
     "topup.paymentSuccess": "Payment successful! Balance updated.",
     "topup.orderExpired": "Payment order expired",
     "topup.viewHistory": "View History",
