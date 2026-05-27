@@ -345,7 +345,12 @@ export default function Topup() {
     return normalizeCreemProducts(topupInfo?.creem_products);
   }, [topupInfo?.creem_products]);
 
-  const creemMinTopup = useMemo(() => getCreemMinTopup(creemProducts), [creemProducts]);
+  const creemMinTopup = useMemo(() => {
+    const configuredMin = Number(topupInfo?.creem_min_topup);
+    return Number.isFinite(configuredMin) && configuredMin > 0
+      ? configuredMin
+      : getCreemMinTopup(creemProducts);
+  }, [topupInfo?.creem_min_topup, creemProducts]);
 
   // History
   const loadHistory = async () => {
