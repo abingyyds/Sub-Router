@@ -5,13 +5,177 @@ import { getSiteModels } from '../api';
 import { useCurrency } from '../context/SiteContext';
 import { getOfficialPrice } from '../utils/officialEquiv';
 
+const MODEL_TYPE_OPTIONS = [
+  { value: '', labelKey: 'pricing.allTypes' },
+  { value: 'chat', labelKey: 'pricing.typeChat' },
+  { value: 'completion', labelKey: 'pricing.typeCompletion' },
+  { value: 'embedding', labelKey: 'pricing.typeEmbedding' },
+  { value: 'image', labelKey: 'pricing.typeImage' },
+  { value: 'audio', labelKey: 'pricing.typeAudio' },
+  { value: 'video', labelKey: 'pricing.typeVideo' },
+  { value: 'rerank', labelKey: 'pricing.typeRerank' },
+];
+
+const MODEL_TYPE_SET = new Set(MODEL_TYPE_OPTIONS.map((item) => item.value).filter(Boolean));
+const PARAM_NAME_SET = new Set([
+  'size',
+  'resolution',
+  'ratio',
+  'width',
+  'height',
+  'seconds',
+  'duration',
+  'duration_seconds',
+]);
+const NUMBER_PATTERN = '[+-]?(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][+-]?\\d+)?';
+
+function splitTopLevelMultiply(expr = '') {
+  const parts = [];
+  let start = 0;
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = 0; i < expr.length; i += 1) {
+    const char = expr[i];
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === '\\') {
+        escaped = true;
+      } else if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+    if (char === '"') {
+      inString = true;
+    } else if (char === '(') {
+      depth += 1;
+    } else if (char === ')') {
+      depth -= 1;
+    } else if (char === '*' && depth === 0) {
+      parts.push(expr.slice(start, i).trim());
+      start = i + 1;
+    }
+  }
+  parts.push(expr.slice(start).trim());
+  return parts.filter(Boolean);
+}
+
+function stripExprVersion(expr = '') {
+  const match = String(expr).match(/^v\d+:([\s\S]*)$/);
+  return match ? match[1] : String(expr || '');
+}
+
+function unwrapParens(expr = '') {
+  let current = String(expr).trim();
+  while (current.startsWith('(') && current.endsWith(')')) {
+    let depth = 0;
+    let valid = true;
+    for (let i = 0; i < current.length; i += 1) {
+      if (current[i] === '(') depth += 1;
+      if (current[i] === ')') depth -= 1;
+      if (depth === 0 && i < current.length - 1) {
+        valid = false;
+        break;
+      }
+    }
+    if (!valid) break;
+    current = current.slice(1, -1).trim();
+  }
+  return current;
+}
+
+function getTierBody(expr = '') {
+  const body = stripExprVersion(expr).trim();
+  const match = body.match(/^tier\("[^"]*",\s*([\s\S]+)\)$/);
+  return match ? match[1] : '';
+}
+
+function deriveVideoPriceLabel(context, index) {
+  const quoted = [...String(context).matchAll(/"([^"]+)"/g)]
+    .map((match) => match[1])
+    .filter((value) => value && !PARAM_NAME_SET.has(value));
+  const preferred = quoted
+    .slice()
+    .reverse()
+    .find((value) => /^\d{2,5}[x*]\d{2,5}$/i.test(value) || /^\d{3,4}p$/i.test(value));
+  if (preferred) return preferred.replace('*', 'x');
+
+  const sizeMatch = String(context).match(/param\("width"\)\s*==\s*(\d{2,5})\s*&&\s*param\("height"\)\s*==\s*(\d{2,5})/);
+  if (sizeMatch) return `${sizeMatch[1]}x${sizeMatch[2]}`;
+
+  return `tier_${index + 1}`;
+}
+
+function parseVideoPricing(expr = '') {
+  const tierBody = getTierBody(expr);
+  if (!tierBody) return [];
+  const parts = splitTopLevelMultiply(tierBody);
+  const millionIndex = parts.findIndex((part) => /^1000000(?:\.0+)?$/.test(part));
+  if (millionIndex <= 0) return [];
+  const priceExpr = unwrapParens(parts[millionIndex - 1]);
+  if (!priceExpr) return [];
+
+  const rows = [];
+  const priceRe = new RegExp(`\\?\\s*(${NUMBER_PATTERN})\\s*:`, 'g');
+  let match;
+  while ((match = priceRe.exec(priceExpr)) !== null) {
+    const price = Number(match[1]);
+    if (!Number.isFinite(price) || price <= 0) continue;
+    rows.push({
+      label: deriveVideoPriceLabel(priceExpr.slice(Math.max(0, match.index - 260), match.index), rows.length),
+      price,
+    });
+  }
+
+  const fallbackMatch = priceExpr.match(new RegExp(`:\\s*(${NUMBER_PATTERN})\\s*\\)*$`));
+  const fallback = fallbackMatch ? Number(fallbackMatch[1]) : Number(priceExpr);
+  if (Number.isFinite(fallback) && fallback > 0) {
+    const hasSame = rows.some((row) => Math.abs(row.price - fallback) < 1e-12);
+    if (!hasSame || rows.length === 0) {
+      rows.push({ label: rows.length === 0 ? 'video' : 'default', price: fallback });
+    }
+  }
+
+  return rows;
+}
+
+function normalizeModelType(model) {
+  const category = String(model?.category || '').trim().toLowerCase();
+  if (MODEL_TYPE_SET.has(category)) return category;
+
+  const endpoints = Array.isArray(model?.supported_endpoint_types)
+    ? model.supported_endpoint_types
+    : [];
+  const billingType = String(model?.billing_type || model?.billing_mode || '').toLowerCase();
+  const name = String(model?.model_name || model?.display_name || '').toLowerCase();
+
+  if (endpoints.includes('openai-video') || parseVideoPricing(model?.billing_expr).length > 0 || /sora|seedance|kling|jimeng|veo|video/.test(name)) return 'video';
+  if (endpoints.includes('image-generation') || /dall-e|imagen|flux|cogview|image/.test(name)) return 'image';
+  if (endpoints.includes('embeddings') || /embed|embedding/.test(name)) return 'embedding';
+  if (endpoints.includes('jina-rerank') || /rerank/.test(name)) return 'rerank';
+  if (/whisper|tts|audio|speech|voxtral/.test(name)) return 'audio';
+  if (billingType === 'completion' || /babbage|davinci|curie/.test(name)) return 'completion';
+  return 'chat';
+}
+
+function isPerCallPrice(item) {
+  return item?.is_per_call || item?.billing_type === 'per_call';
+}
+
+function isTieredExprPrice(item) {
+  return item?.is_tiered_expr || item?.billing_type === 'tiered_expr' || item?.billing_mode === 'tiered_expr';
+}
+
 export default function Pricing() {
   const { t } = useTranslation();
-  const { symbol, rate } = useCurrency();
+  const { symbol, rate, code, usdRate } = useCurrency();
   const [models, setModels] = useState([]);
   const [vendors, setVendors] = useState([]);
   const [search, setSearch] = useState('');
   const [vendor, setVendor] = useState('');
+  const [modelType, setModelType] = useState('');
   const [loading, setLoading] = useState(true);
   const [expandedModels, setExpandedModels] = useState(() => new Set());
 
@@ -41,17 +205,25 @@ export default function Pricing() {
     if (vendor) {
       list = list.filter((m) => m.vendor_name === vendor);
     }
+    // Model type filter
+    if (modelType) {
+      list = list.filter((m) => normalizeModelType(m) === modelType);
+    }
     // Search filter
     if (search) {
       const q = search.toLowerCase();
       list = list.filter((m) =>
         (m.display_name || m.model_name || '').toLowerCase().includes(q) ||
+        normalizeModelType(m).includes(q) ||
         (Array.isArray(m.channels) && m.channels.some((ch) =>
           (ch.provider_name || ch.provider_slug || '').toLowerCase().includes(q)
         ))
       );
     }
     list = [...list].sort((a, b) => {
+      const aTiered = isTieredExprPrice(a);
+      const bTiered = isTieredExprPrice(b);
+      if (aTiered !== bTiered) return aTiered ? 1 : -1;
       if (!!a.is_per_call !== !!b.is_per_call) {
         return a.is_per_call ? 1 : -1;
       }
@@ -61,7 +233,7 @@ export default function Pricing() {
       return (Number(a.input_price) || 0) - (Number(b.input_price) || 0);
     });
     return list;
-  }, [enabledModels, vendor, search]);
+  }, [enabledModels, vendor, modelType, search]);
 
   const toggleModel = (key) => {
     setExpandedModels((prev) => {
@@ -92,6 +264,20 @@ export default function Pricing() {
       ? `${symbol}${(Number(price) * rate).toFixed(4)}/${t('pricing.perCallUnit')}`
       : '-';
 
+  const formatVideoSecondPrice = (price, item = {}) => {
+    const raw = Number(price);
+    if (!Number.isFinite(raw)) return '-';
+    const multiplier = Number(item.price_multiplier) > 0 ? Number(item.price_multiplier) : 1;
+    const sourceCurrency = String(item.price_currency || 'USD').toUpperCase();
+    let displayValue = raw * multiplier;
+    if (sourceCurrency === 'CNY') {
+      displayValue = code === 'CNY' ? displayValue : (displayValue / (usdRate || 1)) * rate;
+    } else {
+      displayValue *= rate;
+    }
+    return `${symbol}${displayValue.toFixed(4)}/s`;
+  };
+
   const formatUsdPrice = (price) => {
     if (price == null) return '-';
     const value = Number(price);
@@ -106,14 +292,45 @@ export default function Pricing() {
   };
 
   const formatSavings = (model, official) => {
-    if (!official || isPerCallPrice(model)) return null;
+    if (!official || isPerCallPrice(model) || isTieredExprPrice(model)) return null;
     const siteInputPerMtok = Number(model.input_price) * 1000;
     if (!Number.isFinite(siteInputPerMtok) || siteInputPerMtok <= 0 || !official.inputPerMtok) return null;
     const savings = Math.round((siteInputPerMtok / official.inputPerMtok - 1) * 100);
     return savings < 0 ? `${savings}%` : null;
   };
 
-  const isPerCallPrice = (item) => item?.is_per_call || item?.billing_type === 'per_call';
+  const getVideoRows = (item) =>
+    parseVideoPricing(item?.billing_expr).map((row) => ({
+      ...row,
+      formatted: formatVideoSecondPrice(row.price, item),
+    }));
+
+  const renderPrimaryPrice = (item) => {
+    if (isTieredExprPrice(item)) {
+      const videoRows = getVideoRows(item);
+      if (videoRows.length > 0) {
+        return (
+          <div className="flex flex-col items-end gap-0.5 whitespace-nowrap">
+            {videoRows.map((row) => (
+              <span key={`${row.label}-${row.price}`}>{row.label} {row.formatted}</span>
+            ))}
+          </div>
+        );
+      }
+      return t('pricing.expressionPricing');
+    }
+    return isPerCallPrice(item) ? t('pricing.perCall') : formatTokenPrice(item.input_price);
+  };
+
+  const renderSecondaryPrice = (item, type, modelName) => {
+    if (isTieredExprPrice(item)) return '-';
+    if (isPerCallPrice(item)) {
+      return type === 'output' ? formatPerCallPrice(item.fixed_price) : '-';
+    }
+    if (type === 'output') return formatTokenPrice(item.output_price);
+    if (type === 'cache_read') return formatTokenPrice(item.cache_read_price);
+    return formatCacheCreationPrice(modelName || item.model_name, item.cache_creation_price, item.cache_creation_price_1h);
+  };
 
   const getChannelLabel = (channel, index) =>
     channel.provider_name || t('pricing.channelFallback', { number: channel.channel_index || index + 1 });
@@ -164,6 +381,23 @@ export default function Pricing() {
         </div>
       )}
 
+      {/* Model Type Filter */}
+      <div className="flex flex-wrap justify-center gap-2 mb-6">
+        {MODEL_TYPE_OPTIONS.map((option) => (
+          <button
+            key={option.value || 'all'}
+            onClick={() => setModelType(option.value)}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium transition-all ${
+              modelType === option.value
+                ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/25'
+                : 'glass-sm text-page-secondary hover:text-page hover:bg-page-surface-hover'
+            }`}
+          >
+            {t(option.labelKey)}
+          </button>
+        ))}
+      </div>
+
       {/* Search */}
       <div className="max-w-md mx-auto mb-8">
         <div className="relative">
@@ -182,7 +416,7 @@ export default function Pricing() {
 
       {filtered.length === 0 ? (
         <div className="text-center py-12 text-page-secondary">
-          {search || vendor ? t('pricing.noMatch') : t('pricing.noModels')}
+          {search || vendor || modelType ? t('pricing.noMatch') : t('pricing.noModels')}
         </div>
       ) : (
         <div className="glass-sm rounded-xl overflow-x-auto">
@@ -233,20 +467,23 @@ export default function Pricing() {
                                 {t('pricing.channelCount', { count: channels.length })}
                               </span>
                             )}
+                            <span className="mt-1 inline-flex rounded-full bg-brand-500/10 px-2 py-0.5 text-[11px] font-medium text-brand-600">
+                              {t(`pricing.type.${normalizeModelType(m)}`)}
+                            </span>
                           </div>
                         </div>
                       </td>
                       <td className="px-5 py-3.5 text-right font-mono text-page-label">
-                        {isPerCallPrice(m) ? t('pricing.perCall') : formatTokenPrice(m.input_price)}
+                        {renderPrimaryPrice(m)}
                       </td>
                       <td className="px-5 py-3.5 text-right font-mono text-page-label">
-                        {isPerCallPrice(m) ? formatPerCallPrice(m.fixed_price) : formatTokenPrice(m.output_price)}
+                        {renderSecondaryPrice(m, 'output')}
                       </td>
                       <td className="px-5 py-3.5 text-right font-mono text-page-label">
-                        {isPerCallPrice(m) ? '-' : formatTokenPrice(m.cache_read_price)}
+                        {renderSecondaryPrice(m, 'cache_read')}
                       </td>
                       <td className="px-5 py-3.5 text-right font-mono text-page-label whitespace-nowrap">
-                        {isPerCallPrice(m) ? '-' : formatCacheCreationPrice(m.model_name, m.cache_creation_price, m.cache_creation_price_1h)}
+                        {renderSecondaryPrice(m, 'cache_creation')}
                       </td>
                       <td className="px-5 py-3.5 text-right font-mono text-page-label whitespace-nowrap">
                         {formatOfficialPrice(official)}
@@ -291,7 +528,6 @@ export default function Pricing() {
                               </thead>
                               <tbody>
                                 {channels.map((channel, channelIndex) => {
-                                  const channelIsPerCall = isPerCallPrice(channel);
                                   return (
                                     <tr key={`${modelKey}-channel-${channel.provider_slug || channelIndex}`} className="border-b border-page-divider last:border-0">
                                       <td className="px-4 py-3">
@@ -333,16 +569,16 @@ export default function Pricing() {
                                         </div>
                                       </td>
                                       <td className="px-4 py-3 text-right font-mono text-page-label">
-                                        {channelIsPerCall ? t('pricing.perCall') : formatTokenPrice(channel.input_price)}
+                                        {renderPrimaryPrice(channel)}
                                       </td>
                                       <td className="px-4 py-3 text-right font-mono text-page-label">
-                                        {channelIsPerCall ? formatPerCallPrice(channel.fixed_price) : formatTokenPrice(channel.output_price)}
+                                        {renderSecondaryPrice(channel, 'output')}
                                       </td>
                                       <td className="px-4 py-3 text-right font-mono text-page-label">
-                                        {channelIsPerCall ? '-' : formatTokenPrice(channel.cache_read_price)}
+                                        {renderSecondaryPrice(channel, 'cache_read')}
                                       </td>
                                       <td className="px-4 py-3 text-right font-mono text-page-label whitespace-nowrap">
-                                        {channelIsPerCall ? '-' : formatCacheCreationPrice(m.model_name, channel.cache_creation_price, channel.cache_creation_price_1h)}
+                                        {renderSecondaryPrice(channel, 'cache_creation', m.model_name)}
                                       </td>
                                     </tr>
                                   );
