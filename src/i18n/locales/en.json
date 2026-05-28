@@ -415,10 +415,6 @@
     "topup.cryptoSelectedSummary": "Current payment method",
     "topup.generateCryptoAddress": "3. Generate {{method}} payment address",
     "topup.token": "Token",
-    "topup.payWith": "Pay with",
-    "topup.payNow": "Pay",
-    "topup.quotaIncluded": "{{count}} quota included",
-    "topup.creemPayment": "Creem Payment",
 
     "topup.inviteTitle": "Referral Program",
     "topup.inviteSubtitle": "Invite friends and earn ongoing rewards",

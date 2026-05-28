@@ -415,10 +415,6 @@
     "topup.cryptoSelectedSummary": "当前支付方式",
     "topup.generateCryptoAddress": "3. 生成 {{method}} 支付地址",
     "topup.token": "代币",
-    "topup.payWith": "使用",
-    "topup.payNow": "支付",
-    "topup.quotaIncluded": "含 {{count}} 额度",
-    "topup.creemPayment": "Creem 支付",
 
     "topup.inviteTitle": "邀请奖励",
     "topup.inviteSubtitle": "邀请好友注册，持续获得推广奖励",
