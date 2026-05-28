@@ -171,6 +171,35 @@ export default function Topup() {
 
   const isCreemPayment = (method) => method === 'creem';
 
+  const getMethodMinTopup = (method) => {
+    const payMethod = (payMethods || []).find((item) => item.type === method);
+    const methodMinTopup = Number(payMethod?.min_topup);
+    if (Number.isFinite(methodMinTopup) && methodMinTopup > 0) return methodMinTopup;
+    if (isCreemPayment(method)) {
+      const configuredMin = Number(topupInfo?.creem_min_topup);
+      return Number.isFinite(configuredMin) && configuredMin > 0
+        ? configuredMin
+        : getCreemMinTopup(normalizeCreemProducts(topupInfo?.creem_products));
+    }
+    if (isStripePayment(method)) {
+      const stripeMin = Number(topupInfo?.stripe_min_topup);
+      if (Number.isFinite(stripeMin) && stripeMin > 0) return stripeMin;
+    }
+    return minTopup;
+  };
+
+  const getMethodDisplayName = (method) => {
+    const payMethod = (payMethods || []).find((item) => item.type === method);
+    return payMethod?.name || (method === 'creem' ? 'Creem' : 'Stripe');
+  };
+
+  const showGatewayMinTopupError = (method, minAmount) => {
+    toast.error(t('topup.gatewayMinimumAmount', {
+      channel: getMethodDisplayName(method),
+      amount: formatCurrencyAmount(minAmount),
+    }));
+  };
+
   // Pay handler for EPay, Stripe and Creem methods
   const handlePay = async (method) => {
     const payAmount = parseInt(amount);
@@ -178,7 +207,12 @@ export default function Topup() {
       toast.error(t('topup.enterAmount'));
       return;
     }
-    if (payAmount < minTopup) {
+    const isGatewayPayment = isStripePayment(method) || isCreemPayment(method);
+    if (isGatewayPayment && payAmount < getMethodMinTopup(method)) {
+      showGatewayMinTopupError(method, getMethodMinTopup(method));
+      return;
+    }
+    if (!isGatewayPayment && payAmount < minTopup) {
       toast.error(t('topup.minimumAmount', { min: formatCurrencyAmount(minTopup * rate) }));
       return;
     }
@@ -368,6 +402,12 @@ export default function Topup() {
     const methods = (payMethods || [])
       .filter((m) => m?.type && m.type !== 'crypto')
       .map((method) => {
+        if (isStripePayment(method.type) && (!method.min_topup || Number(method.min_topup) <= 0)) {
+          const stripeMin = Number(topupInfo?.stripe_min_topup);
+          if (Number.isFinite(stripeMin) && stripeMin > 0) {
+            return { ...method, min_topup: stripeMin };
+          }
+        }
         if (method.type === 'creem' && (!method.min_topup || Number(method.min_topup) <= 0)) {
           return { ...method, min_topup: creemMinTopup };
         }
@@ -515,18 +555,28 @@ export default function Topup() {
                 const isMethodStripe = isStripePayment(method.type);
                 const isMethodCreem = isCreemPayment(method.type);
                 const minForMethod = Number(method.min_topup) || 0;
+                const belowGatewayMin =
+                  (isMethodStripe || isMethodCreem) &&
+                  minForMethod > Number(amount || 0);
                 const disabled =
                   paymentLoading ||
                   !amount ||
                   (!enableOnline && !isMethodStripe && !isMethodCreem) ||
                   (!enableStripe && isMethodStripe) ||
-                  (!enableCreem && isMethodCreem) ||
-                  minForMethod > Number(amount || 0);
+                  (!enableCreem && isMethodCreem);
                 return (
                   <button
                     key={method.type}
                     onClick={() => handlePay(method.type)}
                     disabled={disabled}
+                    title={
+                      belowGatewayMin
+                        ? t('topup.gatewayMinimumAmount', {
+                            channel: method.name,
+                            amount: formatCurrencyAmount(minForMethod),
+                          })
+                        : undefined
+                    }
                     className="px-4 py-2.5 rounded-xl text-sm font-medium glass-sm text-page-label hover:text-page hover:bg-page-surface-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                   >
                     {isCurrentLoading ? t('topup.processing') : method.name}
