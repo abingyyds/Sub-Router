@@ -58,6 +58,39 @@ function findCompatibleCreemProduct(products, amount) {
   }) || null;
 }
 
+const paymentWindowPlaceholderHtml =
+  '<!doctype html><title>Opening payment...</title><body style="font-family: system-ui, sans-serif; padding: 24px;">Opening payment...</body>';
+
+function openPendingPaymentWindow() {
+  try {
+    const paymentWindow = window.open('', '_blank');
+    if (paymentWindow) {
+      paymentWindow.document.write(paymentWindowPlaceholderHtml);
+      paymentWindow.document.close();
+    }
+    return paymentWindow;
+  } catch {
+    return null;
+  }
+}
+
+function redirectPaymentWindow(paymentWindow, url) {
+  if (!url) return false;
+  if (paymentWindow && !paymentWindow.closed) {
+    paymentWindow.location.href = url;
+    paymentWindow.focus?.();
+    return true;
+  }
+  window.location.href = url;
+  return true;
+}
+
+function closePendingPaymentWindow(paymentWindow) {
+  if (paymentWindow && !paymentWindow.closed) {
+    paymentWindow.close();
+  }
+}
+
 export default function Topup() {
   const { t } = useTranslation();
   const { user, refreshUser } = useAuth();
@@ -223,6 +256,7 @@ export default function Topup() {
       toast.error(t('topup.creemUnsupportedAmount') || 'Current amount is not supported by Creem');
       return;
     }
+    const paymentWindow = isCreemPayment(method) ? openPendingPaymentWindow() : null;
     setPaymentLoading(true);
     setPayingMethod(method);
     try {
@@ -236,8 +270,12 @@ export default function Topup() {
           amount: payAmount,
         });
         if (res.data.message === 'success' && res.data.data?.checkout_url) {
-          window.open(res.data.data.checkout_url, '_blank');
+          redirectPaymentWindow(paymentWindow, res.data.data.checkout_url);
+        } else if (res.data.message === 'success') {
+          closePendingPaymentWindow(paymentWindow);
+          toast.error(t('common.requestFailed'));
         } else if (res.data.message !== 'success') {
+          closePendingPaymentWindow(paymentWindow);
           const errMsg = typeof res.data.data === 'string' ? res.data.data : res.data.message;
           toast.error(errMsg || t('common.requestFailed'));
         }
@@ -282,7 +320,10 @@ export default function Topup() {
           toast.error(errMsg || t('common.requestFailed'));
         }
       }
-    } catch (e) { /* interceptor */ }
+    } catch (e) {
+      closePendingPaymentWindow(paymentWindow);
+      /* interceptor */
+    }
     setPaymentLoading(false);
     setPayingMethod('');
   };
