@@ -49,7 +49,13 @@ const getInvoiceValidationError = ({ amount, summary, info, t }) => {
   const normalizedCountry = info.country.trim().toLowerCase();
   if (
     normalizedCountry.includes('中国大陆') ||
+    normalizedCountry.includes('中國大陸') ||
+    normalizedCountry.includes('中华人民共和国') ||
+    normalizedCountry.includes('中華人民共和國') ||
     normalizedCountry.includes('mainland china') ||
+    normalizedCountry.includes('china mainland') ||
+    normalizedCountry === '中国' ||
+    normalizedCountry === '中國' ||
     normalizedCountry === 'china' ||
     normalizedCountry === 'cn' ||
     normalizedCountry === 'prc' ||
