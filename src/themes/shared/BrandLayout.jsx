@@ -90,6 +90,7 @@ export default function BrandLayout({ variant }) {
     { to: '/tokens', label: t('nav.apiKeys'), auth: true },
     { to: '/logs', label: t('nav.logs'), auth: true },
     ...(site?.enable_topup ? [{ to: '/topup', label: t('nav.topup'), auth: true }] : []),
+    { to: '/account', label: t('nav.account'), auth: true },
   ];
   const visibleNavItems = navItems.filter((n) => !n.auth || user);
   const isNavActive = (to) => location.pathname === to || (to === '/logs' && location.pathname === '/tasks');

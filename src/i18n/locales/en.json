@@ -8,6 +8,7 @@
     "nav.login": "Login",
     "nav.signUp": "Sign Up",
     "nav.logout": "Logout",
+    "nav.account": "Account",
     "nav.contact": "Contact",
     "common.close": "Close",
 
@@ -364,6 +365,23 @@
 
     "common.sessionExpired": "Session expired, please log in again",
     "common.requestFailed": "Request failed",
+    "account.title": "Account Settings",
+    "account.subtitle": "View account details and update your login password",
+    "account.username": "Username",
+    "account.userId": "User ID",
+    "account.noEmail": "No email bound",
+    "account.changePassword": "Change Password",
+    "account.currentPassword": "Current Password",
+    "account.newPassword": "New Password",
+    "account.confirmPassword": "Confirm New Password",
+    "account.savePassword": "Save Password",
+    "account.saving": "Saving...",
+    "account.currentPasswordRequired": "Please enter your current password",
+    "account.newPasswordRequired": "Please enter a new password",
+    "account.passwordLength": "Password must be 8-20 characters",
+    "account.passwordSame": "New password must be different from the current password",
+    "account.passwordMismatch": "Passwords do not match",
+    "account.passwordUpdated": "Password updated successfully",
 
     "nav.topup": "Top Up",
 
@@ -479,6 +497,8 @@
 
     "dashboard.logs": "Call Logs",
     "dashboard.viewLogs": "View usage details",
+    "dashboard.account": "Account Settings",
+    "dashboard.accountDesc": "Change login password",
 
     "logs.title": "Call Logs",
     "logs.callLogs": "Call Logs",

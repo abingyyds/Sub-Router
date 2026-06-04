@@ -8,6 +8,7 @@
     "nav.login": "登录",
     "nav.signUp": "注册",
     "nav.logout": "退出",
+    "nav.account": "账户",
     "nav.contact": "联系我们",
     "common.close": "关闭",
 
@@ -364,6 +365,23 @@
 
     "common.sessionExpired": "会话已过期，请重新登录",
     "common.requestFailed": "请求失败",
+    "account.title": "账户设置",
+    "account.subtitle": "查看账户信息并修改登录密码",
+    "account.username": "用户名",
+    "account.userId": "用户 ID",
+    "account.noEmail": "未绑定邮箱",
+    "account.changePassword": "修改密码",
+    "account.currentPassword": "当前密码",
+    "account.newPassword": "新密码",
+    "account.confirmPassword": "确认新密码",
+    "account.savePassword": "保存密码",
+    "account.saving": "保存中...",
+    "account.currentPasswordRequired": "请输入当前密码",
+    "account.newPasswordRequired": "请输入新密码",
+    "account.passwordLength": "密码长度需为 8-20 个字符",
+    "account.passwordSame": "新密码需要和原密码不一致",
+    "account.passwordMismatch": "两次输入的密码不一致",
+    "account.passwordUpdated": "密码修改成功",
 
     "nav.topup": "充值",
 
@@ -479,6 +497,8 @@
 
     "dashboard.logs": "调用日志",
     "dashboard.viewLogs": "查看使用明细",
+    "dashboard.account": "账户设置",
+    "dashboard.accountDesc": "修改登录密码",
 
     "logs.title": "调用日志",
     "logs.callLogs": "调用日志",

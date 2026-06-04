@@ -390,6 +390,10 @@ export default function Dashboard() {
               <p className="text-sm font-medium text-page group-hover:text-page-link transition-colors">{t('dashboard.logs')}</p>
               <p className="text-xs text-page-muted">{t('dashboard.viewLogs')}</p>
             </Link>
+            <Link to="/account" className="glass-sm !rounded-xl px-4 py-3 hover:bg-page-surface-hover transition-colors group">
+              <p className="text-sm font-medium text-page group-hover:text-page-link transition-colors">{t('dashboard.account')}</p>
+              <p className="text-xs text-page-muted">{t('dashboard.accountDesc')}</p>
+            </Link>
             {site?.allow_sub_dist && (
               <Link to="/sub-site" className="glass-sm !rounded-xl px-4 py-3 hover:bg-page-surface-hover transition-colors group">
                 <p className="text-sm font-medium text-page group-hover:text-page-link transition-colors">{t('subDist.nav')}</p>
