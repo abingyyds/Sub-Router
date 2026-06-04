@@ -169,6 +169,11 @@ export const createCryptoOrder = (data) => api.post('/api/dist/topup/crypto/pay'
 export const getCryptoOrderStatus = (tradeNo) => api.get(`/api/dist/topup/crypto/status?trade_no=${tradeNo}`);
 export const getTopupHistory = (params) => api.get('/api/dist/topup/history', { params });
 
+// ===== Invoice =====
+export const getInvoiceInfo = () => api.get('/api/dist/invoice/info');
+export const getInvoiceHistory = (params) => api.get('/api/dist/invoice/history', { params });
+export const createInvoice = (data) => api.post('/api/dist/invoice', data);
+
 // ===== Affiliate / Invitation =====
 export const getAffCode = () => api.get('/api/dist/aff');
 export const transferAffQuota = (data) => api.post('/api/dist/aff_transfer', data);
