@@ -1,5 +1,7 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import i18n from './i18n';
+import { normalizeAppLanguage } from './i18n/languageUtils';
 
 export const Q = 500000; // QuotaPerUnit — single source of truth
 
@@ -70,6 +72,9 @@ api.interceptors.request.use((config) => {
   if (userId) {
     config.headers['New-Api-User'] = userId;
   }
+  config.headers['Accept-Language'] = normalizeAppLanguage(
+    localStorage.getItem('i18nextLng') || i18n.resolvedLanguage || navigator.language,
+  );
   return config;
 });
 
@@ -96,7 +101,7 @@ api.interceptors.response.use(
       // Emit event so AuthContext can clear React state
       window.dispatchEvent(new Event('auth:logout'));
       if (!shouldSkipErrorHandler(err.config)) {
-        toast.error('Session expired, please log in again');
+        toast.error(i18n.t('common.sessionExpired'));
       }
     } else if (!shouldSkipErrorHandler(err.config)) {
       toast.error(msg);
