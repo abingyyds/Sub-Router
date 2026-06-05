@@ -157,13 +157,13 @@ export default function Logs() {
   const [requestIdFilter, setRequestIdFilter] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
-  const [logType, setLogType] = useState('2');
-  const [appliedFilters, setAppliedFilters] = useState({ type: '2' });
+  const [logType, setLogType] = useState('0');
+  const [appliedFilters, setAppliedFilters] = useState({ type: '0' });
   const [expandedRows, setExpandedRows] = useState({});
   const pageSize = 20;
 
   const getAppliedParams = useCallback(() => {
-    const params = { type: appliedFilters.type || '2' };
+    const params = { type: appliedFilters.type || '0' };
     if (appliedFilters.model_name) params.model_name = appliedFilters.model_name;
     if (appliedFilters.token_name) params.token_name = appliedFilters.token_name;
     if (appliedFilters.request_id) params.request_id = appliedFilters.request_id;
@@ -220,10 +220,10 @@ export default function Logs() {
     setRequestIdFilter('');
     setStartTime('');
     setEndTime('');
-    setLogType('2');
+    setLogType('0');
     setExpandedRows({});
     setPage(1);
-    setAppliedFilters({ type: '2' });
+    setAppliedFilters({ type: '0' });
   }, []);
 
   const setQuickRange = useCallback((days) => {
@@ -260,6 +260,15 @@ export default function Logs() {
 
     if (log.content) {
       data.push({ key: t('logs.content'), value: log.content });
+    }
+    if (other.task_id) {
+      data.push({ key: t('任务 ID'), value: other.task_id });
+    }
+    if (other.upstream_task_id && other.upstream_task_id !== other.task_id) {
+      data.push({ key: t('上游任务 ID'), value: other.upstream_task_id });
+    }
+    if (other.reason) {
+      data.push({ key: t('原因'), value: other.reason });
     }
 
     data.push(...getSitePricingDetails(other, symbol, rate, t));
