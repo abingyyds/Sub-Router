@@ -1,10 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { normalizeAppLanguage } from '../i18n/languageUtils';
-
-const languages = [
-  { code: 'zh', label: '中文' },
-  { code: 'en', label: 'EN' },
-];
+import { DIST_SITE_LANGUAGES, normalizeAppLanguage } from '../i18n/languageUtils';
 
 export default function LanguageSwitch({ className = '' }) {
   const { i18n, t } = useTranslation();
@@ -23,7 +18,7 @@ export default function LanguageSwitch({ className = '' }) {
         className="bg-transparent text-current outline-none"
         aria-label={t('common.changeLanguage')}
       >
-        {languages.map((language) => (
+        {DIST_SITE_LANGUAGES.map((language) => (
           <option key={language.code} value={language.code}>
             {language.label}
           </option>

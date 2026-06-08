@@ -1,7 +1,7 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import i18n from './i18n';
-import { normalizeAppLanguage } from './i18n/languageUtils';
+import { getStoredAppLanguage, normalizeAppLanguage } from './i18n/languageUtils';
 
 export const Q = 500000; // QuotaPerUnit — single source of truth
 
@@ -73,7 +73,7 @@ api.interceptors.request.use((config) => {
     config.headers['New-Api-User'] = userId;
   }
   config.headers['Accept-Language'] = normalizeAppLanguage(
-    localStorage.getItem('i18nextLng') || i18n.resolvedLanguage || navigator.language,
+    getStoredAppLanguage() || i18n.resolvedLanguage || navigator.language,
   );
   return config;
 });
