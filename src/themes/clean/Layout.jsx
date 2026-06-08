@@ -4,6 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useSite } from '../../context/SiteContext';
 import LanguageSwitch from '../../components/LanguageSwitch';
+import {
+  getSiteNavItems,
+  getVisibleNavItems,
+  isSiteNavActive,
+} from '../../utils/navigation';
 
 export default function CleanLayout() {
   const { t } = useTranslation();
@@ -15,20 +20,8 @@ export default function CleanLayout() {
 
   const siteName = site?.name || 'AI Platform';
 
-  const navItems = [
-    { to: '/', label: t('nav.home'), auth: false },
-    { to: '/pricing', label: t('nav.pricing'), auth: false },
-    { to: '/packages', label: t('nav.packages'), auth: false },
-    ...(site?.allow_sub_dist ? [{ to: '/sub-site', label: t('subDist.nav'), auth: false }] : []),
-    { to: '/dashboard', label: t('nav.dashboard'), auth: true },
-    { to: '/tokens', label: t('nav.apiKeys'), auth: true },
-    { to: '/logs', label: t('nav.logs'), auth: true },
-    ...(site?.enable_topup ? [{ to: '/topup', label: t('nav.topup'), auth: true }] : []),
-    { to: '/account', label: t('nav.account'), auth: true },
-  ];
-
-  const visibleNavItems = navItems.filter((n) => !n.auth || user);
-  const isNavActive = (to) => location.pathname === to || (to === '/logs' && location.pathname === '/tasks');
+  const visibleNavItems = getVisibleNavItems(getSiteNavItems({ t, site }), user);
+  const isNavActive = (to) => isSiteNavActive(location.pathname, to);
 
   return (
     <div className="theme-light min-h-screen flex flex-col bg-white text-gray-900">
