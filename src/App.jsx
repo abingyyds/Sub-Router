@@ -2,6 +2,7 @@ import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import AuthGuard from './components/AuthGuard';
 import NotificationBell from './components/NotificationBell';
+import { useSite } from './context/SiteContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 
 const Login = lazy(() => import('./pages/Login'));
@@ -24,6 +25,16 @@ const Loading = () => (
   </div>
 );
 
+function AppMarketRoute() {
+  const { site } = useSite();
+
+  if (site?.show_app_market === false) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <AppMarket />;
+}
+
 function ThemedRoutes() {
   const { Home, Layout } = useTheme();
 
@@ -35,7 +46,7 @@ function ThemedRoutes() {
           <Route path="/" element={<Home />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/packages" element={<Packages />} />
-          <Route path="/apps" element={<AppMarket />} />
+          <Route path="/apps" element={<AppMarketRoute />} />
           <Route path="/sub-site" element={<SubDistributor />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />

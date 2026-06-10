@@ -120,6 +120,7 @@ export const getSiteInfo = () => {
       enable_topup: true,
       top_up_link: 'https://example.com/redeem-codes',
       allow_sub_dist: true,
+      show_app_market: true,
       currency: {
         code: 'CNY',
         symbol: '¥',

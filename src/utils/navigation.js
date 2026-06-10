@@ -1,9 +1,13 @@
 export function getSiteNavItems({ t, site }) {
+  const showAppMarket = site?.show_app_market !== false;
+
   return [
     { to: '/', label: t('nav.home'), auth: false },
     { to: '/pricing', label: t('nav.pricing'), auth: false },
     { to: '/packages', label: t('nav.packages'), auth: false },
-    { to: '/apps', label: t('nav.apps'), auth: false },
+    ...(showAppMarket
+      ? [{ to: '/apps', label: t('nav.apps'), auth: false }]
+      : []),
     ...(site?.allow_sub_dist
       ? [{ to: '/sub-site', label: t('subDist.nav'), auth: false }]
       : []),
