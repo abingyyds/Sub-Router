@@ -4,6 +4,7 @@ import { ChevronDown, ChevronRight, ExternalLink } from 'lucide-react';
 import { getSiteModels } from '../api';
 import { useCurrency } from '../context/SiteContext';
 import { getOfficialPrice } from '../utils/officialEquiv';
+import { formatPricingDetailRows, hasVideoPricingDetails } from '../utils/pricingDetails';
 
 const MODEL_TYPE_OPTIONS = [
   { value: '', labelKey: 'pricing.allTypes' },
@@ -151,7 +152,7 @@ function normalizeModelType(model) {
   const billingType = String(model?.billing_type || model?.billing_mode || '').toLowerCase();
   const name = String(model?.model_name || model?.display_name || '').toLowerCase();
 
-  if (endpoints.includes('openai-video') || parseVideoPricing(model?.billing_expr).length > 0 || /sora|seedance|kling|jimeng|veo|video/.test(name)) return 'video';
+  if (endpoints.includes('openai-video') || hasVideoPricingDetails(model) || parseVideoPricing(model?.billing_expr).length > 0 || /sora|seedance|kling|jimeng|veo|video/.test(name)) return 'video';
   if (endpoints.includes('image-generation') || /dall-e|imagen|flux|cogview|image/.test(name)) return 'image';
   if (endpoints.includes('embeddings') || /embed|embedding/.test(name)) return 'embedding';
   if (endpoints.includes('jina-rerank') || /rerank/.test(name)) return 'rerank';
@@ -299,11 +300,14 @@ export default function Pricing() {
     return savings < 0 ? `${savings}%` : null;
   };
 
-  const getVideoRows = (item) =>
-    parseVideoPricing(item?.billing_expr).map((row) => ({
+  const getVideoRows = (item) => {
+    const detailRows = formatPricingDetailRows(item, { symbol, rate, code, usdRate }, t);
+    if (detailRows.length > 0) return detailRows;
+    return parseVideoPricing(item?.billing_expr).map((row) => ({
       ...row,
       formatted: formatVideoSecondPrice(row.price, item),
     }));
+  };
 
   const renderPrimaryPrice = (item) => {
     if (isTieredExprPrice(item)) {
