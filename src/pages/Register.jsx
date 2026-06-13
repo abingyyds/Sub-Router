@@ -12,6 +12,7 @@ export default function Register() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ username: '', password: '', password2: '', email: '' });
   const [loading, setLoading] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   // Capture aff code from URL and persist in localStorage
   useEffect(() => {
@@ -42,6 +43,10 @@ export default function Register() {
     }
     if (form.password.length > 20) {
       toast.error(t('register.passwordLength'));
+      return;
+    }
+    if (!agreedToTerms) {
+      toast.error(t('register.agreeRequired'));
       return;
     }
     setLoading(true);
@@ -128,9 +133,39 @@ export default function Register() {
               />
             </div>
 
+            <div className="flex items-start gap-2 rounded-xl border border-page-divider bg-page-surface/40 p-3">
+              <input
+                id="dist-register-agreement"
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0 rounded border-page-divider accent-current"
+              />
+              <label htmlFor="dist-register-agreement" className="text-xs leading-relaxed text-page-secondary">
+                {t('register.agreePrefix')}
+                <Link
+                  to="/user-agreement"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mx-1 font-medium text-page-link hover:underline"
+                >
+                  {t('legal.userAgreement')}
+                </Link>
+                {t('register.agreeJoin')}
+                <Link
+                  to="/privacy-policy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mx-1 font-medium text-page-link hover:underline"
+                >
+                  {t('legal.privacyPolicy')}
+                </Link>
+              </label>
+            </div>
+
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !agreedToTerms}
               className="btn-primary w-full flex items-center justify-center gap-2"
             >
               {loading && (

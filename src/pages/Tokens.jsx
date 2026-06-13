@@ -12,11 +12,12 @@ import {
 import ConfigExporter from '../components/ConfigExporter';
 import DownloadCatalog from '../components/DownloadCatalog';
 import { useCurrency } from '../context/SiteContext';
+import { formatPricingDetailRows } from '../utils/pricingDetails';
 import toast from 'react-hot-toast';
 
 export default function Tokens() {
   const { t } = useTranslation();
-  const { symbol, rate } = useCurrency();
+  const { symbol, rate, code, usdRate } = useCurrency();
   const [tokens, setTokens] = useState([]);
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState(null);
@@ -346,8 +347,7 @@ export default function Tokens() {
         search={groupPricingSearch}
         onSearchChange={setGroupPricingSearch}
         onClose={closeGroupPricing}
-        symbol={symbol}
-        rate={rate}
+        currency={{ symbol, rate, code, usdRate }}
         t={t}
       />
 
@@ -624,8 +624,7 @@ function GroupPricingModal({
   search,
   onSearchChange,
   onClose,
-  symbol,
-  rate,
+  currency,
   t,
 }) {
   if (!open || !group) {
@@ -635,6 +634,7 @@ function GroupPricingModal({
   const displayGroup = pricingData?.group || group;
   const summary = pricingData?.summary;
   const hasItems = (pricingData?.items || []).length > 0;
+  const { symbol, rate } = currency || {};
 
   return (
     <div
@@ -769,26 +769,28 @@ function GroupPricingModal({
                           ? t('pricing.unknown')
                           : item.billing_type === 'per_call'
                             ? formatGroupPriceRange(item.fixed_price_min, item.fixed_price_max, symbol, rate, true, t)
-                            : formatGroupPriceRange(item.input_price_min, item.input_price_max, symbol, rate, false, t)}
+                            : item.billing_type === 'tiered_expr'
+                              ? formatGroupTieredPrice(item, currency, t)
+                              : formatGroupPriceRange(item.input_price_min, item.input_price_max, symbol, rate, false, t)}
                       </td>
                       <td className="px-4 py-3.5 text-right font-mono text-page-label whitespace-nowrap">
                         {item.status !== 'healthy'
                           ? '-'
-                          : item.billing_type === 'per_call'
+                          : item.billing_type === 'per_call' || item.billing_type === 'tiered_expr'
                             ? '-'
                             : formatGroupPriceRange(item.output_price_min, item.output_price_max, symbol, rate, false, t)}
                       </td>
                       <td className="px-4 py-3.5 text-right font-mono text-page-label whitespace-nowrap">
                         {item.status !== 'healthy'
                           ? '-'
-                          : item.billing_type === 'per_call'
+                          : item.billing_type === 'per_call' || item.billing_type === 'tiered_expr'
                             ? '-'
                             : formatGroupPriceRange(item.cache_read_price_min, item.cache_read_price_max, symbol, rate, false, t)}
                       </td>
                       <td className="px-4 py-3.5 text-right font-mono text-page-label whitespace-nowrap">
                         {item.status !== 'healthy'
                           ? '-'
-                          : item.billing_type === 'per_call'
+                          : item.billing_type === 'per_call' || item.billing_type === 'tiered_expr'
                             ? '-'
                             : formatGroupCachePriceRange(item, symbol, rate, t)}
                       </td>
@@ -805,6 +807,20 @@ function GroupPricingModal({
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function formatGroupTieredPrice(item, currency, t) {
+  const rows = formatPricingDetailRows(item, currency, t);
+  if (rows.length === 0) {
+    return t('pricing.expressionPricing');
+  }
+  return (
+    <div className="flex flex-col items-end gap-0.5 whitespace-nowrap">
+      {rows.map((row) => (
+        <span key={`${row.label}-${row.price}`}>{row.label} {row.formatted}</span>
+      ))}
     </div>
   );
 }
