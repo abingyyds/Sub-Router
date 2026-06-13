@@ -5,6 +5,7 @@ import { ArrowRight, LogOut, Menu, UserCircle, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useSite } from '../../context/SiteContext';
 import LanguageSwitch from '../../components/LanguageSwitch';
+import { FooterLegalLinks } from '../../components/LegalLinks';
 import maoqiuAiImage from '../../assets/maoqiu-ai.png';
 import {
   getSiteNavItems,
@@ -219,11 +220,14 @@ export default function BrandLayout({ variant }) {
       <footer className={cfg.footer}>
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-8 text-sm opacity-70 sm:px-6 md:flex-row md:items-center md:justify-between">
           <p>&copy; {new Date().getFullYear()} {siteName}</p>
-          {site?.contact_email && (
-            <a href={`mailto:${site.contact_email}`} className="font-semibold hover:opacity-100">
-              {t('nav.contact')}
-            </a>
-          )}
+          <div className="flex flex-wrap items-center gap-4">
+            <FooterLegalLinks className="flex items-center gap-2" linkClassName="font-semibold hover:opacity-100" />
+            {site?.contact_email && (
+              <a href={`mailto:${site.contact_email}`} className="font-semibold hover:opacity-100">
+                {t('nav.contact')}
+              </a>
+            )}
+          </div>
         </div>
       </footer>
     </div>

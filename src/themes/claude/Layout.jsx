@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useSite } from '../../context/SiteContext';
 import LanguageSwitch from '../../components/LanguageSwitch';
+import { FooterLegalLinks } from '../../components/LegalLinks';
 import {
   getSiteNavItems,
   getVisibleNavItems,
@@ -132,6 +133,7 @@ export default function ClaudeLayout() {
         <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-[#8B7D6E]">&copy; {new Date().getFullYear()} {siteName}.</p>
           <div className="flex items-center gap-4">
+            <FooterLegalLinks className="flex items-center gap-2 text-sm text-[#8B7D6E]" linkClassName="hover:text-[#D97757] transition-colors" />
             {site?.contact_email && (
               <a href={`mailto:${site.contact_email}`} className="text-sm text-[#8B7D6E] hover:text-[#D97757] transition-colors">
                 {t('nav.contact')}

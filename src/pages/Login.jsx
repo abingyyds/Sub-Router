@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useSite } from '../context/SiteContext';
+import { LegalAgreementCheckbox } from '../components/LegalLinks';
 import toast from 'react-hot-toast';
 
 export default function Login() {
@@ -13,6 +14,7 @@ export default function Login() {
   const location = useLocation();
   const [form, setForm] = useState({ username: '', password: '' });
   const [loading, setLoading] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   // If already logged in, redirect via component (not navigate in render)
   if (user) {
@@ -24,6 +26,10 @@ export default function Login() {
     e.preventDefault();
     if (!form.username || !form.password) {
       toast.error(t('login.fillAllFields'));
+      return;
+    }
+    if (!agreedToTerms) {
+      toast.error(t('legal.agreeRequired'));
       return;
     }
     setLoading(true);
@@ -80,9 +86,15 @@ export default function Login() {
               />
             </div>
 
+            <LegalAgreementCheckbox
+              id="dist-login-agreement"
+              checked={agreedToTerms}
+              onChange={(e) => setAgreedToTerms(e.target.checked)}
+            />
+
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !agreedToTerms}
               className="btn-primary w-full flex items-center justify-center gap-2"
             >
               {loading && (

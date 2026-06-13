@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useSite } from '../../context/SiteContext';
 import LanguageSwitch from '../../components/LanguageSwitch';
+import { FooterLegalLinks } from '../../components/LegalLinks';
 import {
   getSiteNavItems,
   getVisibleNavItems,
@@ -138,6 +139,7 @@ export default function CorporateLayout() {
               <p className="text-xs text-slate-400 mt-1">&copy; {new Date().getFullYear()} {siteName}. All rights reserved.</p>
             </div>
             <div className="flex items-center gap-6">
+              <FooterLegalLinks className="flex items-center gap-2 text-sm text-slate-400" linkClassName="hover:text-slate-600 transition-colors" />
               {site?.contact_email && (
                 <a href={`mailto:${site.contact_email}`} className="text-sm text-slate-400 hover:text-slate-600 transition-colors">
                   {t('nav.contact')}

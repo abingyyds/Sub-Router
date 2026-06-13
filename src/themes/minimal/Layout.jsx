@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useSite } from '../../context/SiteContext';
 import LanguageSwitch from '../../components/LanguageSwitch';
+import { FooterLegalLinks } from '../../components/LegalLinks';
 import {
   getSiteNavItems,
   getVisibleNavItems,
@@ -109,11 +110,14 @@ export default function MinimalLayout() {
       <footer className="border-t border-neutral-800/40 mt-auto">
         <div className="max-w-5xl mx-auto px-6 py-6 flex flex-col md:flex-row items-center justify-between gap-3">
           <p className="text-xs text-neutral-600">&copy; {new Date().getFullYear()} {siteName}</p>
-          {site?.contact_email && (
-            <a href={`mailto:${site.contact_email}`} className="text-xs text-neutral-600 hover:text-white transition-colors">
-              {t('nav.contact')}
-            </a>
-          )}
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <FooterLegalLinks className="flex items-center gap-2 text-xs text-neutral-600" linkClassName="hover:text-white transition-colors" />
+            {site?.contact_email && (
+              <a href={`mailto:${site.contact_email}`} className="text-xs text-neutral-600 hover:text-white transition-colors">
+                {t('nav.contact')}
+              </a>
+            )}
+          </div>
         </div>
       </footer>
     </div>
