@@ -25,6 +25,25 @@ export function getVisibleNavItems(navItems, user) {
   return navItems.filter((item) => !item.auth || user);
 }
 
+const userMenuNavItems = [
+  '/account',
+  '/logs',
+  '/tokens',
+];
+const userMenuNavTargets = new Set(userMenuNavItems);
+
+export function getHeaderNavItems(navItems) {
+  return navItems.filter((item) => !userMenuNavTargets.has(item.to));
+}
+
+export function getUserMenuNavItems(navItems, user) {
+  if (!user) return [];
+  const visibleItems = getVisibleNavItems(navItems, user);
+  return userMenuNavItems
+    .map((to) => visibleItems.find((item) => item.to === to))
+    .filter(Boolean);
+}
+
 export function isSiteNavActive(pathname, to) {
   return pathname === to || (to === '/logs' && pathname === '/tasks');
 }

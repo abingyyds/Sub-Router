@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, LogOut, Menu, UserCircle, X } from 'lucide-react';
+import { ArrowRight, Menu, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useSite } from '../../context/SiteContext';
 import LanguageSwitch from '../../components/LanguageSwitch';
+import UserMenu from '../../components/UserMenu';
 import { FooterLegalLinks } from '../../components/LegalLinks';
 import maoqiuAiImage from '../../assets/maoqiu-ai.png';
 import {
+  getHeaderNavItems,
   getSiteNavItems,
+  getUserMenuNavItems,
   getVisibleNavItems,
   isSiteNavActive,
 } from '../../utils/navigation';
@@ -20,10 +23,12 @@ const configs = {
     announcement: 'border-b border-slate-800 bg-slate-950 px-4 py-2.5 text-center text-sm font-medium text-slate-100',
     header: 'sticky top-0 z-50 border-b border-slate-200 bg-[#f6f8fb]/88 backdrop-blur-xl',
     logo: 'bg-slate-950 text-white shadow-lg shadow-slate-900/10',
-    navWrap: 'hidden items-center gap-1 rounded-lg border border-slate-200 bg-white/80 p-1 shadow-sm md:flex',
+    navWrap: 'hidden items-center gap-1 rounded-lg border border-slate-200 bg-white/80 p-1 shadow-sm lg:flex',
     navActive: 'bg-slate-950 text-white shadow-sm',
     navIdle: 'text-slate-600 hover:bg-white hover:text-slate-950',
     language: 'text-slate-500 hover:bg-white/80 hover:text-slate-950',
+    menu: 'border-slate-200 bg-white/95 text-slate-700 shadow-slate-900/10',
+    menuItem: 'hover:bg-slate-100 hover:text-slate-950',
     primary: 'bg-slate-950 text-white hover:bg-indigo-700',
     mobileActive: 'bg-indigo-50 text-indigo-700',
     mobileIdle: 'text-slate-600 hover:bg-slate-50 hover:text-slate-950',
@@ -35,10 +40,12 @@ const configs = {
     announcement: 'border-b border-emerald-400/20 bg-emerald-400/10 px-4 py-2.5 text-center font-mono text-sm text-emerald-200',
     header: 'sticky top-0 z-50 border-b border-emerald-400/15 bg-[#050807]/88 backdrop-blur-xl',
     logo: 'bg-emerald-400 text-black shadow-lg shadow-emerald-400/20',
-    navWrap: 'hidden items-center gap-1 rounded-lg border border-emerald-400/15 bg-emerald-400/[0.04] p-1 md:flex',
+    navWrap: 'hidden items-center gap-1 rounded-lg border border-emerald-400/15 bg-emerald-400/[0.04] p-1 lg:flex',
     navActive: 'bg-emerald-400 text-black shadow-sm',
     navIdle: 'text-emerald-200/70 hover:bg-emerald-400/10 hover:text-emerald-100',
     language: 'text-emerald-200/70 hover:bg-emerald-400/10 hover:text-emerald-100',
+    menu: 'border-emerald-400/15 bg-[#050807]/95 text-emerald-200',
+    menuItem: 'hover:bg-emerald-400/10 hover:text-emerald-100',
     primary: 'bg-emerald-400 text-black hover:bg-emerald-300',
     mobileActive: 'bg-emerald-400/10 text-emerald-200',
     mobileIdle: 'text-emerald-200/70 hover:bg-emerald-400/10 hover:text-emerald-100',
@@ -50,10 +57,12 @@ const configs = {
     announcement: 'border-b border-stone-800 bg-stone-950 px-4 py-2.5 text-center text-sm font-semibold text-stone-100',
     header: 'sticky top-0 z-50 border-b border-stone-200 bg-[#fbfaf7]/90 backdrop-blur-xl',
     logo: 'bg-stone-950 text-white shadow-lg shadow-stone-900/10',
-    navWrap: 'hidden items-center gap-1 rounded-lg border border-stone-200 bg-white/80 p-1 shadow-sm md:flex',
+    navWrap: 'hidden items-center gap-1 rounded-lg border border-stone-200 bg-white/80 p-1 shadow-sm lg:flex',
     navActive: 'bg-stone-950 text-white shadow-sm',
     navIdle: 'text-stone-600 hover:bg-white hover:text-stone-950',
     language: 'text-stone-500 hover:bg-white hover:text-stone-950',
+    menu: 'border-stone-200 bg-[#fbfaf7]/95 text-stone-700 shadow-stone-900/10',
+    menuItem: 'hover:bg-white hover:text-stone-950',
     primary: 'bg-stone-950 text-white hover:bg-orange-600',
     mobileActive: 'bg-orange-50 text-orange-700',
     mobileIdle: 'text-stone-600 hover:bg-white hover:text-stone-950',
@@ -65,10 +74,12 @@ const configs = {
     announcement: 'border-b border-[#1b2a5b]/10 bg-[#f7f9ff] px-4 py-2.5 text-center text-sm font-semibold text-[#1b2a5b]',
     header: 'sticky top-0 z-50 border-b border-slate-200/80 bg-white/88 backdrop-blur-xl',
     logo: 'bg-gradient-to-br from-[#0788ff] via-[#2248ff] to-[#ec4bff] text-white shadow-lg shadow-blue-500/20',
-    navWrap: 'hidden items-center gap-1 rounded-lg border border-slate-200 bg-white/82 p-1 shadow-sm md:flex',
+    navWrap: 'hidden items-center gap-1 rounded-lg border border-slate-200 bg-white/82 p-1 shadow-sm lg:flex',
     navActive: 'bg-gradient-to-r from-[#0788ff] to-[#b93dff] text-white shadow-sm',
     navIdle: 'text-slate-600 hover:bg-[#f4f7ff] hover:text-[#071337]',
     language: 'text-slate-500 hover:bg-[#f4f7ff] hover:text-[#071337]',
+    menu: 'border-slate-200 bg-white/95 text-slate-700 shadow-slate-900/10',
+    menuItem: 'hover:bg-[#f4f7ff] hover:text-[#071337]',
     primary: 'bg-gradient-to-r from-[#0788ff] to-[#b93dff] text-white hover:brightness-105',
     mobileActive: 'bg-[#eef5ff] text-[#2352ff]',
     mobileIdle: 'text-slate-600 hover:bg-[#f4f7ff] hover:text-[#071337]',
@@ -87,7 +98,10 @@ export default function BrandLayout({ variant }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const siteName = site?.name || 'AI Platform';
 
-  const visibleNavItems = getVisibleNavItems(getSiteNavItems({ t, site }), user);
+  const siteNavItems = getSiteNavItems({ t, site });
+  const headerNavItems = getVisibleNavItems(getHeaderNavItems(siteNavItems), user);
+  const mobileNavItems = getVisibleNavItems(getHeaderNavItems(siteNavItems), user);
+  const userMenuItems = getUserMenuNavItems(siteNavItems, user);
   const isNavActive = (to) => isSiteNavActive(location.pathname, to);
 
   const handleLogout = async () => {
@@ -125,11 +139,11 @@ export default function BrandLayout({ variant }) {
           </Link>
 
           <nav className={cfg.navWrap}>
-            {visibleNavItems.map((n) => (
+            {headerNavItems.map((n) => (
               <Link
                 key={n.to}
                 to={n.to}
-                className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors ${
+                className={`whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-semibold transition-colors ${
                   isNavActive(n.to) ? cfg.navActive : cfg.navIdle
                 }`}
               >
@@ -141,20 +155,15 @@ export default function BrandLayout({ variant }) {
           <div className="flex items-center gap-2">
             <LanguageSwitch className={cfg.language} />
             {user ? (
-              <div className="hidden items-center gap-2 sm:flex">
-                <div className="flex max-w-[180px] items-center gap-2 rounded-full border border-current/10 bg-current/[0.04] px-3 py-1.5 text-sm">
-                  <UserCircle className="h-4 w-4 shrink-0 opacity-60" />
-                  <span className="truncate opacity-80">{user.display_name || user.username}</span>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-current/10"
-                  aria-label={t('nav.logout')}
-                  title={t('nav.logout')}
-                >
-                  <LogOut className="h-4 w-4" />
-                </button>
-              </div>
+              <UserMenu
+                user={user}
+                items={userMenuItems}
+                onLogout={handleLogout}
+                logoutLabel={t('nav.logout')}
+                buttonClassName="border-current/10 bg-current/[0.04] hover:bg-current/10"
+                menuClassName={cfg.menu}
+                itemClassName={cfg.menuItem}
+              />
             ) : (
               <div className="hidden items-center gap-2 sm:flex">
                 <Link to="/login" className="rounded-full px-3 py-2 text-sm font-semibold opacity-75 hover:opacity-100">
@@ -167,7 +176,7 @@ export default function BrandLayout({ variant }) {
               </div>
             )}
             <button
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-current/10 md:hidden"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-current/10 lg:hidden"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle menu"
             >
@@ -177,9 +186,9 @@ export default function BrandLayout({ variant }) {
         </div>
 
         {mobileMenuOpen && (
-          <div className="border-t border-current/10 bg-inherit md:hidden">
+          <div className="border-t border-current/10 bg-inherit lg:hidden">
             <nav className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-3 sm:px-6">
-              {visibleNavItems.map((n) => (
+              {mobileNavItems.map((n) => (
                 <Link
                   key={n.to}
                   to={n.to}
@@ -191,13 +200,8 @@ export default function BrandLayout({ variant }) {
                   {n.label}
                 </Link>
               ))}
-              <div className="mt-2 border-t border-current/10 pt-3 sm:hidden">
-                {user ? (
-                  <button onClick={handleLogout} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold">
-                    <LogOut className="h-4 w-4" />
-                    {t('nav.logout')}
-                  </button>
-                ) : (
+              {!user && (
+                <div className="mt-2 border-t border-current/10 pt-3 sm:hidden">
                   <div className="grid grid-cols-2 gap-2">
                     <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="rounded-lg border border-current/10 px-3 py-2 text-center text-sm font-semibold">
                       {t('nav.login')}
@@ -206,8 +210,8 @@ export default function BrandLayout({ variant }) {
                       {t('nav.signUp')}
                     </Link>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </nav>
           </div>
         )}

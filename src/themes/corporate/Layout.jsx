@@ -4,9 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useSite } from '../../context/SiteContext';
 import LanguageSwitch from '../../components/LanguageSwitch';
+import UserMenu from '../../components/UserMenu';
 import { FooterLegalLinks } from '../../components/LegalLinks';
 import {
+  getHeaderNavItems,
   getSiteNavItems,
+  getUserMenuNavItems,
   getVisibleNavItems,
   isSiteNavActive,
 } from '../../utils/navigation';
@@ -21,7 +24,10 @@ export default function CorporateLayout() {
 
   const siteName = site?.name || 'AI Platform';
 
-  const visibleNavItems = getVisibleNavItems(getSiteNavItems({ t, site }), user);
+  const siteNavItems = getSiteNavItems({ t, site });
+  const headerNavItems = getVisibleNavItems(getHeaderNavItems(siteNavItems), user);
+  const mobileNavItems = getVisibleNavItems(getHeaderNavItems(siteNavItems), user);
+  const userMenuItems = getUserMenuNavItems(siteNavItems, user);
   const isNavActive = (to) => isSiteNavActive(location.pathname, to);
 
   return (
@@ -49,12 +55,12 @@ export default function CorporateLayout() {
             </span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-0.5">
-            {visibleNavItems.map((n) => (
+          <nav className="hidden lg:flex items-center gap-0.5">
+            {headerNavItems.map((n) => (
               <Link
                 key={n.to}
                 to={n.to}
-                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                className={`whitespace-nowrap px-3 py-2 text-sm font-medium transition-colors ${
                   isNavActive(n.to)
                     ? 'text-slate-900 border-b-2 border-slate-900'
                     : 'text-slate-500 hover:text-slate-900'
@@ -69,17 +75,15 @@ export default function CorporateLayout() {
             <LanguageSwitch className="text-slate-400 hover:text-slate-700 hover:bg-slate-50" />
 
             {user ? (
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-slate-600 hidden sm:block font-medium">
-                  {user.display_name || user.username}
-                </span>
-                <button
-                  onClick={async () => { await logout(); navigate('/'); }}
-                  className="text-sm text-slate-400 hover:text-slate-700 transition-colors"
-                >
-                  {t('nav.logout')}
-                </button>
-              </div>
+              <UserMenu
+                user={user}
+                items={userMenuItems}
+                onLogout={async () => { await logout(); navigate('/'); }}
+                logoutLabel={t('nav.logout')}
+                buttonClassName="border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                menuClassName="border-slate-200 bg-white/95 text-slate-700"
+                itemClassName="hover:bg-slate-50 hover:text-slate-900"
+              />
             ) : (
               <>
                 <Link to="/login" className="text-sm text-slate-600 hover:text-slate-900 px-3 py-2 hidden sm:block transition-colors font-medium">
@@ -92,7 +96,7 @@ export default function CorporateLayout() {
             )}
 
             <button
-              className="md:hidden p-2 rounded-lg hover:bg-slate-50 transition-colors"
+              className="lg:hidden p-2 rounded-lg hover:bg-slate-50 transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle menu"
             >
@@ -108,9 +112,9 @@ export default function CorporateLayout() {
         </div>
 
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 bg-white">
+          <div className="lg:hidden border-t border-gray-200 bg-white">
             <nav className="max-w-7xl mx-auto px-6 py-3 flex flex-col">
-              {visibleNavItems.map((n) => (
+              {mobileNavItems.map((n) => (
                 <Link
                   key={n.to}
                   to={n.to}

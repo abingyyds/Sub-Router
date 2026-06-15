@@ -594,6 +594,8 @@
     "dashboard.viewLogs": "查看使用明细",
     "dashboard.account": "账户设置",
     "dashboard.accountDesc": "修改登录密码",
+    "dashboard.invoice": "开票申请",
+    "dashboard.invoiceDesc": "提交发票信息",
 
     "logs.title": "调用日志",
     "logs.callLogs": "调用日志",

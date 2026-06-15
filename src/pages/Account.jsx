@@ -251,7 +251,7 @@ export default function Account() {
       </div>
 
       {site?.enable_invoice && (
-        <section className="glass rounded-2xl p-6 mt-6">
+        <section id="invoice" className="scroll-mt-24 glass rounded-2xl p-6 mt-6">
           <div className="mb-5 flex items-center gap-2">
             <FileText className="h-5 w-5 text-page-link" />
             <div>

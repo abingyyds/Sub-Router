@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Menu, X, LogOut, UserCircle, ArrowRight } from 'lucide-react';
+import { Menu, X, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useSite } from '../../context/SiteContext';
 import LanguageSwitch from '../../components/LanguageSwitch';
+import UserMenu from '../../components/UserMenu';
 import { FooterLegalLinks } from '../../components/LegalLinks';
 import {
+  getHeaderNavItems,
   getSiteNavItems,
+  getUserMenuNavItems,
   getVisibleNavItems,
   isSiteNavActive,
 } from '../../utils/navigation';
@@ -22,7 +25,10 @@ export default function DefaultLayout() {
 
   const siteName = site?.name || 'AI Platform';
 
-  const visibleNavItems = getVisibleNavItems(getSiteNavItems({ t, site }), user);
+  const siteNavItems = getSiteNavItems({ t, site });
+  const headerNavItems = getVisibleNavItems(getHeaderNavItems(siteNavItems), user);
+  const mobileNavItems = getVisibleNavItems(getHeaderNavItems(siteNavItems), user);
+  const userMenuItems = getUserMenuNavItems(siteNavItems, user);
   const isNavActive = (to) => isSiteNavActive(location.pathname, to);
 
   const handleLogout = async () => {
@@ -53,8 +59,8 @@ export default function DefaultLayout() {
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1 md:flex">
-            {visibleNavItems.map((n) => (
+          <nav className="hidden items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1 lg:flex">
+            {headerNavItems.map((n) => (
               <NavLink key={n.to} to={n.to} active={isNavActive(n.to)}>
                 {n.label}
               </NavLink>
@@ -65,20 +71,15 @@ export default function DefaultLayout() {
             <LanguageSwitch className="text-slate-500 hover:bg-slate-100 hover:text-slate-950" />
 
             {user ? (
-              <div className="hidden items-center gap-2 sm:flex">
-                <div className="flex max-w-[180px] items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 shadow-sm">
-                  <UserCircle className="h-4 w-4 shrink-0 text-slate-400" />
-                  <span className="truncate">{user.display_name || user.username}</span>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950"
-                  aria-label={t('nav.logout')}
-                  title={t('nav.logout')}
-                >
-                  <LogOut className="h-4 w-4" />
-                </button>
-              </div>
+              <UserMenu
+                user={user}
+                items={userMenuItems}
+                onLogout={handleLogout}
+                logoutLabel={t('nav.logout')}
+                buttonClassName="border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50 hover:text-slate-950"
+                menuClassName="border-slate-200 bg-white/95 text-slate-700 shadow-slate-900/10"
+                itemClassName="hover:bg-slate-100 hover:text-slate-950"
+              />
             ) : (
               <div className="hidden items-center gap-2 sm:flex">
                 <Link to="/login" className="rounded-full px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-950">
@@ -95,7 +96,7 @@ export default function DefaultLayout() {
             )}
 
             <button
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 md:hidden"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 lg:hidden"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle menu"
             >
@@ -105,9 +106,9 @@ export default function DefaultLayout() {
         </div>
 
         {mobileMenuOpen && (
-          <div className="border-t border-slate-200 bg-white md:hidden">
+          <div className="border-t border-slate-200 bg-white lg:hidden">
             <nav className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-3 sm:px-6">
-              {visibleNavItems.map((n) => (
+              {mobileNavItems.map((n) => (
                 <Link
                   key={n.to}
                   to={n.to}
@@ -122,19 +123,8 @@ export default function DefaultLayout() {
                 </Link>
               ))}
 
-              <div className="mt-2 border-t border-slate-200 pt-3 sm:hidden">
-                {user ? (
-                  <button
-                    onClick={async () => {
-                      setMobileMenuOpen(false);
-                      await handleLogout();
-                    }}
-                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-950"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    {t('nav.logout')}
-                  </button>
-                ) : (
+              {!user && (
+                <div className="mt-2 border-t border-slate-200 pt-3 sm:hidden">
                   <div className="grid grid-cols-2 gap-2">
                     <Link
                       to="/login"
@@ -151,8 +141,8 @@ export default function DefaultLayout() {
                       {t('nav.signUp')}
                     </Link>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </nav>
           </div>
         )}
@@ -183,7 +173,7 @@ function NavLink({ to, children, active }) {
   return (
     <Link
       to={to}
-      className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
+      className={`whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
         active
           ? 'bg-white text-slate-950 shadow-sm ring-1 ring-slate-200'
           : 'text-slate-600 hover:text-slate-950'

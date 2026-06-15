@@ -4,9 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useSite } from '../../context/SiteContext';
 import LanguageSwitch from '../../components/LanguageSwitch';
+import UserMenu from '../../components/UserMenu';
 import { FooterLegalLinks } from '../../components/LegalLinks';
 import {
+  getHeaderNavItems,
   getSiteNavItems,
+  getUserMenuNavItems,
   getVisibleNavItems,
   isSiteNavActive,
 } from '../../utils/navigation';
@@ -21,7 +24,10 @@ export default function DarkLayout() {
 
   const siteName = site?.name || 'AI Platform';
 
-  const visibleNavItems = getVisibleNavItems(getSiteNavItems({ t, site }), user);
+  const siteNavItems = getSiteNavItems({ t, site });
+  const headerNavItems = getVisibleNavItems(getHeaderNavItems(siteNavItems), user);
+  const mobileNavItems = getVisibleNavItems(getHeaderNavItems(siteNavItems), user);
+  const userMenuItems = getUserMenuNavItems(siteNavItems, user);
   const isNavActive = (to) => isSiteNavActive(location.pathname, to);
 
   return (
@@ -49,12 +55,12 @@ export default function DarkLayout() {
             </span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-1">
-            {visibleNavItems.map((n) => (
+          <nav className="hidden lg:flex items-center gap-1">
+            {headerNavItems.map((n) => (
               <Link
                 key={n.to}
                 to={n.to}
-                className={`px-3 py-1.5 text-sm font-mono rounded transition-all ${
+                className={`whitespace-nowrap px-2.5 py-1.5 text-sm font-mono rounded transition-all ${
                   isNavActive(n.to)
                     ? 'text-emerald-400 bg-emerald-500/10'
                     : 'text-neutral-500 hover:text-emerald-400'
@@ -69,12 +75,15 @@ export default function DarkLayout() {
             <LanguageSwitch className="text-neutral-500 hover:text-emerald-400 hover:bg-emerald-500/5 font-mono" />
 
             {user ? (
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-neutral-500 font-mono hidden sm:block">{user.display_name || user.username}</span>
-                <button onClick={async () => { await logout(); navigate('/'); }} className="text-sm text-neutral-500 hover:text-emerald-400 font-mono transition-colors">
-                  {t('nav.logout')}
-                </button>
-              </div>
+              <UserMenu
+                user={user}
+                items={userMenuItems}
+                onLogout={async () => { await logout(); navigate('/'); }}
+                logoutLabel={t('nav.logout')}
+                buttonClassName="border-emerald-500/10 bg-emerald-500/5 text-neutral-500 hover:text-emerald-400"
+                menuClassName="border-emerald-500/10 bg-[#030712]/95 text-neutral-400"
+                itemClassName="font-mono hover:bg-emerald-500/10 hover:text-emerald-400"
+              />
             ) : (
               <>
                 <Link to="/login" className="text-sm text-neutral-500 hover:text-emerald-400 font-mono transition-colors hidden sm:block px-3 py-1.5">
@@ -85,7 +94,7 @@ export default function DarkLayout() {
                 </Link>
               </>
             )}
-            <button className="md:hidden p-1.5 rounded hover:bg-white/5" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            <button className="lg:hidden p-1.5 rounded hover:bg-white/5" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
               <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 {mobileMenuOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />}
               </svg>
@@ -94,9 +103,9 @@ export default function DarkLayout() {
         </div>
 
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-emerald-500/[0.08] bg-[#030712]/95 backdrop-blur-xl">
+          <div className="lg:hidden border-t border-emerald-500/[0.08] bg-[#030712]/95 backdrop-blur-xl">
             <nav className="max-w-7xl mx-auto px-6 py-3 flex flex-col gap-1">
-              {visibleNavItems.map((n) => (
+              {mobileNavItems.map((n) => (
                 <Link key={n.to} to={n.to} onClick={() => setMobileMenuOpen(false)}
                   className={`px-3 py-2 text-sm font-mono rounded transition-colors ${isNavActive(n.to) ? 'text-emerald-400 bg-emerald-500/10' : 'text-neutral-500 hover:text-emerald-400'}`}>
                   {n.label}

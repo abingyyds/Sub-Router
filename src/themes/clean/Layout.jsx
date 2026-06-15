@@ -4,9 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useSite } from '../../context/SiteContext';
 import LanguageSwitch from '../../components/LanguageSwitch';
+import UserMenu from '../../components/UserMenu';
 import { FooterLegalLinks } from '../../components/LegalLinks';
 import {
+  getHeaderNavItems,
   getSiteNavItems,
+  getUserMenuNavItems,
   getVisibleNavItems,
   isSiteNavActive,
 } from '../../utils/navigation';
@@ -21,7 +24,10 @@ export default function CleanLayout() {
 
   const siteName = site?.name || 'AI Platform';
 
-  const visibleNavItems = getVisibleNavItems(getSiteNavItems({ t, site }), user);
+  const siteNavItems = getSiteNavItems({ t, site });
+  const headerNavItems = getVisibleNavItems(getHeaderNavItems(siteNavItems), user);
+  const mobileNavItems = getVisibleNavItems(getHeaderNavItems(siteNavItems), user);
+  const userMenuItems = getUserMenuNavItems(siteNavItems, user);
   const isNavActive = (to) => isSiteNavActive(location.pathname, to);
 
   return (
@@ -49,12 +55,12 @@ export default function CleanLayout() {
             </span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-1">
-            {visibleNavItems.map((n) => (
+          <nav className="hidden lg:flex items-center gap-1">
+            {headerNavItems.map((n) => (
               <Link
                 key={n.to}
                 to={n.to}
-                className={`px-3.5 py-2 text-sm rounded-lg transition-all ${
+                className={`whitespace-nowrap px-3 py-2 text-sm rounded-lg transition-all ${
                   isNavActive(n.to)
                     ? 'text-blue-600 bg-blue-50 font-medium'
                     : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
@@ -69,15 +75,15 @@ export default function CleanLayout() {
             <LanguageSwitch className="text-gray-400 hover:text-gray-700 hover:bg-gray-50" />
 
             {user ? (
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-500 hidden sm:block">{user.display_name || user.username}</span>
-                <button
-                  onClick={async () => { await logout(); navigate('/'); }}
-                  className="text-sm text-gray-400 hover:text-gray-700 transition-colors"
-                >
-                  {t('nav.logout')}
-                </button>
-              </div>
+              <UserMenu
+                user={user}
+                items={userMenuItems}
+                onLogout={async () => { await logout(); navigate('/'); }}
+                logoutLabel={t('nav.logout')}
+                buttonClassName="border-gray-100 bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                menuClassName="border-gray-100 bg-white/95 text-gray-700"
+                itemClassName="hover:bg-gray-50 hover:text-gray-900"
+              />
             ) : (
               <>
                 <Link to="/login" className="text-sm text-gray-500 hover:text-gray-900 px-3 py-2 hidden sm:block transition-colors">
@@ -90,7 +96,7 @@ export default function CleanLayout() {
             )}
 
             <button
-              className="md:hidden p-2 rounded-lg hover:bg-gray-50 transition-colors"
+              className="lg:hidden p-2 rounded-lg hover:bg-gray-50 transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle menu"
             >
@@ -106,9 +112,9 @@ export default function CleanLayout() {
         </div>
 
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-100 bg-white">
+          <div className="lg:hidden border-t border-gray-100 bg-white">
             <nav className="max-w-6xl mx-auto px-6 py-3 flex flex-col gap-1">
-              {visibleNavItems.map((n) => (
+              {mobileNavItems.map((n) => (
                 <Link
                   key={n.to}
                   to={n.to}

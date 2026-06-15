@@ -4,9 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useSite } from '../../context/SiteContext';
 import LanguageSwitch from '../../components/LanguageSwitch';
+import UserMenu from '../../components/UserMenu';
 import { FooterLegalLinks } from '../../components/LegalLinks';
 import {
+  getHeaderNavItems,
   getSiteNavItems,
+  getUserMenuNavItems,
   getVisibleNavItems,
   isSiteNavActive,
 } from '../../utils/navigation';
@@ -21,7 +24,10 @@ export default function ClaudeLayout() {
 
   const siteName = site?.name || 'AI Platform';
 
-  const visibleNavItems = getVisibleNavItems(getSiteNavItems({ t, site }), user);
+  const siteNavItems = getSiteNavItems({ t, site });
+  const headerNavItems = getVisibleNavItems(getHeaderNavItems(siteNavItems), user);
+  const mobileNavItems = getVisibleNavItems(getHeaderNavItems(siteNavItems), user);
+  const userMenuItems = getUserMenuNavItems(siteNavItems, user);
   const isNavActive = (to) => isSiteNavActive(location.pathname, to);
 
   return (
@@ -49,12 +55,12 @@ export default function ClaudeLayout() {
             </span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-1">
-            {visibleNavItems.map((n) => (
+          <nav className="hidden lg:flex items-center gap-1">
+            {headerNavItems.map((n) => (
               <Link
                 key={n.to}
                 to={n.to}
-                className={`px-3.5 py-2 text-sm rounded-lg transition-all ${
+                className={`whitespace-nowrap px-3 py-2 text-sm rounded-lg transition-all ${
                   isNavActive(n.to)
                     ? 'text-[#D97757] bg-[#D97757]/8 font-medium'
                     : 'text-[#6B5D4F] hover:text-[#3D3024] hover:bg-[#E8DDD0]/50'
@@ -69,15 +75,15 @@ export default function ClaudeLayout() {
             <LanguageSwitch className="text-[#8B7D6E] hover:text-[#3D3024] hover:bg-[#E8DDD0]/50" />
 
             {user ? (
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-[#6B5D4F] hidden sm:block">{user.display_name || user.username}</span>
-                <button
-                  onClick={async () => { await logout(); navigate('/'); }}
-                  className="text-sm text-[#8B7D6E] hover:text-[#3D3024] transition-colors"
-                >
-                  {t('nav.logout')}
-                </button>
-              </div>
+              <UserMenu
+                user={user}
+                items={userMenuItems}
+                onLogout={async () => { await logout(); navigate('/'); }}
+                logoutLabel={t('nav.logout')}
+                buttonClassName="border-[#E8DDD0] bg-[#E8DDD0]/30 text-[#6B5D4F] hover:bg-[#E8DDD0]/60 hover:text-[#3D3024]"
+                menuClassName="border-[#E8DDD0] bg-[#FAF6F1]/95 text-[#6B5D4F]"
+                itemClassName="hover:bg-[#E8DDD0]/50 hover:text-[#3D3024]"
+              />
             ) : (
               <>
                 <Link to="/login" className="text-sm text-[#6B5D4F] hover:text-[#3D3024] px-3 py-2 hidden sm:block transition-colors">
@@ -90,7 +96,7 @@ export default function ClaudeLayout() {
             )}
 
             <button
-              className="md:hidden p-2 rounded-lg hover:bg-[#E8DDD0]/50 transition-colors"
+              className="lg:hidden p-2 rounded-lg hover:bg-[#E8DDD0]/50 transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle menu"
             >
@@ -106,9 +112,9 @@ export default function ClaudeLayout() {
         </div>
 
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-[#E8DDD0] bg-[#FAF6F1]">
+          <div className="lg:hidden border-t border-[#E8DDD0] bg-[#FAF6F1]">
             <nav className="max-w-6xl mx-auto px-6 py-3 flex flex-col gap-1">
-              {visibleNavItems.map((n) => (
+              {mobileNavItems.map((n) => (
                 <Link
                   key={n.to}
                   to={n.to}

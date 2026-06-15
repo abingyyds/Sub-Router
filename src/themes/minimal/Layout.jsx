@@ -4,9 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useSite } from '../../context/SiteContext';
 import LanguageSwitch from '../../components/LanguageSwitch';
+import UserMenu from '../../components/UserMenu';
 import { FooterLegalLinks } from '../../components/LegalLinks';
 import {
+  getHeaderNavItems,
   getSiteNavItems,
+  getUserMenuNavItems,
   getVisibleNavItems,
   isSiteNavActive,
 } from '../../utils/navigation';
@@ -21,7 +24,10 @@ export default function MinimalLayout() {
 
   const siteName = site?.name || 'AI Platform';
 
-  const visibleNavItems = getVisibleNavItems(getSiteNavItems({ t, site }), user);
+  const siteNavItems = getSiteNavItems({ t, site });
+  const headerNavItems = getVisibleNavItems(getHeaderNavItems(siteNavItems), user);
+  const mobileNavItems = getVisibleNavItems(getHeaderNavItems(siteNavItems), user);
+  const userMenuItems = getUserMenuNavItems(siteNavItems, user);
   const isNavActive = (to) => isSiteNavActive(location.pathname, to);
 
   return (
@@ -47,12 +53,12 @@ export default function MinimalLayout() {
             )}
           </Link>
 
-          <nav className="hidden md:flex items-center gap-6">
-            {visibleNavItems.map((n) => (
+          <nav className="hidden lg:flex items-center gap-5">
+            {headerNavItems.map((n) => (
               <Link
                 key={n.to}
                 to={n.to}
-                className={`text-sm transition-colors ${
+                className={`whitespace-nowrap text-sm transition-colors ${
                   isNavActive(n.to)
                     ? 'text-white'
                     : 'text-neutral-500 hover:text-white'
@@ -67,12 +73,15 @@ export default function MinimalLayout() {
             <LanguageSwitch className="text-neutral-500 hover:text-white hover:bg-white/5" />
 
             {user ? (
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-neutral-500 hidden sm:block">{user.display_name || user.username}</span>
-                <button onClick={async () => { await logout(); navigate('/'); }} className="text-sm text-neutral-500 hover:text-white transition-colors">
-                  {t('nav.logout')}
-                </button>
-              </div>
+              <UserMenu
+                user={user}
+                items={userMenuItems}
+                onLogout={async () => { await logout(); navigate('/'); }}
+                logoutLabel={t('nav.logout')}
+                buttonClassName="border-neutral-800 bg-white/5 text-neutral-500 hover:text-white"
+                menuClassName="border-neutral-800 bg-neutral-950/95 text-neutral-400"
+                itemClassName="hover:bg-white/5 hover:text-white"
+              />
             ) : (
               <>
                 <Link to="/login" className="text-sm text-neutral-500 hover:text-white transition-colors hidden sm:block">
@@ -83,7 +92,7 @@ export default function MinimalLayout() {
                 </Link>
               </>
             )}
-            <button className="md:hidden p-1" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            <button className="lg:hidden p-1" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
               <svg className="w-5 h-5 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 {mobileMenuOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16M4 18h16" />}
               </svg>
@@ -92,9 +101,9 @@ export default function MinimalLayout() {
         </div>
 
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-neutral-800/40 bg-neutral-950/95">
+          <div className="lg:hidden border-t border-neutral-800/40 bg-neutral-950/95">
             <nav className="max-w-5xl mx-auto px-6 py-3 flex flex-col gap-1">
-              {visibleNavItems.map((n) => (
+              {mobileNavItems.map((n) => (
                 <Link key={n.to} to={n.to} onClick={() => setMobileMenuOpen(false)}
                   className={`px-3 py-2 text-sm rounded transition-colors ${isNavActive(n.to) ? 'text-white' : 'text-neutral-500 hover:text-white'}`}>
                   {n.label}

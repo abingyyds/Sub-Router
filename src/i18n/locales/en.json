@@ -594,6 +594,8 @@
     "dashboard.viewLogs": "View usage details",
     "dashboard.account": "Account Settings",
     "dashboard.accountDesc": "Change login password",
+    "dashboard.invoice": "Invoice Request",
+    "dashboard.invoiceDesc": "Submit invoice details",
 
     "logs.title": "Call Logs",
     "logs.callLogs": "Call Logs",
