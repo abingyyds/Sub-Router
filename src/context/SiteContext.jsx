@@ -87,6 +87,7 @@ export function SiteProvider({ children }) {
         theme_template: previewTheme,
         enable_topup: true,
         top_up_link: 'https://example.com/redeem-codes',
+        top_up_link_name: 'Redeem Code Shop',
         allow_sub_dist: true,
         show_app_market: true,
         currency: {

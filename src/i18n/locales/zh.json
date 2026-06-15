@@ -488,6 +488,7 @@
     "topup.rechargeAmountLabel": "充值金额",
     "topup.amountPlaceholder": "输入金额（最低 {{min}}）",
     "topup.paymentMethod": "支付方式",
+    "topup.otherPayment": "其他方式",
     "topup.processing": "处理中...",
     "topup.calculating": "计算中...",
     "topup.payAmountLabel": "实付金额",

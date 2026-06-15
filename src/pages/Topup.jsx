@@ -30,6 +30,11 @@ function normalizeExternalUrl(value) {
   }
 }
 
+function normalizePaymentLabel(value) {
+  const label = String(value || '').trim();
+  return Array.from(label).slice(0, 32).join('');
+}
+
 function normalizeCreemProducts(value) {
   if (!value) return [];
   try {
@@ -121,6 +126,7 @@ export default function Topup() {
   const [selectedPreset, setSelectedPreset] = useState(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [payingMethod, setPayingMethod] = useState('');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
 
   // Crypto modal
   const [cryptoOrder, setCryptoOrder] = useState(null);
@@ -142,11 +148,19 @@ export default function Topup() {
   const enableStripe = topupInfo?.enable_stripe_topup;
   const enableCreem = topupInfo?.enable_creem_topup;
   const enableCrypto = topupInfo?.enable_crypto_topup;
-  const hasAnyPayment = enableOnline || enableStripe || enableCreem || enableCrypto;
   const redeemCodeShopUrl = useMemo(
     () => normalizeExternalUrl(site?.top_up_link || topupConfig?.top_up_link || topupInfo?.top_up_link),
     [site?.top_up_link, topupConfig?.top_up_link, topupInfo?.top_up_link],
   );
+  const redeemCodeShopLabel = useMemo(
+    () => normalizePaymentLabel(site?.top_up_link_name || topupConfig?.top_up_link_name || topupInfo?.top_up_link_name) || t('topup.otherPayment'),
+    [site?.top_up_link_name, topupConfig?.top_up_link_name, topupInfo?.top_up_link_name, t],
+  );
+
+  const openRedeemCodeShop = useCallback(() => {
+    if (!redeemCodeShopUrl) return;
+    window.open(redeemCodeShopUrl, '_blank', 'noopener,noreferrer');
+  }, [redeemCodeShopUrl]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -245,6 +259,7 @@ export default function Topup() {
 
   // Pay handler for EPay, Stripe and Creem methods
   const handlePay = async (method) => {
+    setSelectedPaymentMethod(method);
     const payAmount = parseInt(amount);
     if (!payAmount || payAmount <= 0) {
       toast.error(t('topup.enterAmount'));
@@ -418,6 +433,7 @@ export default function Topup() {
   const selectedCryptoLabel = selectedChainLabel
     ? `${selectedTokenLabel} (${selectedChainLabel})`
     : selectedTokenLabel;
+  const showCryptoOptions = selectedPaymentMethod === 'crypto' && enableCrypto && availableChains.length > 0;
 
   // Set default chain when available
   useEffect(() => {
@@ -526,7 +542,7 @@ export default function Topup() {
       </div>
 
       {/* Online Topup */}
-      {site?.enable_topup && (enableOnline || enableStripe || enableCreem || enableCrypto) && (topupPayMethods.length > 0 || enableCrypto) && (
+      {site?.enable_topup && (enableOnline || enableStripe || enableCreem || enableCrypto || redeemCodeShopUrl) && (topupPayMethods.length > 0 || enableCrypto || redeemCodeShopUrl) && (
         <div className="glass rounded-2xl p-6 mb-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold text-page">{t('topup.onlineTopup')}</h2>
@@ -629,17 +645,51 @@ export default function Topup() {
                           })
                         : undefined
                     }
-                    className="px-4 py-2.5 rounded-xl text-sm font-medium glass-sm text-page-label hover:text-page hover:bg-page-surface-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                    className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                      selectedPaymentMethod === method.type
+                        ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/25'
+                        : 'glass-sm text-page-label hover:text-page hover:bg-page-surface-hover'
+                    }`}
                   >
                     {isCurrentLoading ? t('topup.processing') : method.name}
                   </button>
                 );
               })}
+              {enableCrypto && availableChains.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedPaymentMethod('crypto')}
+                  disabled={paymentLoading}
+                  className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                    selectedPaymentMethod === 'crypto'
+                      ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/25'
+                      : 'glass-sm text-page-label hover:text-page hover:bg-page-surface-hover'
+                  }`}
+                >
+                  {t('topup.cryptoPayment')}
+                </button>
+              )}
+              {redeemCodeShopUrl && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedPaymentMethod('external');
+                    openRedeemCodeShop();
+                  }}
+                  className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                    selectedPaymentMethod === 'external'
+                      ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/25'
+                      : 'glass-sm text-page-label hover:text-page hover:bg-page-surface-hover'
+                  }`}
+                >
+                  {redeemCodeShopLabel}
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Crypto Payment (inline) */}
-          {enableCrypto && availableChains.length > 0 && (
+          {/* Crypto Payment */}
+          {showCryptoOptions && (
             <div className="mt-6 pt-6 border-t border-page-divider">
               <label className="block text-sm font-medium text-page-label mb-3">{t('topup.cryptoPayment')}</label>
               <div className="rounded-xl border border-page-divider bg-page-surface/50 p-4 space-y-4">

@@ -488,6 +488,7 @@
     "topup.rechargeAmountLabel": "Recharge Amount",
     "topup.amountPlaceholder": "Enter amount (min {{min}})",
     "topup.paymentMethod": "Payment Method",
+    "topup.otherPayment": "Other Methods",
     "topup.processing": "Processing...",
     "topup.calculating": "Calculating...",
     "topup.payAmountLabel": "Amount to pay",
