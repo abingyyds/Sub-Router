@@ -7,6 +7,9 @@ const PRODUCT_PAGE_REPO_RAW =
 const LIBRECHAT_REPO_RAW =
   'https://raw.githubusercontent.com/danny-avila/LibreChat/main';
 const WEBNOVEL_WRITER_OWNER_AVATAR = 'https://github.com/lingfengQAQ.png';
+const MONEY_PRINTER_TURBO_REPO_RAW =
+  'https://raw.githubusercontent.com/harry0703/MoneyPrinterTurbo/main';
+const MONEY_PRINTER_TURBO_OWNER_AVATAR = 'https://github.com/harry0703.png';
 
 const PLATFORM_APP_INTEGRATION = [
   'appMarket.integrationLogin',
@@ -113,6 +116,26 @@ export const APP_MARKET_APPS = [
       'appMarket.featureOutlinePlanning',
       'appMarket.featureStoryMemory',
       'appMarket.featureConsistencyReview',
+    ],
+  },
+  {
+    id: 'moneyprinterturbo',
+    name: 'MoneyPrinterTurbo',
+    categoryKey: 'appMarket.categoryContent',
+    statusKey: 'appMarket.statusLive',
+    taglineKey: 'appMarket.moneyPrinterTurboTagline',
+    descriptionKey: 'appMarket.moneyPrinterTurboDescription',
+    logo: MONEY_PRINTER_TURBO_OWNER_AVATAR,
+    cover: `${MONEY_PRINTER_TURBO_REPO_RAW}/docs/webui.jpg`,
+    appUrl: 'https://moneyprinterturbo-production-e7fc.up.railway.app/',
+    sourceUrl: 'https://github.com/harry0703/MoneyPrinterTurbo',
+    license: 'MIT',
+    integration: PLATFORM_APP_INTEGRATION,
+    featureKeys: [
+      'appMarket.featureShortVideoGeneration',
+      'appMarket.featureAiCopywriting',
+      'appMarket.featureSubtitleVoiceover',
+      'appMarket.featureBatchVideo',
     ],
   },
 ];
