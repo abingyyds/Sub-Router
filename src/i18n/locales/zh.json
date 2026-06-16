@@ -375,6 +375,7 @@
     "pricing.subtitle": "透明的按量付费定价。价格以每百万 token 计。",
     "pricing.searchPlaceholder": "搜索模型...",
     "pricing.noMatch": "没有匹配的模型",
+    "pricing.regionRestricted": "此分类/此模型只对海外用户开放",
     "pricing.noModels": "暂无可用模型",
     "pricing.model": "模型",
     "pricing.inputPrice": "输入 / 百万 token",

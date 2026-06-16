@@ -180,12 +180,7 @@ function SectionTitle({ title, desc, compact = false }) {
 }
 
 function MarketBoard({ models, t }) {
-  const rows = models.length ? models : [
-    { display_name: 'gpt-4o-mini' },
-    { display_name: 'claude-sonnet' },
-    { display_name: 'gemini-pro' },
-    { display_name: 'deepseek-chat' },
-  ];
+  const rows = models.slice(0, 4);
   return (
     <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-[0_28px_80px_rgba(41,37,36,0.12)]">
       <div className="mb-4 flex items-center justify-between gap-4">

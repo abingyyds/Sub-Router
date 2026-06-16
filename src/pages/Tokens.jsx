@@ -634,6 +634,7 @@ function GroupPricingModal({
   const displayGroup = pricingData?.group || group;
   const summary = pricingData?.summary;
   const hasItems = (pricingData?.items || []).length > 0;
+  const regionRestricted = pricingData?.region_restricted === true;
   const { symbol, rate } = currency || {};
 
   return (
@@ -727,11 +728,15 @@ function GroupPricingModal({
             </div>
           ) : !hasItems ? (
             <div className="text-sm text-page-secondary">
-              {t('tokens.groupPricingNoData')}
+              {regionRestricted
+                ? t('pricing.regionRestricted')
+                : t('tokens.groupPricingNoData')}
             </div>
           ) : items.length === 0 ? (
             <div className="text-sm text-page-secondary">
-              {t('tokens.groupPricingNoMatch')}
+              {regionRestricted && search.trim()
+                ? t('pricing.regionRestricted')
+                : t('tokens.groupPricingNoMatch')}
             </div>
           ) : (
             <div className="overflow-x-auto">

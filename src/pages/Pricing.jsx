@@ -179,6 +179,7 @@ export default function Pricing() {
   const [modelType, setModelType] = useState('');
   const [loading, setLoading] = useState(true);
   const [expandedModels, setExpandedModels] = useState(() => new Set());
+  const [restriction, setRestriction] = useState(null);
 
   useEffect(() => {
     getSiteModels()
@@ -186,6 +187,11 @@ export default function Pricing() {
         if (r.data.success) {
           setModels(r.data.data || []);
           setVendors(r.data.vendors || []);
+          setRestriction(
+            r.data.region_restricted
+              ? { region_restricted: true, message: r.data.message }
+              : null,
+          );
         }
       })
       .catch(() => {})
@@ -235,6 +241,9 @@ export default function Pricing() {
     });
     return list;
   }, [enabledModels, vendor, modelType, search]);
+  const hasActiveFilter = Boolean(search.trim() || vendor || modelType);
+  const restrictedEmpty =
+    restriction?.region_restricted && hasActiveFilter && filtered.length === 0;
 
   const toggleModel = (key) => {
     setExpandedModels((prev) => {
@@ -420,7 +429,9 @@ export default function Pricing() {
 
       {filtered.length === 0 ? (
         <div className="text-center py-12 text-page-secondary">
-          {search || vendor || modelType ? t('pricing.noMatch') : t('pricing.noModels')}
+          {restrictedEmpty
+            ? t('pricing.regionRestricted')
+            : search || vendor || modelType ? t('pricing.noMatch') : t('pricing.noModels')}
         </div>
       ) : (
         <div className="glass-sm rounded-xl overflow-x-auto">

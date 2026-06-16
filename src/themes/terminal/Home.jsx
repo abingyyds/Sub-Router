@@ -179,7 +179,7 @@ function SectionTitle({ title, desc }) {
 }
 
 function RouteConsole({ models, t }) {
-  const rows = models.length ? models : [{ display_name: 'gpt-4o-mini' }, { display_name: 'claude-sonnet' }, { display_name: 'gemini-pro' }];
+  const rows = models.slice(0, 3);
   return (
     <div className="rounded-xl border border-emerald-400/20 bg-[#030504] shadow-2xl shadow-emerald-950/60">
       <div className="flex items-center justify-between border-b border-emerald-400/15 px-4 py-3 font-mono">
