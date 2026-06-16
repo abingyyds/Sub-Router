@@ -333,14 +333,20 @@ export default function SubDistributor() {
           )}
 
           {cryptoOrder && (
-            <div className="mt-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5 space-y-2">
+            <div className="mt-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5 space-y-3">
               <p className="text-sm font-medium text-page">{t('subDist.cryptoTitle')}</p>
               <p className="text-sm text-page-secondary">{t('subDist.cryptoHint')}</p>
+              <div className="rounded-xl border-2 border-amber-400/60 bg-amber-500/10 p-4">
+                <p className="text-xs font-semibold text-page-warning mb-2">{t('subDist.exactAmountLabel')}</p>
+                <p className="text-2xl font-bold text-page-warning font-mono break-all">{cryptoOrder.amount} {cryptoOrder.token}</p>
+                <p className="mt-2 text-xs leading-relaxed text-page-warning">{t('subDist.exactAmountNotice')}</p>
+              </div>
               <div className="text-sm text-page">
                 <div>{t('subDist.wallet')}: <span className="font-mono break-all">{cryptoOrder.wallet}</span></div>
                 <div>{t('subDist.amount')}: <span className="font-mono">{cryptoOrder.amount} {cryptoOrder.token}</span></div>
                 <div>{t('subDist.tradeNo')}: <span className="font-mono break-all">{cryptoOrder.trade_no}</span></div>
               </div>
+              <p className="rounded-xl border border-amber-400/30 bg-amber-500/5 p-3 text-xs leading-relaxed text-page-warning">{t('subDist.exactAmountDetail')}</p>
             </div>
           )}
         </div>
