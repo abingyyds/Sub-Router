@@ -180,6 +180,7 @@ export default function Pricing() {
   const [loading, setLoading] = useState(true);
   const [expandedModels, setExpandedModels] = useState(() => new Set());
   const [restriction, setRestriction] = useState(null);
+  const [unrestrictedTotal, setUnrestrictedTotal] = useState(0);
 
   useEffect(() => {
     getSiteModels()
@@ -187,6 +188,7 @@ export default function Pricing() {
         if (r.data.success) {
           setModels(r.data.data || []);
           setVendors(r.data.vendors || []);
+          setUnrestrictedTotal(Number(r.data.unrestricted_total || 0));
           setRestriction(
             r.data.region_restricted
               ? { region_restricted: true, message: r.data.message }
@@ -244,6 +246,18 @@ export default function Pricing() {
   const hasActiveFilter = Boolean(search.trim() || vendor || modelType);
   const restrictedEmpty =
     restriction?.region_restricted && hasActiveFilter && filtered.length === 0;
+  const regionRestrictedNoModels =
+    restriction?.region_restricted &&
+    !hasActiveFilter &&
+    enabledModels.length === 0 &&
+    unrestrictedTotal > 0;
+  const emptyMessage = regionRestrictedNoModels
+    ? t('pricing.regionNoModels')
+    : restrictedEmpty
+    ? t('pricing.regionRestricted')
+    : search || vendor || modelType
+    ? t('pricing.noMatch')
+    : t('pricing.noModels');
 
   const toggleModel = (key) => {
     setExpandedModels((prev) => {
@@ -429,9 +443,7 @@ export default function Pricing() {
 
       {filtered.length === 0 ? (
         <div className="text-center py-12 text-page-secondary">
-          {restrictedEmpty
-            ? t('pricing.regionRestricted')
-            : search || vendor || modelType ? t('pricing.noMatch') : t('pricing.noModels')}
+          {emptyMessage}
         </div>
       ) : (
         <div className="glass-sm rounded-xl overflow-x-auto">

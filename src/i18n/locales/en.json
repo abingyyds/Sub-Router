@@ -376,6 +376,7 @@
     "pricing.searchPlaceholder": "Search models...",
     "pricing.noMatch": "No models match your search",
     "pricing.regionRestricted": "This category/model is only available to overseas users.",
+    "pricing.regionNoModels": "No models are currently available for mainland China.",
     "pricing.noModels": "No models available",
     "pricing.model": "Model",
     "pricing.inputPrice": "Input / 1M tokens",
