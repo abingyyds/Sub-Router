@@ -8,6 +8,7 @@ import {
   getAffCode,
   transferAffQuota,
   getAffEarnings,
+  getAffPayouts,
   requestAffWithdraw,
   getDistKolStatus,
   submitDistKolApply,
@@ -29,8 +30,11 @@ export default function Dashboard() {
   // Invitation / Aff
   const [affLink, setAffLink] = useState('');
   const [affEarnings, setAffEarnings] = useState([]);
+  const [affPayouts, setAffPayouts] = useState([]);
+  const [affDetailTab, setAffDetailTab] = useState('earnings');
   const [showAffEarnings, setShowAffEarnings] = useState(false);
   const [affEarningsLoading, setAffEarningsLoading] = useState(false);
+  const [affPayoutsLoading, setAffPayoutsLoading] = useState(false);
   const [transferAmount, setTransferAmount] = useState('');
   const [transferring, setTransferring] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
@@ -99,6 +103,39 @@ export default function Dashboard() {
     setAffEarningsLoading(false);
   };
 
+  const loadAffPayouts = async () => {
+    setAffPayoutsLoading(true);
+    try {
+      const res = await getAffPayouts({ page: 1, page_size: 20 });
+      if (res.data.success && res.data.data) {
+        setAffPayouts(res.data.data);
+      }
+    } catch (e) {
+      /* interceptor */
+    }
+    setAffPayoutsLoading(false);
+  };
+
+  const handleToggleAffDetails = () => {
+    const nextShow = !showAffEarnings;
+    setShowAffEarnings(nextShow);
+    if (!nextShow) return;
+    if (affDetailTab === 'payouts') {
+      loadAffPayouts();
+    } else {
+      loadAffEarnings();
+    }
+  };
+
+  const handleAffDetailTabChange = (tab) => {
+    setAffDetailTab(tab);
+    if (tab === 'payouts') {
+      loadAffPayouts();
+    } else {
+      loadAffEarnings();
+    }
+  };
+
   const handleCopyAffLink = () => {
     if (!affLink) return;
     navigator.clipboard.writeText(affLink).then(() => {
@@ -109,6 +146,49 @@ export default function Dashboard() {
   };
 
   const getAffEarningUsername = (item) => item.username || item.display_name || (item.user_id ? `ID ${item.user_id}` : '-');
+
+  const formatTime = (timestamp) => {
+    if (!timestamp) return '-';
+    return new Date(timestamp * 1000).toLocaleString();
+  };
+
+  const formatPayoutAmount = (item) => {
+    const money = Number(item?.money ?? 0);
+    const amount = Number(item?.amount ?? 0);
+    const usdAmount = money > 0 ? money : amount;
+    return `${symbol}${(usdAmount * rate).toFixed(2)}`;
+  };
+
+  const getPayoutStatusMeta = (status) => {
+    if (status === 0) {
+      return {
+        label: t('topup.withdrawStatusPending'),
+        className: 'border-amber-500/20 bg-amber-500/10 text-amber-600',
+      };
+    }
+    if (status === 1) {
+      return {
+        label: t('topup.withdrawStatusProcessing'),
+        className: 'border-sky-500/20 bg-sky-500/10 text-sky-600',
+      };
+    }
+    if (status === 2) {
+      return {
+        label: t('topup.withdrawStatusCompleted'),
+        className: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600',
+      };
+    }
+    if (status === 3) {
+      return {
+        label: t('topup.withdrawStatusFailed'),
+        className: 'border-red-500/20 bg-red-500/10 text-red-600',
+      };
+    }
+    return {
+      label: '-',
+      className: 'border-page-border bg-page-surface-hover text-page-secondary',
+    };
+  };
 
   const handleTransfer = async () => {
     const val = parseInt(transferAmount);
@@ -204,7 +284,9 @@ export default function Dashboard() {
         toast.success(res.data.message || t('topup.withdrawSuccess'));
         setShowWithdrawModal(false);
         resetWithdrawForm();
-        await Promise.all([loadData(), refreshUser()]);
+        await Promise.all([loadData(), refreshUser(), loadAffPayouts()]);
+        setAffDetailTab('payouts');
+        setShowAffEarnings(true);
       }
     } catch (err) {
       /* interceptor */
@@ -488,30 +570,52 @@ export default function Dashboard() {
 
           <div>
             <button
-              onClick={() => {
-                setShowAffEarnings(!showAffEarnings);
-                if (!showAffEarnings) loadAffEarnings();
-              }}
+              onClick={handleToggleAffDetails}
               className="text-sm text-page-secondary hover:text-page transition-colors"
             >
-              {showAffEarnings ? t('topup.hideEarnings') : t('topup.viewEarnings')}
+              {showAffEarnings ? t('topup.hideEarnings') : t('topup.viewRewardDetails')}
             </button>
             {showAffEarnings && (
               <div className="mt-3">
-                {affEarningsLoading ? (
+                <div className="mb-3 flex overflow-hidden rounded-xl border border-page-border">
+                  <button
+                    type="button"
+                    onClick={() => handleAffDetailTabChange('earnings')}
+                    className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
+                      affDetailTab === 'earnings'
+                        ? 'bg-page-surface-hover text-page'
+                        : 'text-page-secondary hover:text-page'
+                    }`}
+                  >
+                    {t('topup.earningDetails')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleAffDetailTabChange('payouts')}
+                    className={`flex-1 border-l border-page-border px-4 py-2 text-sm font-medium transition-colors ${
+                      affDetailTab === 'payouts'
+                        ? 'bg-page-surface-hover text-page'
+                        : 'text-page-secondary hover:text-page'
+                    }`}
+                  >
+                    {t('topup.withdrawHistory')}
+                  </button>
+                </div>
+
+                {affDetailTab === 'earnings' && affEarningsLoading ? (
                   <div className="flex justify-center py-6">
                     <div className="w-6 h-6 border-2 border-brand-500/30 border-t-brand-500 rounded-full animate-spin" />
                   </div>
-                ) : affEarnings.length === 0 ? (
+                ) : affDetailTab === 'earnings' && affEarnings.length === 0 ? (
                   <p className="text-sm text-page-muted text-center py-6">{t('topup.noEarnings')}</p>
-                ) : (
+                ) : affDetailTab === 'earnings' ? (
                   <div className="space-y-2">
                     {affEarnings.map((item, i) => (
                       <div key={i} className="flex items-center justify-between glass-sm rounded-xl px-4 py-3">
                         <div className="min-w-0">
                           <p className="truncate text-sm text-page">{getAffEarningUsername(item)}</p>
                           <p className="truncate text-xs text-page-muted">
-                            {item.model_name || '-'} · {new Date(item.created_time * 1000).toLocaleString()} · {(item.commission_rate * 100).toFixed(1)}%
+                            {item.model_name || '-'} · {formatTime(item.created_time)} · {(item.commission_rate * 100).toFixed(1)}%
                           </p>
                         </div>
                         <span className="shrink-0 text-sm font-medium text-page-success">
@@ -519,6 +623,63 @@ export default function Dashboard() {
                         </span>
                       </div>
                     ))}
+                  </div>
+                ) : affPayoutsLoading ? (
+                  <div className="flex justify-center py-6">
+                    <div className="w-6 h-6 border-2 border-brand-500/30 border-t-brand-500 rounded-full animate-spin" />
+                  </div>
+                ) : affPayouts.length === 0 ? (
+                  <p className="text-sm text-page-muted text-center py-6">{t('topup.noWithdrawHistory')}</p>
+                ) : (
+                  <div className="space-y-2">
+                    {affPayouts.map((item) => {
+                      const statusMeta = getPayoutStatusMeta(item.status);
+                      return (
+                        <div key={item.id} className="glass-sm rounded-xl px-4 py-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-page">
+                                {formatPayoutAmount(item)}
+                              </p>
+                              <p className="mt-1 truncate text-xs text-page-muted">
+                                {formatTime(item.created_time)} · {item.payment_method || '-'}
+                              </p>
+                            </div>
+                            <span className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-medium ${statusMeta.className}`}>
+                              {statusMeta.label}
+                            </span>
+                          </div>
+                          {(item.remark || item.admin_remark || item.transaction_id || item.completed_time) && (
+                            <div className="mt-3 space-y-1 border-t border-page-border pt-3 text-xs text-page-muted">
+                              {item.remark && (
+                                <p>
+                                  <span className="text-page-secondary">{t('topup.withdrawRemarkLabel')}</span>
+                                  {item.remark}
+                                </p>
+                              )}
+                              {item.admin_remark && (
+                                <p>
+                                  <span className="text-page-secondary">{t('topup.withdrawAdminRemark')}</span>
+                                  {item.admin_remark}
+                                </p>
+                              )}
+                              {item.transaction_id && (
+                                <p className="break-all">
+                                  <span className="text-page-secondary">{t('topup.withdrawTransactionId')}</span>
+                                  {item.transaction_id}
+                                </p>
+                              )}
+                              {item.completed_time > 0 && (
+                                <p>
+                                  <span className="text-page-secondary">{t('topup.withdrawCompletedTime')}</span>
+                                  {formatTime(item.completed_time)}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
