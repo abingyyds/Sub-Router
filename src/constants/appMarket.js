@@ -6,6 +6,10 @@ const PRODUCT_PAGE_REPO_RAW =
   'https://raw.githubusercontent.com/ziguishian/ai-product-page-generator/main';
 const LIBRECHAT_REPO_RAW =
   'https://raw.githubusercontent.com/danny-avila/LibreChat/main';
+const WEBNOVEL_WRITER_OWNER_AVATAR = 'https://github.com/lingfengQAQ.png';
+const MONEY_PRINTER_TURBO_REPO_RAW =
+  'https://raw.githubusercontent.com/harry0703/MoneyPrinterTurbo/main';
+const MONEY_PRINTER_TURBO_OWNER_AVATAR = 'https://github.com/harry0703.png';
 
 const PLATFORM_APP_INTEGRATION = [
   'appMarket.integrationLogin',
@@ -92,6 +96,46 @@ export const APP_MARKET_APPS = [
       'appMarket.featureAgents',
       'appMarket.featureMcp',
       'appMarket.featureFiles',
+    ],
+  },
+  {
+    id: 'webnovel-writer',
+    name: 'WebNovel Writer',
+    categoryKey: 'appMarket.categoryWriting',
+    statusKey: 'appMarket.statusLive',
+    taglineKey: 'appMarket.webnovelWriterTagline',
+    descriptionKey: 'appMarket.webnovelWriterDescription',
+    logo: WEBNOVEL_WRITER_OWNER_AVATAR,
+    coverTone: 'from-zinc-950 via-stone-800 to-lime-700',
+    appUrl: 'https://webnovel-writer-production.up.railway.app/',
+    sourceUrl: 'https://github.com/lingfengQAQ/webnovel-writer',
+    license: 'GPL-3.0',
+    integration: PLATFORM_APP_INTEGRATION,
+    featureKeys: [
+      'appMarket.featureLongformWriting',
+      'appMarket.featureOutlinePlanning',
+      'appMarket.featureStoryMemory',
+      'appMarket.featureConsistencyReview',
+    ],
+  },
+  {
+    id: 'moneyprinterturbo',
+    name: 'MoneyPrinterTurbo',
+    categoryKey: 'appMarket.categoryContent',
+    statusKey: 'appMarket.statusLive',
+    taglineKey: 'appMarket.moneyPrinterTurboTagline',
+    descriptionKey: 'appMarket.moneyPrinterTurboDescription',
+    logo: MONEY_PRINTER_TURBO_OWNER_AVATAR,
+    cover: `${MONEY_PRINTER_TURBO_REPO_RAW}/docs/webui.jpg`,
+    appUrl: 'https://moneyprinterturbo-production-e7fc.up.railway.app/',
+    sourceUrl: 'https://github.com/harry0703/MoneyPrinterTurbo',
+    license: 'MIT',
+    integration: PLATFORM_APP_INTEGRATION,
+    featureKeys: [
+      'appMarket.featureShortVideoGeneration',
+      'appMarket.featureAiCopywriting',
+      'appMarket.featureSubtitleVoiceover',
+      'appMarket.featureBatchVideo',
     ],
   },
 ];
