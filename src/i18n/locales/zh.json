@@ -211,6 +211,8 @@
     "appMarket.openSource": "开源项目",
     "appMarket.moreComing": "更多应用即将公布",
     "appMarket.moreComingDesc": "新的 AI 应用上线后，会继续在这里展示入口、源码、图片和使用说明。",
+    "appMarket.emptyTitle": "当前分站暂无上架应用",
+    "appMarket.emptyDesc": "站长暂未在应用市场中选择可展示的应用。",
 
     "subDist.nav": "中转站搭建",
     "subDist.dashboardEntry": "开通可定价、可推广的专属中转站",

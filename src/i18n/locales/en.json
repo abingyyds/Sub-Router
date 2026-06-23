@@ -211,6 +211,8 @@
     "appMarket.openSource": "Open Source",
     "appMarket.moreComing": "More apps coming soon",
     "appMarket.moreComingDesc": "When new AI apps go live, their entrance, source code, images, and usage notes will be shown here.",
+    "appMarket.emptyTitle": "No apps listed on this site",
+    "appMarket.emptyDesc": "The site owner has not selected apps to display in the App Market yet.",
 
     "subDist.nav": "Relay Site Setup",
     "subDist.dashboardEntry": "Launch a relay site you can price and promote",
