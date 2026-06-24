@@ -11,6 +11,7 @@ import {
   WalletCards,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useSite } from '../context/SiteContext';
 import { APP_MARKET_APPS } from '../constants/appMarket';
 
 function CoverFallback({ app, t }) {
@@ -41,6 +42,14 @@ function CoverFallback({ app, t }) {
 export default function AppMarket() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { site } = useSite();
+  const visibleApps = React.useMemo(() => {
+    if (!Array.isArray(site?.app_market_apps)) {
+      return APP_MARKET_APPS;
+    }
+    const enabledAppIds = new Set(site.app_market_apps);
+    return APP_MARKET_APPS.filter((app) => enabledAppIds.has(app.id));
+  }, [site?.app_market_apps]);
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 sm:py-12">
@@ -89,7 +98,16 @@ export default function AppMarket() {
       </section>
 
       <section className="mt-8 grid gap-5">
-        {APP_MARKET_APPS.map((app) => (
+        {visibleApps.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-page-divider bg-page-surface px-5 py-10 text-center">
+            <h2 className="text-base font-semibold text-page">
+              {t('appMarket.emptyTitle')}
+            </h2>
+            <p className="mt-2 text-sm text-page-secondary">
+              {t('appMarket.emptyDesc')}
+            </p>
+          </div>
+        ) : visibleApps.map((app) => (
           <article
             key={app.id}
             className="glass overflow-hidden rounded-2xl shadow-sm"
@@ -227,14 +245,16 @@ export default function AppMarket() {
         ))}
       </section>
 
-      <section className="mt-6 rounded-2xl border border-dashed border-page-divider bg-page-surface px-5 py-6 text-center">
-        <h2 className="text-base font-semibold text-page">
-          {t('appMarket.moreComing')}
-        </h2>
-        <p className="mt-2 text-sm text-page-secondary">
-          {t('appMarket.moreComingDesc')}
-        </p>
-      </section>
+      {visibleApps.length > 0 && (
+        <section className="mt-6 rounded-2xl border border-dashed border-page-divider bg-page-surface px-5 py-6 text-center">
+          <h2 className="text-base font-semibold text-page">
+            {t('appMarket.moreComing')}
+          </h2>
+          <p className="mt-2 text-sm text-page-secondary">
+            {t('appMarket.moreComingDesc')}
+          </p>
+        </section>
+      )}
     </div>
   );
 }

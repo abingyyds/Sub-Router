@@ -775,15 +775,23 @@ export default function Topup() {
                 <p className="text-xs text-page-secondary mb-1">{t('topup.walletAddress')}</p>
                 <p className="text-sm text-page font-mono break-all">{cryptoOrder.wallet}</p>
               </div>
+              <div className="rounded-xl border-2 border-amber-400/60 bg-amber-500/10 p-4">
+                <p className="text-xs font-semibold text-page-warning mb-2">{t('topup.exactAmountLabel')}</p>
+                <p className="text-2xl font-bold text-page-warning font-mono break-all">{cryptoOrder.amount} {cryptoOrder.token}</p>
+                <p className="mt-2 text-xs leading-relaxed text-page-warning">{t('topup.exactAmountNotice')}</p>
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="glass-sm rounded-xl p-3">
                   <p className="text-xs text-page-secondary mb-1">{t('topup.amount')}</p>
-                  <p className="text-sm text-page font-medium">{cryptoOrder.amount} {cryptoOrder.token}</p>
+                  <p className="text-sm text-page font-medium font-mono">{cryptoOrder.amount} {cryptoOrder.token}</p>
                 </div>
                 <div className="glass-sm rounded-xl p-3">
                   <p className="text-xs text-page-secondary mb-1">{t('topup.chain')}</p>
                   <p className="text-sm text-page font-medium">{selectedChainLabel || cryptoOrder.chain}</p>
                 </div>
+              </div>
+              <div className="rounded-xl border border-amber-400/30 bg-amber-500/5 p-3 text-xs leading-relaxed text-page-warning">
+                {t('topup.exactAmountDetail')}
               </div>
               {cryptoPolling && (
                 <div className="flex items-center gap-2 text-sm text-page-secondary">

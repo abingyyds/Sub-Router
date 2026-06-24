@@ -189,12 +189,7 @@ function SectionTitle({ title, desc, compact = false }) {
 }
 
 function HeroPanel({ models, siteName }) {
-  const preview = models.length ? models : [
-    { display_name: 'GPT-4o Mini' },
-    { display_name: 'Claude Sonnet' },
-    { display_name: 'Gemini Pro' },
-    { display_name: 'DeepSeek Chat' },
-  ];
+  const preview = models.slice(0, 4);
 
   return (
     <div className="relative mx-auto max-w-xl">

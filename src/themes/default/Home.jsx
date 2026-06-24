@@ -306,11 +306,7 @@ function Metric({ value, label, prefix = '', suffix = '' }) {
 }
 
 function HeroConsole({ models, t }) {
-  const rows = models.length > 0 ? models : [
-    { display_name: 'gpt-4o-mini' },
-    { display_name: 'claude-3.5-sonnet' },
-    { display_name: 'gemini-1.5-pro' },
-  ];
+  const rows = models.slice(0, 3);
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl shadow-slate-200/80">

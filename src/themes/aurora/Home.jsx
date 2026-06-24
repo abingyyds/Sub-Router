@@ -194,12 +194,7 @@ function SectionTitle({ title, desc, compact = false }) {
 }
 
 function RoutingWorkbench({ models, t }) {
-  const preview = models.length ? models : [
-    { display_name: 'gpt-4o-mini' },
-    { display_name: 'claude-sonnet' },
-    { display_name: 'gemini-pro' },
-    { display_name: 'deepseek-chat' },
-  ];
+  const preview = models.slice(0, 4);
   const rows = [
     { label: 'latency', value: '42ms', tone: 'text-blue-200' },
     { label: 'fallback', value: 'armed', tone: 'text-teal-200' },

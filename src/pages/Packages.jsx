@@ -19,8 +19,18 @@ const resetLabelKeys = {
 const ACTIVE_SUBS_PAGE_SIZE = 5;
 
 function formatDate(unix) {
-  if (!unix) return '';
-  return new Date(unix * 1000).toLocaleDateString();
+  const timestamp = Number(unix || 0);
+  if (!timestamp) return '';
+
+  const date = new Date(timestamp * 1000);
+  if (Number.isNaN(date.getTime())) return '';
+
+  const pad = (value) => String(value).padStart(2, '0');
+  return [
+    date.getFullYear(),
+    pad(date.getMonth() + 1),
+    pad(date.getDate()),
+  ].join('-') + ` ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 export default function Packages() {
