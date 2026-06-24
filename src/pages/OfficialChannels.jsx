@@ -14,6 +14,12 @@ const normalizeDiscount = (value) => {
   return Number.isFinite(n) && n > 0 ? Math.min(n, 1) : 0;
 };
 
+const normalizeMarkup = (value) => {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return n;
+};
+
 const formatDiscount = (value) => {
   const discount = normalizeDiscount(value);
   if (discount <= 0) return '不限';
@@ -23,7 +29,18 @@ const formatDiscount = (value) => {
   return `${discount.toFixed(discount >= 10 ? 1 : 2).replace(/\.?0+$/, '')}x`;
 };
 
+const formatPriceMultiplier = (value) => {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return '不限';
+  if (n < 1) {
+    return `${(n * 10).toFixed(n * 10 < 1 ? 1 : 2).replace(/\.?0+$/, '')}折`;
+  }
+  return `${n.toFixed(n >= 10 ? 1 : 2).replace(/\.?0+$/, '')}x`;
+};
+
 const formatCount = (value) => Number(value || 0).toLocaleString();
+
+const formatMarkup = (value) => `${normalizeMarkup(value).toFixed(2).replace(/\.?0+$/, '')}%`;
 
 export default function OfficialChannels() {
   const { t } = useTranslation();
@@ -52,7 +69,7 @@ export default function OfficialChannels() {
         acc.models += Number(item.usable_model_count || 0);
         acc.keys += Number(item.available_key_count || 0);
         acc.providers += Number(item.available_provider_count || 0);
-        const min = normalizeDiscount(item.min_allowed_price_discount || item.min_price_discount);
+        const min = Number(item.min_allowed_final_discount || item.min_allowed_price_discount || item.min_price_discount || 0);
         if (min > 0 && (acc.min === 0 || min < acc.min)) acc.min = min;
         return acc;
       },
@@ -129,10 +146,11 @@ export default function OfficialChannels() {
                   </div>
                 </div>
 
-                <div className="grid gap-2 sm:grid-cols-3">
-                  <Metric label={t('officialChannels.lowestPrice')} value={formatDiscount(channel.min_allowed_price_discount || channel.min_price_discount)} />
-                  <Metric label={t('officialChannels.maxPrice')} value={formatDiscount(channel.max_discount)} />
-                  <Metric label={t('officialChannels.priceRange')} value={`${formatDiscount(channel.min_allowed_price_discount || channel.min_price_discount)} - ${formatDiscount(channel.max_discount)}`} />
+                <div className="grid gap-2 sm:grid-cols-4">
+                  <Metric label={t('officialChannels.lowestPrice')} value={formatPriceMultiplier(channel.min_allowed_final_discount || channel.min_allowed_price_discount || channel.min_price_discount)} />
+                  <Metric label={t('officialChannels.maxPrice')} value={formatPriceMultiplier(channel.max_final_discount || channel.max_discount)} />
+                  <Metric label={t('officialChannels.markup')} value={formatMarkup(channel.markup_percent)} />
+                  <Metric label={t('officialChannels.priceRange')} value={`${formatPriceMultiplier(channel.min_allowed_final_discount || channel.min_allowed_price_discount || channel.min_price_discount)} - ${formatPriceMultiplier(channel.max_final_discount || channel.max_discount)}`} />
                 </div>
 
                 <div className="grid gap-2 sm:grid-cols-3">

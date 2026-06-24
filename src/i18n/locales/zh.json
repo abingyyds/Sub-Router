@@ -26,6 +26,7 @@
     "officialChannels.available": "可用",
     "officialChannels.lowestPrice": "最近最低价",
     "officialChannels.maxPrice": "最高允许价",
+    "officialChannels.markup": "站长加价",
     "officialChannels.priceRange": "价格范围",
     "officialChannels.models": "可用模型",
     "officialChannels.keys": "可用 Key",
