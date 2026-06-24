@@ -20,7 +20,9 @@ const ACTIVE_SUBS_PAGE_SIZE = 5;
 
 function formatDate(unix) {
   if (!unix) return '';
-  return new Date(unix * 1000).toLocaleDateString();
+  const date = new Date(unix * 1000);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 export default function Packages() {
