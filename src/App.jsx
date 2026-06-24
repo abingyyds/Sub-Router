@@ -37,6 +37,22 @@ function AppMarketRoute() {
   return <AppMarket />;
 }
 
+function OfficialChannelsRoute() {
+  const { site, loading } = useSite();
+  const showOfficialChannels =
+    site?.show_official_channels !== false && site?.has_official_channels;
+
+  if (loading) {
+    return <Loading />;
+  }
+
+  if (!showOfficialChannels) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <OfficialChannels />;
+}
+
 function ThemedRoutes() {
   const { Home, Layout } = useTheme();
 
@@ -47,7 +63,7 @@ function ThemedRoutes() {
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
           <Route path="/pricing" element={<Pricing />} />
-          <Route path="/official-channels" element={<OfficialChannels />} />
+          <Route path="/official-channels" element={<OfficialChannelsRoute />} />
           <Route path="/packages" element={<Packages />} />
           <Route path="/apps" element={<AppMarketRoute />} />
           <Route path="/sub-site" element={<SubDistributor />} />

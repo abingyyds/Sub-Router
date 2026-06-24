@@ -1,10 +1,12 @@
 export function getSiteNavItems({ t, site }) {
   const showAppMarket = site?.show_app_market !== false;
+  const showOfficialChannels =
+    site?.show_official_channels !== false && site?.has_official_channels;
 
   return [
     { to: '/', label: t('nav.home'), auth: false },
     { to: '/pricing', label: t('nav.pricing'), auth: false },
-    ...(site?.has_official_channels
+    ...(showOfficialChannels
       ? [{ to: '/official-channels', label: t('nav.officialChannels'), auth: false }]
       : []),
     { to: '/packages', label: t('nav.packages'), auth: false },

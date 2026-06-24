@@ -145,6 +145,7 @@ export const getSiteInfo = () => {
       top_up_link_name: 'Redeem Code Shop',
       allow_sub_dist: true,
       show_app_market: true,
+      show_official_channels: true,
       has_official_channels: true,
       currency: {
         code: 'CNY',
