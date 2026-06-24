@@ -15,8 +15,33 @@ import { useCurrency } from '../context/SiteContext';
 import { formatPricingDetailRows } from '../utils/pricingDetails';
 import toast from 'react-hot-toast';
 
+const normalizeOfficialKeyMaxDiscount = (value) => {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? Math.min(n, 1) : 0;
+};
+
+const mergeOfficialKeyMaxDiscount = (left, right) => {
+  const leftDiscount = normalizeOfficialKeyMaxDiscount(left);
+  const rightDiscount = normalizeOfficialKeyMaxDiscount(right);
+  if (leftDiscount <= 0) return rightDiscount;
+  if (rightDiscount <= 0) return leftDiscount;
+  return Math.min(leftDiscount, rightDiscount);
+};
+
+const formatDiscountHint = (value, language = 'zh') => {
+  const discount = normalizeOfficialKeyMaxDiscount(value);
+  if (discount <= 0) return '';
+  if (discount < 1) {
+    if (!String(language || '').toLowerCase().startsWith('zh')) {
+      return `${discount.toFixed(discount < 0.1 ? 2 : 3).replace(/\.?0+$/, '')}x`;
+    }
+    return `${(discount * 10).toFixed(discount * 10 < 1 ? 1 : 2).replace(/\.?0+$/, '')}折`;
+  }
+  return `${discount.toFixed(discount >= 10 ? 1 : 2).replace(/\.?0+$/, '')}x`;
+};
+
 export default function Tokens() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { symbol, rate, code, usdRate } = useCurrency();
   const [tokens, setTokens] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -37,6 +62,7 @@ export default function Tokens() {
   const [showCreate, setShowCreate] = useState(false);
   const [createName, setCreateName] = useState('');
   const [selectedGroupId, setSelectedGroupId] = useState(0);
+  const [createOfficialKeyMaxDiscount, setCreateOfficialKeyMaxDiscount] = useState(0);
   const [creating, setCreating] = useState(false);
 
   const load = useCallback(async () => {
@@ -69,13 +95,21 @@ export default function Tokens() {
     if (group.is_unavailable) return;
     setSelectedGroupId(group.id);
     setCreateName(group.name);
+    setCreateOfficialKeyMaxDiscount(0);
     setShowCreate(true);
   };
 
   const openCreateDefault = () => {
     setSelectedGroupId(0);
     setCreateName('');
+    setCreateOfficialKeyMaxDiscount(0);
     setShowCreate(true);
+  };
+
+  const closeCreateModal = () => {
+    setShowCreate(false);
+    setSelectedGroupId(0);
+    setCreateOfficialKeyMaxDiscount(0);
   };
 
   const openGroupPricing = async (group) => {
@@ -112,11 +146,11 @@ export default function Tokens() {
     try {
       const payload = { name: createName.trim() };
       if (selectedGroupId > 0) payload.key_group_id = selectedGroupId;
+      payload.official_key_max_discount = normalizeOfficialKeyMaxDiscount(createOfficialKeyMaxDiscount);
       const res = await createToken(payload);
       if (res.data.success) {
         setCreateName('');
-        setShowCreate(false);
-        setSelectedGroupId(0);
+        closeCreateModal();
         const createdKey = res.data.data?.key;
         if (createdKey) setNewKey(createdKey);
         await load();
@@ -214,6 +248,19 @@ export default function Tokens() {
   const activeGroupPricing = activePricingGroup
     ? groupPricingCache[activePricingGroup.id] || null
     : null;
+  const formatOfficialDiscount = useCallback(
+    (value) => formatDiscountHint(value, i18n.resolvedLanguage || i18n.language),
+    [i18n.language, i18n.resolvedLanguage],
+  );
+  const selectedCreateGroup = selectedGroupId > 0
+    ? keyGroups.find((group) => group.id === selectedGroupId)
+    : null;
+  const selectedGroupDiscountHint = formatOfficialDiscount(selectedCreateGroup?.official_key_max_discount);
+  const effectiveCreateOfficialKeyMaxDiscount = mergeOfficialKeyMaxDiscount(
+    createOfficialKeyMaxDiscount,
+    selectedCreateGroup?.official_key_max_discount,
+  );
+  const createDiscountHint = formatOfficialDiscount(effectiveCreateOfficialKeyMaxDiscount);
   const filteredGroupPricingItems = useMemo(() => {
     const items = activeGroupPricing?.items || [];
     const keyword = groupPricingSearch.trim().toLowerCase();
@@ -290,6 +337,7 @@ export default function Tokens() {
                   parseTags={parseTags}
                   onSelect={openCreateFromGroup}
                   onViewPricing={openGroupPricing}
+                  formatDiscountHint={formatOfficialDiscount}
                   t={t}
                 />
               ))}
@@ -300,15 +348,19 @@ export default function Tokens() {
 
       {/* ========== Create Modal ========== */}
       {showCreate && (
-        <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setShowCreate(false); setSelectedGroupId(0); }}>
+        <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={closeCreateModal}>
           <div className="glass rounded-2xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-lg font-semibold text-page mb-4">{t('tokens.createApiKey')}</h2>
             {selectedGroupId > 0 && (() => {
-              const g = keyGroups.find((x) => x.id === selectedGroupId);
-              return g ? (
+              return selectedCreateGroup ? (
                 <div className="mb-4 p-3 rounded-lg bg-page-surface border border-page-divider">
                   <p className="text-xs text-page-muted">{t('tokens.selectedGroup')}</p>
-                  <p className="text-sm font-medium text-page">{g.name}</p>
+                  <p className="text-sm font-medium text-page">{selectedCreateGroup.name}</p>
+                  {selectedGroupDiscountHint && (
+                    <p className="text-xs text-page-secondary mt-1">
+                      {t('tokens.officialKeyGroupMaxDiscount', { discount: selectedGroupDiscountHint })}
+                    </p>
+                  )}
                 </div>
               ) : null;
             })()}
@@ -325,8 +377,25 @@ export default function Tokens() {
                   required
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-page-label mb-1.5">{t('tokens.officialKeyMaxDiscount')}</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={createOfficialKeyMaxDiscount}
+                  onChange={(e) => setCreateOfficialKeyMaxDiscount(e.target.value)}
+                  className="input"
+                  placeholder={t('tokens.officialKeyMaxDiscountPlaceholder')}
+                />
+                <p className="text-xs text-page-muted mt-1.5">
+                  {createDiscountHint
+                    ? t('tokens.officialKeyMaxDiscountHint', { discount: createDiscountHint })
+                    : t('tokens.officialKeyMaxDiscountNoLimitHint')}
+                </p>
+              </div>
               <div className="flex justify-end gap-3">
-                <button type="button" onClick={() => { setShowCreate(false); setSelectedGroupId(0); }} className="btn-secondary">
+                <button type="button" onClick={closeCreateModal} className="btn-secondary">
                   {t('tokens.cancel')}
                 </button>
                 <button type="submit" disabled={creating} className="btn-primary">
@@ -423,6 +492,13 @@ export default function Tokens() {
                   <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${token.status === 1 ? 'bg-green-500' : 'bg-page-muted'}`} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-page">{token.name}</p>
+                    {formatOfficialDiscount(token.official_key_max_discount) && (
+                      <p className="text-xs text-page-muted mt-0.5">
+                        {t('tokens.officialKeyTokenMaxDiscount', {
+                          discount: formatOfficialDiscount(token.official_key_max_discount),
+                        })}
+                      </p>
+                    )}
                   </div>
                   <span className="text-xs text-page-muted hidden md:block">
                     {token.created_time ? new Date(token.created_time * 1000).toLocaleDateString() : ''}
@@ -534,9 +610,10 @@ export default function Tokens() {
 }
 
 /* ========== Key Group Card ========== */
-function KeyGroupCard({ group, parseTags, onSelect, onViewPricing, t }) {
+function KeyGroupCard({ group, parseTags, onSelect, onViewPricing, formatDiscountHint, t }) {
   const tags = parseTags(group.tags);
   const isUnavailable = group.is_unavailable;
+  const officialKeyDiscountHint = formatDiscountHint(group.official_key_max_discount);
 
   return (
     <div
@@ -574,6 +651,11 @@ function KeyGroupCard({ group, parseTags, onSelect, onViewPricing, t }) {
             {group.discount_label && (
               <span className="text-[11px] font-semibold text-page-success">
                 {group.discount_label}
+              </span>
+            )}
+            {officialKeyDiscountHint && (
+              <span className="text-[11px] font-semibold text-page-success">
+                {t('tokens.officialKeyCardMaxDiscount', { discount: officialKeyDiscountHint })}
               </span>
             )}
             {tags.map((tag, i) => (
