@@ -160,6 +160,9 @@ export const getSiteInfo = () => {
 export const getSiteModels = () => getPreviewTheme() ? previewResponse(previewModels) : api.get('/api/dist/site/models');
 export const getSitePricing = () => api.get('/api/dist/site/pricing');
 export const getSiteOfficialChannels = () => getPreviewTheme() ? previewResponse(previewOfficialChannels) : api.get('/api/dist/site/official-channels');
+export const getOfficialChannelTokens = (id) => api.get(`/api/dist/official-channels/${id}/tokens`);
+export const createOfficialChannelToken = (id, data) => api.post(`/api/dist/official-channels/${id}/tokens`, data);
+export const deleteOfficialChannelToken = (id, tokenId) => api.delete(`/api/dist/official-channels/${id}/tokens/${tokenId}`);
 export const getSitePackages = () => getPreviewTheme() ? previewResponse(previewPackages) : api.get('/api/dist/site/packages');
 export const getSiteKeyGroups = () => api.get('/api/dist/site/key-groups');
 export const getSiteKeyGroupPricing = (id) => api.get(`/api/dist/site/key-groups/${id}/pricing`);

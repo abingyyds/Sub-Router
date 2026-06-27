@@ -64,6 +64,7 @@ function ThemedRoutes() {
           <Route path="/" element={<Home />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/official-channels" element={<OfficialChannelsRoute />} />
+          <Route path="/official-channels/:channelId" element={<OfficialChannelsRoute />} />
           <Route path="/packages" element={<Packages />} />
           <Route path="/apps" element={<AppMarketRoute />} />
           <Route path="/sub-site" element={<SubDistributor />} />
