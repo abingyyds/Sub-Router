@@ -39,7 +39,7 @@ const CCSWITCH_APPS = [
 const API_ENDPOINTS = [
   {
     id: 'overseas-direct',
-    url: 'https://aiapi.up.railway.app',
+    url: 'https://test1122.up.railway.app/',
     nameKey: 'config.apiEndpointOverseasDirectName',
     descKey: 'config.apiEndpointOverseasDirectDesc',
   },

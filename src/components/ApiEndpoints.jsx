@@ -7,7 +7,7 @@ const SHARED_API_ENDPOINTS = [
   {
     id: 'overseas-direct',
     labelKey: 'home.apiEndpointOverseasDirect',
-    url: 'https://aiapi.up.railway.app',
+    url: 'https://test1122.up.railway.app/',
   },
   {
     id: 'overseas-cdn',

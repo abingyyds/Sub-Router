@@ -24,7 +24,7 @@ import { useAuth } from '../context/AuthContext';
 
 const API_BASE_URLS = [
   { label: 'CF加速', value: 'https://subrouter.ai' },
-  { label: '直连', value: 'https://aiapi.up.railway.app' },
+  { label: '直连', value: 'https://test1122.up.railway.app/' },
 ];
 
 const normalizeDiscount = (value) => {
