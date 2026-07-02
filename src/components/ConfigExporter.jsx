@@ -51,6 +51,9 @@ const API_ENDPOINTS = [
   },
 ];
 
+const normalizeServerAddress = (serverAddress = '') =>
+  String(serverAddress || '').replace(/\/+$/, '');
+
 function ThemedSelect({
   value,
   onChange,
@@ -215,7 +218,10 @@ const ConfigExporter = ({ tokens = [] }) => {
       API_ENDPOINTS[0],
     [selectedEndpointId],
   );
-  const apiServerAddress = selectedEndpoint.url;
+  const apiServerAddress = useMemo(
+    () => normalizeServerAddress(selectedEndpoint.url),
+    [selectedEndpoint.url],
+  );
 
   const selectedToken = useMemo(
     () => tokens.find((token) => token.id === selectedTokenId) || null,
