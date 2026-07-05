@@ -5,14 +5,14 @@ import { useSite } from '../context/SiteContext';
 
 const SHARED_API_ENDPOINTS = [
   {
-    id: 'overseas-direct',
-    labelKey: 'home.apiEndpointOverseasDirect',
-    url: 'https://test1122.up.railway.app/',
-  },
-  {
     id: 'overseas-cdn',
     labelKey: 'home.apiEndpointOverseasCdn',
     url: 'https://ai.orbitlink.me',
+  },
+  {
+    id: 'overseas-direct',
+    labelKey: 'home.apiEndpointOverseasDirect',
+    url: 'https://test1122.up.railway.app/',
   },
 ];
 

@@ -38,16 +38,16 @@ const CCSWITCH_APPS = [
 
 const API_ENDPOINTS = [
   {
-    id: 'overseas-direct',
-    url: 'https://test1122.up.railway.app/',
-    nameKey: 'config.apiEndpointOverseasDirectName',
-    descKey: 'config.apiEndpointOverseasDirectDesc',
-  },
-  {
     id: 'overseas-cdn',
     url: 'https://ai.orbitlink.me',
     nameKey: 'config.apiEndpointOverseasCdnName',
     descKey: 'config.apiEndpointOverseasCdnDesc',
+  },
+  {
+    id: 'overseas-direct',
+    url: 'https://test1122.up.railway.app/',
+    nameKey: 'config.apiEndpointOverseasDirectName',
+    descKey: 'config.apiEndpointOverseasDirectDesc',
   },
 ];
 
@@ -203,7 +203,7 @@ const ConfigExporter = ({ tokens = [] }) => {
   const [selectedModel, setSelectedModel] = useState('');
   const [selectedTool, setSelectedTool] = useState('claudecode');
   const [selectedCCSwitchApp, setSelectedCCSwitchApp] = useState('codex');
-  const [selectedEndpointId, setSelectedEndpointId] = useState('overseas-direct');
+  const [selectedEndpointId, setSelectedEndpointId] = useState('overseas-cdn');
   const [loadingModels, setLoadingModels] = useState(false);
   const [modelsError, setModelsError] = useState(false);
   const [copied, setCopied] = useState(false);
