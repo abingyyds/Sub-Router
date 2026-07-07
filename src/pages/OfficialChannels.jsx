@@ -21,11 +21,12 @@ import {
   getSiteOfficialChannels,
 } from '../api';
 import { useAuth } from '../context/AuthContext';
+import { SHARED_API_ENDPOINTS } from '../constants/apiEndpoints';
 
-const API_BASE_URLS = [
-  { label: 'CF加速', value: 'https://subrouter.ai' },
-  { label: '直连', value: 'https://test1122.up.railway.app/' },
-];
+const API_BASE_URLS = SHARED_API_ENDPOINTS.map((endpoint) => ({
+  labelKey: endpoint.nameKey,
+  value: endpoint.url,
+}));
 
 const normalizeDiscount = (value) => {
   const n = Number(value);
@@ -412,7 +413,7 @@ function OfficialChannelDetail({
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           {API_BASE_URLS.map((item) => (
             <div key={item.value} className="rounded-xl border border-page-divider bg-page-inset px-4 py-3">
-              <div className="mb-2 text-xs font-semibold text-page-secondary">{item.label}</div>
+              <div className="mb-2 text-xs font-semibold text-page-secondary">{t(item.labelKey)}</div>
               <div className="flex items-center gap-2">
                 <code className="min-w-0 flex-1 break-all text-sm text-page">{item.value}</code>
                 <button

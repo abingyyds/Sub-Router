@@ -7,6 +7,7 @@ import {
   CCSWITCH_PRIMARY_DOWNLOAD,
   CCSWITCH_REPO_URL,
 } from '../constants/downloads';
+import { SHARED_API_ENDPOINTS } from '../constants/apiEndpoints';
 
 const TOOLS = [
   { id: 'claudecode', name: 'Claude Code', path: '~/.claude/settings.json' },
@@ -36,20 +37,7 @@ const CCSWITCH_APPS = [
   { id: 'hermes', name: 'Hermes', endpointType: 'hermes' },
 ];
 
-const API_ENDPOINTS = [
-  {
-    id: 'overseas-cdn',
-    url: 'https://ai.orbitlink.me',
-    nameKey: 'config.apiEndpointOverseasCdnName',
-    descKey: 'config.apiEndpointOverseasCdnDesc',
-  },
-  {
-    id: 'overseas-direct',
-    url: 'https://test1122.up.railway.app/',
-    nameKey: 'config.apiEndpointOverseasDirectName',
-    descKey: 'config.apiEndpointOverseasDirectDesc',
-  },
-];
+const API_ENDPOINTS = SHARED_API_ENDPOINTS;
 
 const normalizeServerAddress = (serverAddress = '') =>
   String(serverAddress || '').replace(/\/+$/, '');
