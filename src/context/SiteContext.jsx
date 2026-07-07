@@ -83,7 +83,7 @@ export function SiteProvider({ children }) {
     const previewTheme = getDevPreviewTheme();
     if (previewTheme) {
       const previewSite = {
-        name: 'SubRouter Preview',
+        name: 'API Preview',
         theme_template: previewTheme,
         enable_topup: true,
         top_up_link: 'https://example.com/redeem-codes',

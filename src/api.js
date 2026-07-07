@@ -138,7 +138,7 @@ export const getSiteInfo = () => {
   const theme = getPreviewTheme();
   if (theme) {
     return previewResponse({
-      name: 'SubRouter Preview',
+      name: 'API Preview',
       theme_template: theme,
       enable_topup: true,
       top_up_link: 'https://example.com/redeem-codes',

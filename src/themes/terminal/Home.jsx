@@ -185,7 +185,7 @@ function RouteConsole({ models, t }) {
       <div className="flex items-center justify-between border-b border-emerald-400/15 px-4 py-3 font-mono">
         <div className="flex items-center gap-2 text-xs font-black text-emerald-300">
           <RadioTower className="h-4 w-4" />
-          subrouter-live
+          api-relay-live
         </div>
         <span className="text-xs text-emerald-100/45">200 OK</span>
       </div>
