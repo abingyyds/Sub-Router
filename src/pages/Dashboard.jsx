@@ -210,6 +210,13 @@ export default function Dashboard() {
     setTransferring(false);
   };
 
+  const handleTransferAll = () => {
+    const quota = user?.aff_quota || 0;
+    if (quota > 0) {
+      setTransferAmount(String(quota));
+    }
+  };
+
   const resetWithdrawForm = () => {
     setWithdrawAmount('');
     setWithdrawMethod('');
@@ -559,8 +566,16 @@ export default function Dashboard() {
                   onChange={(e) => setTransferAmount(e.target.value)}
                   placeholder={t('topup.transferPlaceholder')}
                   className="input flex-1 text-sm"
-                  min={1}
+                  min={0}
                 />
+                <button
+                  type="button"
+                  onClick={handleTransferAll}
+                  disabled={transferring || (user?.aff_quota || 0) <= 0}
+                  className="btn-secondary whitespace-nowrap text-sm px-4"
+                >
+                  {t('topup.transferAll')}
+                </button>
                 <button onClick={handleTransfer} disabled={transferring} className="btn-primary whitespace-nowrap text-sm px-4">
                   {transferring ? t('topup.processing') : t('topup.transfer')}
                 </button>

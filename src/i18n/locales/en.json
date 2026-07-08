@@ -629,6 +629,7 @@
     "topup.noEarnings": "No earnings yet",
     "topup.transferToBalance": "Transfer to Balance",
     "topup.transferPlaceholder": "Enter transfer amount (quota)",
+    "topup.transferAll": "All",
     "topup.transfer": "Transfer",
     "topup.transferSuccess": "Transfer successful",
     "topup.withdraw": "Withdraw",
