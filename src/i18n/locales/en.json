@@ -628,7 +628,7 @@
     "topup.earningDetails": "Earning Details",
     "topup.noEarnings": "No earnings yet",
     "topup.transferToBalance": "Transfer to Balance",
-    "topup.transferPlaceholder": "Enter transfer amount (quota)",
+    "topup.transferPlaceholder": "Enter transfer amount",
     "topup.transferAll": "All",
     "topup.transfer": "Transfer",
     "topup.transferSuccess": "Transfer successful",

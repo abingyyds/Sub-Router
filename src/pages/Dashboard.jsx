@@ -191,8 +191,13 @@ export default function Dashboard() {
   };
 
   const handleTransfer = async () => {
-    const val = parseInt(transferAmount);
-    if (!val || val <= 0) {
+    const amount = Number.parseFloat(transferAmount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast.error(t('topup.enterAmount'));
+      return;
+    }
+    const val = Math.round((amount / rate) * Q);
+    if (val <= 0) {
       toast.error(t('topup.enterAmount'));
       return;
     }
@@ -211,9 +216,8 @@ export default function Dashboard() {
   };
 
   const handleTransferAll = () => {
-    const quota = user?.aff_quota || 0;
-    if (quota > 0) {
-      setTransferAmount(String(quota));
+    if (availableAffAmount > 0) {
+      setTransferAmount(availableAffAmount.toFixed(2));
     }
   };
 

@@ -628,7 +628,7 @@
     "topup.earningDetails": "收入明细",
     "topup.noEarnings": "暂无收入记录",
     "topup.transferToBalance": "划转到余额",
-    "topup.transferPlaceholder": "输入划转额度 (quota)",
+    "topup.transferPlaceholder": "输入划转金额",
     "topup.transferAll": "全部",
     "topup.transfer": "划转",
     "topup.transferSuccess": "划转成功",
