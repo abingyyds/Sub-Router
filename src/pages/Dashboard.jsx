@@ -20,7 +20,7 @@ import toast from 'react-hot-toast';
 
 export default function Dashboard() {
   const { t } = useTranslation();
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, updateUser } = useAuth();
   const { symbol, rate } = useCurrency();
   const { site } = useSite();
   const [usage, setUsage] = useState(null);
@@ -205,6 +205,11 @@ export default function Dashboard() {
     try {
       const res = await transferAffQuota({ quota: val });
       if (res.data.success) {
+        const updated = res.data.data;
+        if (updated) {
+          updateUser(updated);
+          setUsage((prev) => (prev ? { ...prev, quota: updated.quota } : prev));
+        }
         toast.success(res.data.message || t('topup.transferSuccess'));
         setTransferAmount('');
         await Promise.all([loadData(), refreshUser()]);

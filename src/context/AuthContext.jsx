@@ -20,6 +20,10 @@ export function AuthProvider({ children }) {
     return null;
   }, []);
 
+  const updateUser = useCallback((patch) => {
+    setUser((prev) => (prev ? { ...prev, ...patch } : prev));
+  }, []);
+
   // Try to restore session on mount (server uses cookies, so just try fetching self)
   useEffect(() => {
     const userId = localStorage.getItem('dist_user_id');
@@ -89,7 +93,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
