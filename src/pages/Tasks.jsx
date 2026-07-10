@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ExternalLink, Image, Loader2, RotateCcw, Search, Video, X } from 'lucide-react';
+import { Copy, Download, ExternalLink, Image, Loader2, RotateCcw, Search, Video, X } from 'lucide-react';
 import { getUserMjTasks, getUserTasks } from '../api';
 import LogSubnav from '../components/LogSubnav';
 
@@ -87,9 +87,35 @@ const taskTypeLabel = (action, mode, t) => {
   return labels[action] || action || t('tasks.unknown');
 };
 
+const isVideoGenerationAction = (action) => (
+  action === 'generate' ||
+  action === 'textGenerate' ||
+  action === 'firstTailGenerate' ||
+  action === 'referenceGenerate' ||
+  action === 'remixGenerate'
+);
+
 const isUrl = (value) => {
   if (!value || typeof value !== 'string') return false;
   return /^(https?:\/\/|\/|data:)/.test(value.trim());
+};
+
+const toAbsoluteUrl = (url) => {
+  try {
+    return new URL(url, window.location.origin).toString();
+  } catch (e) {
+    return url;
+  }
+};
+
+const withQueryParam = (url, key, value) => {
+  try {
+    const parsed = new URL(url, window.location.origin);
+    parsed.searchParams.set(key, value);
+    return parsed.toString();
+  } catch (e) {
+    return url;
+  }
 };
 
 const firstVideoUrl = (value) => {
@@ -105,6 +131,32 @@ const firstVideoUrl = (value) => {
     return '';
   }
   return '';
+};
+
+const videoContentUrl = (taskId) => {
+  if (!taskId) return '';
+  return `/v1/videos/${encodeURIComponent(taskId)}/content`;
+};
+
+const getVideoTaskResultUrl = (item) => {
+  if (!isVideoGenerationAction(item.action)) return '';
+  const explicitUrl = item.result_url || firstVideoUrl(item.video_url) || firstVideoUrl(item.video_urls);
+  if (explicitUrl) return explicitUrl;
+  if (isUrl(item.fail_reason)) return item.fail_reason.trim();
+  if (item.status === 'SUCCESS' && item.task_id) {
+    return videoContentUrl(item.task_id);
+  }
+  return '';
+};
+
+const getDownloadFileName = (url, fallback = 'video.mp4') => {
+  try {
+    const pathname = new URL(toAbsoluteUrl(url)).pathname;
+    const fileName = decodeURIComponent(pathname.split('/').filter(Boolean).pop() || '');
+    return fileName && fileName !== 'content' ? fileName : fallback;
+  } catch (e) {
+    return fallback;
+  }
 };
 
 const getImageTaskResult = (item) => {
@@ -126,6 +178,7 @@ export default function Tasks() {
   const [endTime, setEndTime] = useState('');
   const [appliedFilters, setAppliedFilters] = useState({});
   const [preview, setPreview] = useState(null);
+  const [previewVideoError, setPreviewVideoError] = useState(false);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -198,6 +251,61 @@ export default function Tasks() {
     setPage(1);
     setItems([]);
     setTotal(0);
+    setPreview(null);
+  };
+
+  const openPreview = (nextPreview) => {
+    setPreviewVideoError(false);
+    setPreview(nextPreview);
+  };
+
+  const closePreview = () => {
+    setPreview(null);
+    setPreviewVideoError(false);
+  };
+
+  const copyPreviewUrl = async (url) => {
+    const value = toAbsoluteUrl(url);
+    try {
+      await navigator.clipboard.writeText(value);
+    } catch (e) {
+      const input = document.createElement('textarea');
+      input.value = value;
+      input.setAttribute('readonly', '');
+      input.style.position = 'fixed';
+      input.style.opacity = '0';
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      input.remove();
+    }
+  };
+
+  const triggerDownload = (url, filename) => {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.target = '_blank';
+    link.rel = 'noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
+
+  const downloadPreviewVideo = async (url) => {
+    const absoluteUrl = toAbsoluteUrl(url);
+    const downloadUrl = withQueryParam(absoluteUrl, 'download', '1');
+    const filename = getDownloadFileName(absoluteUrl);
+    try {
+      const response = await fetch(downloadUrl, { mode: 'cors', credentials: 'include' });
+      if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      triggerDownload(objectUrl, filename);
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+    } catch (e) {
+      triggerDownload(downloadUrl, filename);
+    }
   };
 
   const renderProgress = (progress, status) => {
@@ -217,10 +325,11 @@ export default function Tasks() {
   };
 
   const renderVideoRows = () => items.map((item) => {
-    const resultUrl = item.result_url || (isUrl(item.fail_reason) ? item.fail_reason : '');
+    const resultUrl = getVideoTaskResultUrl(item);
     return (
       <tr key={`video-${item.id || item.task_id}`} className="border-b border-page-divider last:border-0">
         <td className="px-4 py-3 whitespace-nowrap text-page-secondary">{formatUnix(item.submit_time)}</td>
+        <td className="px-4 py-3 whitespace-nowrap text-page-secondary">{formatUnix(item.finish_time)}</td>
         <td className="px-4 py-3 whitespace-nowrap">{formatDuration(item.submit_time, item.finish_time, 's')}</td>
         <td className="px-4 py-3 whitespace-nowrap">{taskTypeLabel(item.action, 'video', t)}</td>
         <td className="px-4 py-3 font-mono text-xs">{item.task_id || '-'}</td>
@@ -228,11 +337,11 @@ export default function Tasks() {
         <td className="px-4 py-3">{renderProgress(item.progress, item.status)}</td>
         <td className="px-4 py-3">
           {resultUrl && item.status === 'SUCCESS' ? (
-            <button type="button" className="rounded-md border border-page-divider px-2.5 py-1 text-xs hover:bg-page-surface-hover" onClick={() => setPreview({ type: 'video', url: resultUrl })}>
+            <button type="button" className="rounded-md border border-page-divider px-2.5 py-1 text-xs hover:bg-page-surface-hover" onClick={() => openPreview({ type: 'video', url: resultUrl, taskId: item.task_id })}>
               {t('tasks.previewVideo')}
             </button>
           ) : item.fail_reason ? (
-            <button type="button" className="max-w-[180px] truncate text-left text-xs text-page-danger" title={item.fail_reason} onClick={() => setPreview({ type: 'text', text: item.fail_reason })}>
+            <button type="button" className="max-w-[180px] truncate text-left text-xs text-page-danger" title={item.fail_reason} onClick={() => openPreview({ type: 'text', text: item.fail_reason })}>
               {item.fail_reason}
             </button>
           ) : '-'}
@@ -246,6 +355,7 @@ export default function Tasks() {
     return (
       <tr key={`image-${item.id || item.mj_id}`} className="border-b border-page-divider last:border-0">
         <td className="px-4 py-3 whitespace-nowrap text-page-secondary">{formatMs(item.submit_time)}</td>
+        <td className="px-4 py-3 whitespace-nowrap text-page-secondary">{formatMs(item.finish_time)}</td>
         <td className="px-4 py-3 whitespace-nowrap">{formatDuration(item.submit_time, item.finish_time, 'ms')}</td>
         <td className="px-4 py-3 whitespace-nowrap">{taskTypeLabel(item.action, 'image', t)}</td>
         <td className="px-4 py-3 font-mono text-xs">{item.mj_id || '-'}</td>
@@ -253,11 +363,11 @@ export default function Tasks() {
         <td className="px-4 py-3">{renderProgress(item.progress, item.status)}</td>
         <td className="px-4 py-3">
           {result ? (
-            <button type="button" className="rounded-md border border-page-divider px-2.5 py-1 text-xs hover:bg-page-surface-hover" onClick={() => setPreview(result)}>
+            <button type="button" className="rounded-md border border-page-divider px-2.5 py-1 text-xs hover:bg-page-surface-hover" onClick={() => openPreview(result)}>
               {result.type === 'video' ? t('tasks.previewVideo') : t('tasks.previewImage')}
             </button>
           ) : item.fail_reason ? (
-            <button type="button" className="max-w-[180px] truncate text-left text-xs text-page-danger" title={item.fail_reason} onClick={() => setPreview({ type: 'text', text: item.fail_reason })}>
+            <button type="button" className="max-w-[180px] truncate text-left text-xs text-page-danger" title={item.fail_reason} onClick={() => openPreview({ type: 'text', text: item.fail_reason })}>
               {item.fail_reason}
             </button>
           ) : '-'}
@@ -345,12 +455,13 @@ export default function Tasks() {
               <thead>
                 <tr className="border-b border-page-divider text-left text-page-muted">
                   <th className="px-4 py-3 font-medium">{t('tasks.submitTime')}</th>
+                  <th className="px-4 py-3 font-medium">{t('tasks.finishTime')}</th>
                   <th className="px-4 py-3 font-medium">{t('tasks.duration')}</th>
                   <th className="px-4 py-3 font-medium">{t('tasks.type')}</th>
                   <th className="px-4 py-3 font-medium">{t('tasks.taskId')}</th>
-                  <th className="px-4 py-3 font-medium">{t('tasks.status')}</th>
+                  <th className="px-4 py-3 font-medium">{t('tasks.taskStatus')}</th>
                   <th className="px-4 py-3 font-medium">{t('tasks.progress')}</th>
-                  <th className="px-4 py-3 font-medium">{t('tasks.result')}</th>
+                  <th className="px-4 py-3 font-medium">{t('tasks.detail')}</th>
                   {mode === 'image' && <th className="px-4 py-3 font-medium">Prompt</th>}
                 </tr>
               </thead>
@@ -382,18 +493,41 @@ export default function Tasks() {
       )}
 
       {preview && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4" onClick={() => setPreview(null)}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4" onClick={closePreview}>
           <div className="relative max-h-[90vh] max-w-[92vw]" onClick={(event) => event.stopPropagation()}>
-            <button type="button" className="absolute -right-3 -top-3 z-10 rounded-full bg-white p-2 text-slate-900 shadow-lg" onClick={() => setPreview(null)}>
+            <button type="button" className="absolute -right-3 -top-3 z-10 rounded-full bg-white p-2 text-slate-900 shadow-lg" onClick={closePreview}>
               <X className="h-4 w-4" />
             </button>
             {preview.type === 'video' && (
-              <div className="rounded-2xl bg-black p-2 shadow-2xl">
-                <video src={preview.url} controls autoPlay className="max-h-[82vh] max-w-[88vw] rounded-xl" />
-                <a href={preview.url} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs text-white/80 hover:text-white">
-                  <ExternalLink className="h-3.5 w-3.5" />
-                  {t('tasks.openNewTab')}
-                </a>
+              <div className="w-[min(960px,92vw)] overflow-hidden rounded-2xl bg-black shadow-2xl">
+                {previewVideoError ? (
+                  <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 p-8 text-center text-sm text-white/80">
+                    <p>{t('tasks.videoCannotPlay')}</p>
+                    <p className="max-w-xl break-all text-xs text-white/50">{toAbsoluteUrl(preview.url)}</p>
+                  </div>
+                ) : (
+                  <video
+                    src={toAbsoluteUrl(preview.url)}
+                    controls
+                    autoPlay
+                    className="max-h-[76vh] w-full bg-black object-contain"
+                    onError={() => setPreviewVideoError(true)}
+                  />
+                )}
+                <div className="flex flex-wrap items-center justify-end gap-2 border-t border-white/10 p-3">
+                  <button type="button" onClick={() => downloadPreviewVideo(preview.url)} className="inline-flex items-center gap-1.5 rounded-md border border-white/15 px-3 py-1.5 text-xs text-white/80 hover:bg-white/10 hover:text-white">
+                    <Download className="h-3.5 w-3.5" />
+                    {t('tasks.downloadVideo')}
+                  </button>
+                  <button type="button" onClick={() => copyPreviewUrl(preview.url)} className="inline-flex items-center gap-1.5 rounded-md border border-white/15 px-3 py-1.5 text-xs text-white/80 hover:bg-white/10 hover:text-white">
+                    <Copy className="h-3.5 w-3.5" />
+                    {t('tasks.copyLink')}
+                  </button>
+                  <a href={toAbsoluteUrl(preview.url)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-md border border-white/15 px-3 py-1.5 text-xs text-white/80 hover:bg-white/10 hover:text-white">
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    {t('tasks.openNewTab')}
+                  </a>
+                </div>
               </div>
             )}
             {preview.type === 'image' && (
