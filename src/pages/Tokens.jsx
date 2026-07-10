@@ -22,16 +22,23 @@ const normalizeOfficialKeyMaxDiscount = (value) => {
   return Number.isFinite(n) && n > 0 ? Math.min(n, 1) : 0;
 };
 
-const formatDiscountHint = (value, language = 'zh') => {
+const trimPriceMultiplier = (value) => {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return '';
+  return n.toFixed(n >= 10 ? 1 : 2).replace(/\.?0+$/, '');
+};
+
+const formatDiscountHint = (value, t) => {
   const discount = normalizeOfficialKeyMaxDiscount(value);
   if (discount <= 0) return '';
   if (discount < 1) {
-    if (!String(language || '').toLowerCase().startsWith('zh')) {
-      return `${discount.toFixed(discount < 0.1 ? 2 : 3).replace(/\.?0+$/, '')}x`;
-    }
-    return `${(discount * 10).toFixed(discount * 10 < 1 ? 1 : 2).replace(/\.?0+$/, '')}折`;
+    return t('officialChannels.discountLabel', {
+      value: trimPriceMultiplier(discount * 10),
+      multiplier: trimPriceMultiplier(discount),
+      percent: trimPriceMultiplier(discount * 100),
+    });
   }
-  return `${discount.toFixed(discount >= 10 ? 1 : 2).replace(/\.?0+$/, '')}x`;
+  return t('officialChannels.multiplierLabel', { value: trimPriceMultiplier(discount) });
 };
 
 const emptyControlForm = () => ({
@@ -121,7 +128,7 @@ const tokenToEditForm = (token, rate) => ({
 });
 
 export default function Tokens() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { site } = useSite();
   const { symbol, rate, code, usdRate } = useCurrency();
   const [tokens, setTokens] = useState([]);
@@ -422,8 +429,8 @@ export default function Tokens() {
     ? groupPricingCache[activePricingGroup.id] || null
     : null;
   const formatOfficialDiscount = useCallback(
-    (value) => formatDiscountHint(value, i18n.resolvedLanguage || i18n.language),
-    [i18n.language, i18n.resolvedLanguage],
+    (value) => formatDiscountHint(value, t),
+    [t],
   );
   const selectedCreateGroup = selectedGroupId > 0
     ? keyGroups.find((group) => group.id === selectedGroupId)
