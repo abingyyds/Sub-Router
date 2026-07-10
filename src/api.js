@@ -57,8 +57,9 @@ const previewOfficialChannels = [
     official_channel_id: 1,
     name: 'OpenAI Official',
     description: 'OpenAI official model catalog supplied by multiple provider keys.',
-    max_discount: 0.5,
-    min_allowed_price_discount: 0.32,
+    max_final_discount: 0.5,
+    min_allowed_final_discount: 0.32,
+    min_final_price_discount: 0.32,
     usable_model_count: 24,
     available_key_count: 18,
     available_provider_count: 6,
@@ -67,8 +68,9 @@ const previewOfficialChannels = [
     official_channel_id: 2,
     name: 'Anthropic Official',
     description: 'Claude official models with station-level price caps.',
-    max_discount: 0.6,
-    min_allowed_price_discount: 0.4,
+    max_final_discount: 0.6,
+    min_allowed_final_discount: 0.4,
+    min_final_price_discount: 0.4,
     usable_model_count: 8,
     available_key_count: 9,
     available_provider_count: 4,
@@ -160,9 +162,6 @@ export const getSiteInfo = () => {
 export const getSiteModels = () => getPreviewTheme() ? previewResponse(previewModels) : api.get('/api/dist/site/models');
 export const getSitePricing = () => api.get('/api/dist/site/pricing');
 export const getSiteOfficialChannels = () => getPreviewTheme() ? previewResponse(previewOfficialChannels) : api.get('/api/dist/site/official-channels');
-export const getOfficialChannelTokens = (id) => api.get(`/api/dist/official-channels/${id}/tokens`);
-export const createOfficialChannelToken = (id, data) => api.post(`/api/dist/official-channels/${id}/tokens`, data);
-export const deleteOfficialChannelToken = (id, tokenId) => api.delete(`/api/dist/official-channels/${id}/tokens/${tokenId}`);
 export const getSitePackages = () => getPreviewTheme() ? previewResponse(previewPackages) : api.get('/api/dist/site/packages');
 export const getSiteKeyGroups = () => api.get('/api/dist/site/key-groups');
 export const getSiteKeyGroupPricing = (id) => api.get(`/api/dist/site/key-groups/${id}/pricing`);
