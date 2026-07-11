@@ -28,7 +28,7 @@ export const APP_MARKET_APPS = [
     logo: `${TOONFLOW_REPO_RAW}/docs/logo.png`,
     cover: `${TOONFLOW_REPO_RAW}/docs/screenshot/1.png`,
     appUrl: 'https://toonflow-app-production-4a00.up.railway.app/',
-    sourceUrl: 'https://github.com/HBAI-Ltd/Toonflow-app',
+    sourceUrl: 'https://github.com/abingyyds/Toonflow-app',
     license: 'Apache-2.0',
     integration: PLATFORM_APP_INTEGRATION,
     featureKeys: [
@@ -48,7 +48,7 @@ export const APP_MARKET_APPS = [
     logo: `${INFINITE_CANVAS_REPO_RAW}/web/public/logo.svg`,
     cover: 'https://i.ibb.co/TDFvGWDT/image.png',
     appUrl: 'https://infinite-canvas-production-131b.up.railway.app/',
-    sourceUrl: 'https://github.com/basketikun/infinite-canvas',
+    sourceUrl: 'https://github.com/abingyyds/infinite-canvas',
     license: 'AGPL-3.0',
     integration: PLATFORM_APP_INTEGRATION,
     featureKeys: [
@@ -68,7 +68,7 @@ export const APP_MARKET_APPS = [
     logo: `${PRODUCT_PAGE_REPO_RAW}/public/brand-icon.ico`,
     coverTone: 'from-rose-950 via-fuchsia-800 to-amber-600',
     appUrl: 'https://ai-product-page-generator-production.up.railway.app/',
-    sourceUrl: 'https://github.com/ziguishian/ai-product-page-generator',
+    sourceUrl: 'https://github.com/abingyyds/ai-product-page-generator',
     license: 'MIT',
     integration: PLATFORM_APP_INTEGRATION,
     featureKeys: [
@@ -88,7 +88,7 @@ export const APP_MARKET_APPS = [
     logo: `${LIBRECHAT_REPO_RAW}/client/public/assets/logo.svg`,
     coverTone: 'from-slate-950 via-slate-800 to-emerald-700',
     appUrl: 'https://librechat-production-c42f.up.railway.app/',
-    sourceUrl: 'https://github.com/danny-avila/LibreChat',
+    sourceUrl: 'https://github.com/abingyyds/LibreChat',
     license: 'MIT',
     integration: PLATFORM_APP_INTEGRATION,
     featureKeys: [
@@ -108,7 +108,7 @@ export const APP_MARKET_APPS = [
     logo: WEBNOVEL_WRITER_OWNER_AVATAR,
     coverTone: 'from-zinc-950 via-stone-800 to-lime-700',
     appUrl: 'https://webnovel-writer-production.up.railway.app/',
-    sourceUrl: 'https://github.com/lingfengQAQ/webnovel-writer',
+    sourceUrl: 'https://github.com/abingyyds/webnovel-writer',
     license: 'GPL-3.0',
     integration: PLATFORM_APP_INTEGRATION,
     featureKeys: [
@@ -128,7 +128,7 @@ export const APP_MARKET_APPS = [
     logo: MONEY_PRINTER_TURBO_OWNER_AVATAR,
     cover: `${MONEY_PRINTER_TURBO_REPO_RAW}/docs/webui.jpg`,
     appUrl: 'https://moneyprinterturbo-production-e7fc.up.railway.app/',
-    sourceUrl: 'https://github.com/harry0703/MoneyPrinterTurbo',
+    sourceUrl: 'https://github.com/abingyyds/MoneyPrinterTurbo',
     license: 'MIT',
     integration: PLATFORM_APP_INTEGRATION,
     featureKeys: [
