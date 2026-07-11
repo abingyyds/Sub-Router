@@ -5,6 +5,7 @@ import { getUserMjTasks, getUserTasks } from '../api';
 import LogSubnav from '../components/LogSubnav';
 
 const PAGE_SIZE = 20;
+const previewButtonClass = 'inline-flex whitespace-nowrap rounded-md border border-page-divider px-2.5 py-1 text-xs hover:bg-page-surface-hover';
 
 const formatDateTimeLocal = (date) => {
   const pad = (n) => String(n).padStart(2, '0');
@@ -332,12 +333,12 @@ export default function Tasks() {
         <td className="px-4 py-3 whitespace-nowrap text-page-secondary">{formatUnix(item.finish_time)}</td>
         <td className="px-4 py-3 whitespace-nowrap">{formatDuration(item.submit_time, item.finish_time, 's')}</td>
         <td className="px-4 py-3 whitespace-nowrap">{taskTypeLabel(item.action, 'video', t)}</td>
-        <td className="px-4 py-3 font-mono text-xs">{item.task_id || '-'}</td>
+        <td className="max-w-[220px] truncate px-4 py-3 font-mono text-xs" title={item.task_id || ''}>{item.task_id || '-'}</td>
         <td className="px-4 py-3 whitespace-nowrap">{statusLabel(item.status, t)}</td>
         <td className="px-4 py-3">{renderProgress(item.progress, item.status)}</td>
-        <td className="px-4 py-3">
+        <td className="px-4 py-3 whitespace-nowrap">
           {resultUrl && item.status === 'SUCCESS' ? (
-            <button type="button" className="rounded-md border border-page-divider px-2.5 py-1 text-xs hover:bg-page-surface-hover" onClick={() => openPreview({ type: 'video', url: resultUrl, taskId: item.task_id })}>
+            <button type="button" className={previewButtonClass} onClick={() => openPreview({ type: 'video', url: resultUrl, taskId: item.task_id })}>
               {t('tasks.previewVideo')}
             </button>
           ) : item.fail_reason ? (
@@ -358,12 +359,12 @@ export default function Tasks() {
         <td className="px-4 py-3 whitespace-nowrap text-page-secondary">{formatMs(item.finish_time)}</td>
         <td className="px-4 py-3 whitespace-nowrap">{formatDuration(item.submit_time, item.finish_time, 'ms')}</td>
         <td className="px-4 py-3 whitespace-nowrap">{taskTypeLabel(item.action, 'image', t)}</td>
-        <td className="px-4 py-3 font-mono text-xs">{item.mj_id || '-'}</td>
+        <td className="max-w-[220px] truncate px-4 py-3 font-mono text-xs" title={item.mj_id || ''}>{item.mj_id || '-'}</td>
         <td className="px-4 py-3 whitespace-nowrap">{statusLabel(item.status, t)}</td>
         <td className="px-4 py-3">{renderProgress(item.progress, item.status)}</td>
-        <td className="px-4 py-3">
+        <td className="px-4 py-3 whitespace-nowrap">
           {result ? (
-            <button type="button" className="rounded-md border border-page-divider px-2.5 py-1 text-xs hover:bg-page-surface-hover" onClick={() => openPreview(result)}>
+            <button type="button" className={previewButtonClass} onClick={() => openPreview(result)}>
               {result.type === 'video' ? t('tasks.previewVideo') : t('tasks.previewImage')}
             </button>
           ) : item.fail_reason ? (
@@ -451,7 +452,7 @@ export default function Tasks() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className={`w-full text-sm ${mode === 'image' ? 'min-w-[1040px]' : 'min-w-[920px]'}`}>
               <thead>
                 <tr className="border-b border-page-divider text-left text-page-muted">
                   <th className="px-4 py-3 font-medium">{t('tasks.submitTime')}</th>
@@ -461,7 +462,7 @@ export default function Tasks() {
                   <th className="px-4 py-3 font-medium">{t('tasks.taskId')}</th>
                   <th className="px-4 py-3 font-medium">{t('tasks.taskStatus')}</th>
                   <th className="px-4 py-3 font-medium">{t('tasks.progress')}</th>
-                  <th className="px-4 py-3 font-medium">{t('tasks.detail')}</th>
+                  <th className="px-4 py-3 font-medium whitespace-nowrap">{t('tasks.detail')}</th>
                   {mode === 'image' && <th className="px-4 py-3 font-medium">Prompt</th>}
                 </tr>
               </thead>
