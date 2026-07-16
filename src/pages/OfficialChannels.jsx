@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
+  Boxes,
+  Building2,
   CheckCircle2,
   Copy,
   KeyRound,
@@ -14,6 +16,7 @@ import {
 import toast from 'react-hot-toast';
 import { getSiteOfficialChannels } from '../api';
 import { useAuth } from '../context/AuthContext';
+import { useSite, useCurrency } from '../context/SiteContext';
 import { SHARED_API_ENDPOINTS } from '../constants/apiEndpoints';
 
 const API_BASE_URLS = SHARED_API_ENDPOINTS.map((endpoint) => ({
@@ -64,6 +67,22 @@ const formatPriceRange = (channel, t) => {
 
 const formatCount = (value) => Number(value || 0).toLocaleString();
 
+const formatPercent = (value) => {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? `${n.toFixed(1)}%` : '--';
+};
+
+const formatModelPrice = (model, final = false) => {
+  const input = Number(model?.[final ? 'final_input_price' : 'official_input_price'] || 0);
+  const output = Number(model?.[final ? 'final_output_price' : 'official_output_price'] || 0);
+  const fixed = Number(model?.[final ? 'final_fixed_price' : 'official_fixed_price'] || 0);
+  const currency = model?.price_currency === 'CNY' ? '¥' : '$';
+  if (fixed > 0) return `${currency}${fixed.toFixed(fixed < 0.01 ? 6 : 4).replace(/\.?0+$/, '')}/次`;
+  if (input <= 0 && output <= 0) return '--';
+  const format = (value) => value > 0 ? `${currency}${value.toFixed(value < 0.01 ? 6 : 4).replace(/\.?0+$/, '')}` : '-';
+  return `${format(input)} / ${format(output)} / M`;
+};
+
 const channelIdOf = (channel) => Number(channel?.official_channel_id || channel?.id || 0);
 
 const copyText = async (value, message, errorMessage = 'Copy failed') => {
@@ -81,6 +100,8 @@ export default function OfficialChannels() {
   const navigate = useNavigate();
   const { channelId } = useParams();
   const { user } = useAuth();
+  const { site } = useSite();
+  const { symbol } = useCurrency();
   const [channels, setChannels] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -149,6 +170,8 @@ export default function OfficialChannels() {
       <OfficialChannelDetail
         channel={selectedChannel}
         user={user}
+        hideProviderInfo={Boolean(site?.hide_provider_info)}
+        currencySymbol={symbol}
         onBack={() => navigate('/official-channels')}
         onOpenTokens={handleOpenTokens}
       />
@@ -202,6 +225,7 @@ export default function OfficialChannels() {
             <OfficialChannelCard
               key={channelIdOf(channel)}
               channel={channel}
+              hideProviderInfo={Boolean(site?.hide_provider_info)}
               onOpen={() => navigate(`/official-channels/${channelIdOf(channel)}`)}
             />
           ))}
@@ -211,7 +235,7 @@ export default function OfficialChannels() {
   );
 }
 
-function OfficialChannelCard({ channel, onOpen }) {
+function OfficialChannelCard({ channel, onOpen, hideProviderInfo = false }) {
   const { t } = useTranslation();
   return (
     <article className="glass rounded-2xl p-5 shadow-sm">
@@ -236,16 +260,16 @@ function OfficialChannelCard({ channel, onOpen }) {
           </div>
         </div>
 
-        <div className="grid gap-2 sm:grid-cols-4">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           <Metric label={t('officialChannels.lowestPrice')} value={formatPriceMultiplier(finalMinPriceOf(channel), t)} />
           <Metric label={t('officialChannels.maxPrice')} value={formatPriceMultiplier(finalMaxPriceOf(channel), t)} />
-          <Metric label={t('officialChannels.priceRange')} value={formatPriceRange(channel, t)} />
-          <Metric label={t('officialChannels.keys')} value={formatCount(channel.available_key_count)} />
+          <Metric label={t('officialChannels.keyAvailability')} value={formatPercent(channel.key_availability)} />
+          <Metric label={t('officialChannels.modelAvailability')} value={formatPercent(channel.model_availability)} />
         </div>
 
         <div className="grid gap-2 sm:grid-cols-3">
           <Metric label={t('officialChannels.models')} value={formatCount(channel.usable_model_count)} />
-          <Metric label={t('officialChannels.providers')} value={formatCount(channel.available_provider_count)} />
+          {!hideProviderInfo && <Metric label={t('officialChannels.providers')} value={formatCount(channel.available_provider_count)} />}
           <Metric label={t('officialChannels.keyType')} value={t('officialChannels.groupKeyOnly')} />
         </div>
 
@@ -265,10 +289,16 @@ function OfficialChannelCard({ channel, onOpen }) {
 function OfficialChannelDetail({
   channel,
   user,
+  hideProviderInfo = false,
+  currencySymbol = '$',
   onBack,
   onOpenTokens,
 }) {
   const { t } = useTranslation();
+  const models = Array.isArray(channel.models) ? channel.models : [];
+  const [selectedModelId, setSelectedModelId] = useState(models[0]?.id || null);
+  const selectedModel = models.find((model) => String(model.id) === String(selectedModelId)) || models[0];
+
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
       <button type="button" onClick={onBack} className="btn-secondary mb-6">
@@ -300,11 +330,76 @@ function OfficialChannelDetail({
           </button>
         </div>
 
-        <div className="mt-6 grid gap-2 sm:grid-cols-4">
+        <div className="mt-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           <Metric label={t('officialChannels.lowestPrice')} value={formatPriceMultiplier(finalMinPriceOf(channel), t)} />
           <Metric label={t('officialChannels.maxPrice')} value={formatPriceMultiplier(finalMaxPriceOf(channel), t)} />
-          <Metric label={t('officialChannels.models')} value={formatCount(channel.usable_model_count)} />
-          <Metric label={t('officialChannels.keys')} value={formatCount(channel.available_key_count)} />
+          <Metric label={t('officialChannels.keyAvailability')} value={formatPercent(channel.key_availability)} />
+          <Metric label={t('officialChannels.modelAvailability')} value={formatPercent(channel.model_availability)} />
+        </div>
+      </section>
+
+      <section className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,360px)_1fr]">
+        <div className="rounded-2xl border border-page-divider bg-page-surface p-4">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h2 className="text-base font-semibold text-page">{t('officialChannels.modelCatalog')}</h2>
+            <span className="text-xs text-page-secondary">{formatCount(models.length)}</span>
+          </div>
+          <div className="max-h-[520px] space-y-2 overflow-y-auto pr-1">
+            {models.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-page-divider px-3 py-8 text-center text-sm text-page-secondary">
+                {t('officialChannels.noModels')}
+              </div>
+            ) : models.map((model) => (
+              <button
+                key={model.id}
+                type="button"
+                onClick={() => setSelectedModelId(model.id)}
+                className={`w-full rounded-xl border px-3 py-3 text-left transition ${String(model.id) === String(selectedModel?.id) ? 'border-page-link bg-page-link/10' : 'border-page-divider bg-page-inset hover:border-page-link/50'}`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="min-w-0 truncate text-sm font-semibold text-page">{model.model_name}</span>
+                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${model.available ? 'bg-emerald-500/10 text-page-success' : 'bg-page-inset text-page-muted'}`}>
+                    {model.available ? t('officialChannels.available') : t('officialChannels.unavailable')}
+                  </span>
+                </div>
+                <div className="mt-1 flex flex-wrap gap-2 text-xs text-page-secondary">
+                  <span>{model.category || 'chat'}</span>
+                  <span>{formatCount(model.available_key_count)} Key</span>
+                  <span>{formatModelPrice(model, true)}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-page-divider bg-page-surface p-5">
+          {selectedModel ? (
+            <>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Boxes size={17} className="text-page-link" />
+                    <h2 className="text-lg font-semibold text-page">{selectedModel.model_name}</h2>
+                  </div>
+                  <p className="mt-2 text-sm text-page-secondary">{selectedModel.description || t('officialChannels.modelPriceHint')}</p>
+                </div>
+                <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-page-success">
+                  {formatPercent(channel.model_availability)}
+                </span>
+              </div>
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <Metric label={t('officialChannels.originalPrice')} value={formatModelPrice(selectedModel, false)} />
+                <Metric label={t('officialChannels.finalPrice')} value={formatModelPrice(selectedModel, true)} />
+                <Metric label={t('officialChannels.discount')} value={formatPriceMultiplier(selectedModel.final_price_discount, t)} />
+                <Metric label={t('officialChannels.modelKeys')} value={formatCount(selectedModel.key_count)} />
+              </div>
+              <div className="mt-4 rounded-xl border border-page-divider bg-page-inset px-4 py-3 text-xs text-page-secondary">
+                {t('officialChannels.priceUnitHint', { currency: selectedModel.price_currency || currencySymbol })}
+              </div>
+            </>
+          ) : (
+            <div className="flex h-full min-h-48 items-center justify-center text-sm text-page-secondary">{t('officialChannels.selectModel')}</div>
+          )}
         </div>
       </section>
 
@@ -319,6 +414,15 @@ function OfficialChannelDetail({
           </span>
         </div>
       </section>
+
+      <section className="mt-5 grid gap-3 sm:grid-cols-2">
+        <Metric label={t('officialChannels.models')} value={formatCount(channel.usable_model_count)} />
+        <Metric label={hideProviderInfo ? t('officialChannels.providerDetailsHidden') : t('officialChannels.providers')} value={hideProviderInfo ? t('officialChannels.hidden') : formatCount(channel.available_provider_count)} />
+      </section>
+
+      {!hideProviderInfo && (
+        <ProviderSupplySection providers={channel.providers} />
+      )}
 
       <section className="mt-5 rounded-2xl border border-page-divider bg-page-surface p-5">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
@@ -353,6 +457,62 @@ function OfficialChannelDetail({
   );
 }
 
+function ProviderSupplySection({ providers }) {
+  const { t } = useTranslation();
+  const items = Array.isArray(providers) ? providers : [];
+
+  return (
+    <section className="mt-5 rounded-2xl border border-page-divider bg-page-surface p-5">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <Building2 size={17} className="text-page-link" />
+            <h2 className="text-base font-semibold text-page">{t('officialChannels.providerSupplyTitle')}</h2>
+          </div>
+          <p className="mt-1 text-sm leading-6 text-page-secondary">{t('officialChannels.providerSupplyDesc')}</p>
+        </div>
+        <span className="mt-2 inline-flex w-fit rounded-full bg-page-link/10 px-2.5 py-1 text-xs font-semibold text-page-link sm:mt-0">
+          {formatCount(items.length)}
+        </span>
+      </div>
+
+      {items.length === 0 ? (
+        <div className="mt-4 rounded-xl border border-dashed border-page-divider px-4 py-6 text-center text-sm text-page-secondary">
+          {t('officialChannels.noProviderSupply')}
+        </div>
+      ) : (
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {items.map((provider, index) => (
+            <div
+              key={provider.provider_id || provider.provider_slug || provider.provider_name || index}
+              className="rounded-xl border border-page-divider bg-page-inset p-4"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-semibold text-page">
+                    {provider.provider_name || provider.provider_slug || t('officialChannels.unnamedProvider')}
+                  </div>
+                  {provider.provider_slug && provider.provider_name && (
+                    <div className="mt-1 truncate text-xs text-page-secondary">{provider.provider_slug}</div>
+                  )}
+                </div>
+                <span className="shrink-0 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-page-success">
+                  {formatAvailability(provider.availability)}
+                </span>
+              </div>
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                <Metric label={t('officialChannels.providerKeys')} value={formatCount(provider.key_count)} />
+                <Metric label={t('officialChannels.providerModels')} value={formatCount(provider.supported_model_count)} />
+                <Metric label={t('officialChannels.providerPrice')} value={formatPriceMultiplier(provider.price_discount, t)} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function SummaryCard({ label, value }) {
   return (
     <div className="rounded-2xl border border-page-divider bg-page-surface px-4 py-4 shadow-sm">
@@ -369,6 +529,11 @@ function Metric({ label, value }) {
       <div className="mt-1 text-sm font-semibold text-page">{value}</div>
     </div>
   );
+}
+
+function formatAvailability(value) {
+  const n = Number(value);
+  return Number.isFinite(n) && n >= 0 ? `${n.toFixed(1)}%` : '--';
 }
 
 function LoadingBlock({ label, compact = false }) {

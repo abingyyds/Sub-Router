@@ -63,6 +63,22 @@ const previewOfficialChannels = [
     usable_model_count: 24,
     available_key_count: 18,
     available_provider_count: 6,
+    key_availability: 92.4,
+    model_availability: 100,
+    models: [
+      {
+        id: 'preview-official-1',
+        model_name: 'gpt-4o-mini',
+        category: 'chat',
+        price_currency: 'USD',
+        official_input_price: 0.15,
+        official_output_price: 0.6,
+        final_input_price: 0.048,
+        final_output_price: 0.192,
+        final_price_discount: 0.32,
+        key_count: 12,
+      },
+    ],
   },
   {
     official_channel_id: 2,
@@ -74,6 +90,22 @@ const previewOfficialChannels = [
     usable_model_count: 8,
     available_key_count: 9,
     available_provider_count: 4,
+    key_availability: 88.9,
+    model_availability: 100,
+    models: [
+      {
+        id: 'preview-official-2',
+        model_name: 'claude-sonnet-4-5',
+        category: 'chat',
+        price_currency: 'USD',
+        official_input_price: 3,
+        official_output_price: 15,
+        final_input_price: 1.2,
+        final_output_price: 6,
+        final_price_discount: 0.4,
+        key_count: 7,
+      },
+    ],
   },
 ];
 
