@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, ChevronRight, RotateCcw, Search } from 'lucide-react';
-import { getUserLogs, getUserLogsStat, Q } from '../api';
+import { ChevronDown, ChevronRight, Download, RotateCcw, Search } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { exportUserLogs, getUserLogs, getUserLogsStat, Q } from '../api';
 import { useCurrency } from '../context/SiteContext';
 import LogSubnav from '../components/LogSubnav';
 
@@ -151,6 +152,7 @@ export default function Logs() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [loadingStat, setLoadingStat] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [stat, setStat] = useState({ quota: 0, rpm: 0, tpm: 0, token: 0 });
   const [modelFilter, setModelFilter] = useState('');
   const [tokenFilter, setTokenFilter] = useState('');
@@ -225,6 +227,33 @@ export default function Logs() {
     setPage(1);
     setAppliedFilters({ type: '0' });
   }, []);
+
+  const exportLogs = useCallback(async () => {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const res = await exportUserLogs(getAppliedParams());
+      const contentType = res.headers?.['content-type'] || '';
+      if (contentType.includes('application/json')) {
+        throw new Error('export failed');
+      }
+      const disposition = res.headers?.['content-disposition'] || '';
+      const filenameMatch = disposition.match(/filename="?([^";]+)"?/i);
+      const filename = filenameMatch?.[1] || `usage-logs-${Date.now()}.csv`;
+      const url = URL.createObjectURL(res.data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error(t('logs.exportFailed'));
+    } finally {
+      setExporting(false);
+    }
+  }, [exporting, getAppliedParams, t]);
 
   const setQuickRange = useCallback((days) => {
     const now = new Date();
@@ -405,6 +434,10 @@ export default function Logs() {
           <button type="button" onClick={resetFilters} className="btn-secondary inline-flex items-center gap-2 text-sm">
             <RotateCcw className="h-4 w-4" />
             {t('logs.clearFilter')}
+          </button>
+          <button type="button" onClick={exportLogs} className="btn-secondary inline-flex items-center gap-2 text-sm" disabled={loading || exporting}>
+            <Download className="h-4 w-4" />
+            {exporting ? t('logs.exporting') : t('logs.export')}
           </button>
         </div>
       </form>
