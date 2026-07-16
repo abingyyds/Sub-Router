@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getSiteOfficialChannelAvailability, getSiteOfficialChannels } from '../api';
+import OfficialChannelKeyCreateModal from '../components/OfficialChannelKeyCreateModal';
 import { useAuth } from '../context/AuthContext';
 import { useSite, useCurrency } from '../context/SiteContext';
 import { SHARED_API_ENDPOINTS } from '../constants/apiEndpoints';
@@ -115,9 +116,10 @@ export default function OfficialChannels() {
   const { channelId } = useParams();
   const { user } = useAuth();
   const { site } = useSite();
-  const { symbol } = useCurrency();
+  const { symbol, rate } = useCurrency();
   const [channels, setChannels] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [createChannel, setCreateChannel] = useState(null);
 
   const loadChannels = useCallback(() => {
     setLoading(true);
@@ -154,12 +156,12 @@ export default function OfficialChannels() {
     );
   }, [channels]);
 
-  const handleOpenTokens = () => {
+  const handleOpenTokens = (channel) => {
     if (!user) {
       navigate('/login');
       return;
     }
-    navigate('/tokens');
+    setCreateChannel(channel || null);
   };
 
   if (channelId) {
@@ -181,14 +183,22 @@ export default function OfficialChannels() {
       );
     }
     return (
-      <OfficialChannelDetail
-        channel={selectedChannel}
-        user={user}
-        hideProviderInfo={Boolean(site?.hide_provider_info)}
-        currencySymbol={symbol}
-        onBack={() => navigate('/official-channels')}
-        onOpenTokens={handleOpenTokens}
-      />
+      <>
+        <OfficialChannelDetail
+          channel={selectedChannel}
+          user={user}
+          hideProviderInfo={Boolean(site?.hide_provider_info)}
+          currencySymbol={symbol}
+          onBack={() => navigate('/official-channels')}
+          onOpenTokens={() => handleOpenTokens(selectedChannel)}
+        />
+        <OfficialChannelKeyCreateModal
+          open={Boolean(createChannel)}
+          channel={createChannel}
+          currency={{ symbol, rate }}
+          onClose={() => setCreateChannel(null)}
+        />
+      </>
     );
   }
 
