@@ -77,6 +77,8 @@ const previewOfficialChannels = [
         final_output_price: 0.192,
         final_price_discount: 0.32,
         key_count: 12,
+        available_key_count: 11,
+        key_availability: 91.7,
       },
     ],
   },
@@ -104,6 +106,8 @@ const previewOfficialChannels = [
         final_output_price: 6,
         final_price_discount: 0.4,
         key_count: 7,
+        available_key_count: 6,
+        key_availability: 85.7,
       },
     ],
   },
@@ -194,6 +198,24 @@ export const getSiteInfo = () => {
 export const getSiteModels = () => getPreviewTheme() ? previewResponse(previewModels) : api.get('/api/dist/site/models');
 export const getSitePricing = () => api.get('/api/dist/site/pricing');
 export const getSiteOfficialChannels = () => getPreviewTheme() ? previewResponse(previewOfficialChannels) : api.get('/api/dist/site/official-channels');
+export const getSiteOfficialChannelAvailability = (channelId, modelId, period = '24h') => {
+  const params = { period };
+  if (modelId) params.model_id = modelId;
+  return getPreviewTheme()
+    ? previewResponse({
+        official_channel_id: channelId,
+        official_model_id: modelId || 0,
+        period,
+        availability: modelId ? 100 : 92.4,
+        buckets: Array.from({ length: period === '7d' ? 14 : 24 }, (_, index) => ({
+          bucket_time: index,
+          total: 10,
+          successes: modelId ? 10 : index === 3 ? 8 : 10,
+          availability: modelId ? 100 : index === 3 ? 80 : 100,
+        })),
+      })
+    : api.get(`/api/dist/site/official-channels/${channelId}/availability`, { params });
+};
 export const getSitePackages = () => getPreviewTheme() ? previewResponse(previewPackages) : api.get('/api/dist/site/packages');
 export const getSiteKeyGroups = () => api.get('/api/dist/site/key-groups');
 export const getSiteKeyGroupPricing = (id) => api.get(`/api/dist/site/key-groups/${id}/pricing`);

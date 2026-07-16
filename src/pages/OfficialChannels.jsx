@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
+  Activity,
   Boxes,
   Building2,
   CheckCircle2,
@@ -14,7 +15,7 @@ import {
   SlidersHorizontal,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { getSiteOfficialChannels } from '../api';
+import { getSiteOfficialChannelAvailability, getSiteOfficialChannels } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useSite, useCurrency } from '../context/SiteContext';
 import { SHARED_API_ENDPOINTS } from '../constants/apiEndpoints';
@@ -69,7 +70,20 @@ const formatCount = (value) => Number(value || 0).toLocaleString();
 
 const formatPercent = (value) => {
   const n = Number(value);
-  return Number.isFinite(n) && n > 0 ? `${n.toFixed(1)}%` : '--';
+  return Number.isFinite(n) && n >= 0 ? `${n.toFixed(1)}%` : '--';
+};
+
+const availabilityNumber = (value) => {
+  const n = Number(value);
+  return Number.isFinite(n) && n >= 0 ? Math.min(100, Math.max(0, n)) : -1;
+};
+
+const availabilityClass = (value) => {
+  const n = availabilityNumber(value);
+  if (n < 0) return 'bg-page-inset';
+  if (n < 50) return 'bg-rose-500';
+  if (n < 80) return 'bg-amber-500';
+  return 'bg-emerald-500';
 };
 
 const formatModelPrice = (model, final = false) => {
@@ -273,6 +287,11 @@ function OfficialChannelCard({ channel, onOpen, hideProviderInfo = false }) {
           <Metric label={t('officialChannels.keyType')} value={t('officialChannels.groupKeyOnly')} />
         </div>
 
+        <div className="grid gap-3 sm:grid-cols-2">
+          <AvailabilityMeter label={t('officialChannels.keyAvailability')} value={channel.key_availability} />
+          <AvailabilityMeter label={t('officialChannels.modelAvailability')} value={channel.model_availability} />
+        </div>
+
         <button
           type="button"
           onClick={onOpen}
@@ -298,6 +317,50 @@ function OfficialChannelDetail({
   const models = Array.isArray(channel.models) ? channel.models : [];
   const [selectedModelId, setSelectedModelId] = useState(models[0]?.id || null);
   const selectedModel = models.find((model) => String(model.id) === String(selectedModelId)) || models[0];
+  const [channelAvailability, setChannelAvailability] = useState(null);
+  const [channelAvailabilityLoading, setChannelAvailabilityLoading] = useState(true);
+  const [modelAvailability, setModelAvailability] = useState(null);
+  const [modelAvailabilityLoading, setModelAvailabilityLoading] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    setChannelAvailabilityLoading(true);
+    getSiteOfficialChannelAvailability(channelIdOf(channel), 0, '24h')
+      .then((res) => {
+        if (active && res.data?.success) setChannelAvailability(res.data.data || null);
+      })
+      .catch(() => {
+        if (active) setChannelAvailability(null);
+      })
+      .finally(() => {
+        if (active) setChannelAvailabilityLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [channel]);
+
+  useEffect(() => {
+    if (!selectedModel?.id) {
+      setModelAvailability(null);
+      return undefined;
+    }
+    let active = true;
+    setModelAvailabilityLoading(true);
+    getSiteOfficialChannelAvailability(channelIdOf(channel), selectedModel.id, '24h')
+      .then((res) => {
+        if (active && res.data?.success) setModelAvailability(res.data.data || null);
+      })
+      .catch(() => {
+        if (active) setModelAvailability(null);
+      })
+      .finally(() => {
+        if (active) setModelAvailabilityLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [channel, selectedModel?.id]);
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
@@ -338,6 +401,12 @@ function OfficialChannelDetail({
         </div>
       </section>
 
+      <AvailabilityGraph
+        title={t('officialChannels.channelAvailabilityGraph')}
+        data={channelAvailability}
+        loading={channelAvailabilityLoading}
+      />
+
       <section className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,360px)_1fr]">
         <div className="rounded-2xl border border-page-divider bg-page-surface p-4">
           <div className="mb-3 flex items-center justify-between gap-2">
@@ -367,6 +436,7 @@ function OfficialChannelDetail({
                   <span>{formatCount(model.available_key_count)} Key</span>
                   <span>{formatModelPrice(model, true)}</span>
                 </div>
+                <AvailabilityMeter label={t('officialChannels.modelAvailability')} value={model.key_availability} compact />
               </button>
             ))}
           </div>
@@ -393,6 +463,12 @@ function OfficialChannelDetail({
                 <Metric label={t('officialChannels.discount')} value={formatPriceMultiplier(selectedModel.final_price_discount, t)} />
                 <Metric label={t('officialChannels.modelKeys')} value={formatCount(selectedModel.key_count)} />
               </div>
+              <AvailabilityGraph
+                title={t('officialChannels.modelAvailabilityGraph')}
+                data={modelAvailability}
+                loading={modelAvailabilityLoading}
+                compact
+              />
               <div className="mt-4 rounded-xl border border-page-divider bg-page-inset px-4 py-3 text-xs text-page-secondary">
                 {t('officialChannels.priceUnitHint', { currency: selectedModel.price_currency || currencySymbol })}
               </div>
@@ -519,6 +595,65 @@ function SummaryCard({ label, value }) {
       <div className="text-sm text-page-secondary">{label}</div>
       <div className="mt-2 text-2xl font-semibold text-page">{value}</div>
     </div>
+  );
+}
+
+function AvailabilityMeter({ label, value, compact = false }) {
+  const percent = availabilityNumber(value);
+  return (
+    <div className={`rounded-xl border border-page-divider bg-page-surface ${compact ? 'mt-2 px-2 py-1.5' : 'px-3 py-3'}`}>
+      <div className="flex items-center justify-between gap-2 text-xs text-page-secondary">
+        <span>{label}</span>
+        <span className="font-semibold text-page">{formatPercent(percent)}</span>
+      </div>
+      <div className={`mt-1.5 w-full overflow-hidden rounded-full bg-page-inset ${compact ? 'h-1.5' : 'h-2'}`}>
+        <div
+          className={`h-full rounded-full transition-all ${availabilityClass(percent)}`}
+          style={{ width: `${percent < 0 ? 0 : percent}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function AvailabilityGraph({ title, data, loading = false, compact = false }) {
+  const { t } = useTranslation();
+  const buckets = Array.isArray(data?.buckets) ? data.buckets : [];
+  const availability = availabilityNumber(data?.availability);
+  return (
+    <section className={`rounded-2xl border border-page-divider bg-page-surface ${compact ? 'mt-4 p-4' : 'mt-5 p-5'}`}>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Activity size={17} className="text-page-link" />
+          <h2 className="text-base font-semibold text-page">{title}</h2>
+        </div>
+        <span className="text-sm font-semibold text-page">{formatPercent(availability)}</span>
+      </div>
+      {loading ? (
+        <div className="mt-4 flex h-12 items-center justify-center text-xs text-page-secondary">{t('common.loading')}</div>
+      ) : buckets.length === 0 ? (
+        <div className="mt-4 rounded-xl border border-dashed border-page-divider px-3 py-5 text-center text-xs text-page-secondary">
+          {t('officialChannels.noAvailabilityHistory')}
+        </div>
+      ) : (
+        <>
+          <div className={`mt-4 flex items-end gap-1 ${compact ? 'h-12' : 'h-16'}`}>
+            {buckets.map((bucket, index) => (
+              <div
+                key={`${bucket.bucket_time}-${index}`}
+                title={`${formatPercent(bucket.availability)} · ${formatCount(bucket.successes)}/${formatCount(bucket.total)}`}
+                className={`min-w-0 flex-1 rounded-t-sm transition-opacity hover:opacity-80 ${availabilityClass(bucket.availability)}`}
+                style={{ height: `${Math.max(8, availabilityNumber(bucket.availability) < 0 ? 8 : availabilityNumber(bucket.availability))}%` }}
+              />
+            ))}
+          </div>
+          <div className="mt-2 flex items-center justify-between text-[11px] text-page-secondary">
+            <span>{data?.period === '7d' ? t('officialChannels.sevenDaysAgo') : t('officialChannels.twentyFourHoursAgo')}</span>
+            <span>{t('officialChannels.now')}</span>
+          </div>
+        </>
+      )}
+    </section>
   );
 }
 
