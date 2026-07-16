@@ -73,6 +73,8 @@
     "officialChannels.selectModel": "请选择一个模型",
     "officialChannels.providerDetailsHidden": "供应商详情",
     "officialChannels.hidden": "已隐藏",
+    "officialChannels.modelProviders": "模型供应商",
+    "officialChannels.providerFallback": "供应商 {{number}}",
     "officialChannels.providerSupplyTitle": "供应商供货",
     "officialChannels.providerSupplyDesc": "当前分站允许展示官方渠道供应商信息，因此这里显示聚合供货统计；不会公开单个 Key 或密钥内容。",
     "officialChannels.noProviderSupply": "当前暂无可用供应商供货。",

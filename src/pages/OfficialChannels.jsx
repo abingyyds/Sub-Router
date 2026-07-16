@@ -493,7 +493,7 @@ function OfficialChannelDetail({
 
       <section className="mt-5 grid gap-3 sm:grid-cols-2">
         <Metric label={t('officialChannels.models')} value={formatCount(channel.usable_model_count)} />
-        <Metric label={hideProviderInfo ? t('officialChannels.providerDetailsHidden') : t('officialChannels.providers')} value={hideProviderInfo ? t('officialChannels.hidden') : formatCount(channel.available_provider_count)} />
+        {!hideProviderInfo && <Metric label={t('officialChannels.providers')} value={formatCount(channel.available_provider_count)} />}
       </section>
 
       {!hideProviderInfo && (
@@ -619,6 +619,7 @@ function AvailabilityMeter({ label, value, compact = false }) {
 function AvailabilityGraph({ title, data, loading = false, compact = false }) {
   const { t } = useTranslation();
   const buckets = Array.isArray(data?.buckets) ? data.buckets : [];
+  const providers = Array.isArray(data?.providers) ? data.providers : [];
   const availability = availabilityNumber(data?.availability);
   return (
     <section className={`rounded-2xl border border-page-divider bg-page-surface ${compact ? 'mt-4 p-4' : 'mt-5 p-5'}`}>
@@ -652,6 +653,38 @@ function AvailabilityGraph({ title, data, loading = false, compact = false }) {
             <span>{t('officialChannels.now')}</span>
           </div>
         </>
+      )}
+      {providers.length > 0 && (
+        <div className="mt-4 border-t border-page-divider pt-4">
+          <div className="flex items-center justify-between gap-2 text-xs text-page-secondary">
+            <span>{t('officialChannels.modelProviders')}</span>
+            <span>{formatCount(providers.length)}</span>
+          </div>
+          <div className="mt-3 space-y-2">
+            {providers.map((provider, index) => {
+              const providerAvailability = availabilityNumber(provider.availability);
+              const providerLabel = provider.provider_name || t('officialChannels.providerFallback', { number: provider.provider_index || index + 1 });
+              return (
+                <div key={`${provider.provider_id || provider.provider_index || index}`} className="rounded-lg border border-page-divider bg-page-inset px-3 py-2">
+                  <div className="flex items-center justify-between gap-3 text-xs">
+                    <span className="truncate font-semibold text-page">{providerLabel}</span>
+                    <span className="shrink-0 font-semibold text-page">{formatPercent(providerAvailability)}</span>
+                  </div>
+                  <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-page-surface">
+                    <div
+                      className={`h-full rounded-full ${availabilityClass(providerAvailability)}`}
+                      style={{ width: `${providerAvailability < 0 ? 0 : providerAvailability}%` }}
+                    />
+                  </div>
+                  <div className="mt-1 flex items-center justify-between gap-2 text-[11px] text-page-secondary">
+                    <span>{formatCount(provider.key_count)} Key</span>
+                    <span>{formatPriceMultiplier(provider.price_discount, t)}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       )}
     </section>
   );

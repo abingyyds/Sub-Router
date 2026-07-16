@@ -73,6 +73,8 @@
     "officialChannels.selectModel": "Select a model",
     "officialChannels.providerDetailsHidden": "Provider details",
     "officialChannels.hidden": "Hidden",
+    "officialChannels.modelProviders": "Model providers",
+    "officialChannels.providerFallback": "Provider {{number}}",
     "officialChannels.providerSupplyTitle": "Provider supply",
     "officialChannels.providerSupplyDesc": "Aggregated provider supply is shown because this site allows provider details on the official channel page. Individual keys and secrets are never exposed.",
     "officialChannels.noProviderSupply": "No provider supply is currently available.",
