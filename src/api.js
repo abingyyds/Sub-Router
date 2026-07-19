@@ -127,6 +127,31 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+// Public bootstrap data is shared by the home page and public detail pages.
+// Keep one in-flight request and a very short cache to avoid duplicate work
+// during React StrictMode mounts and rapid route changes.
+const publicRequestCache = new Map();
+const cachedPublicRequest = (key, request, ttl = 30000) => {
+  const now = Date.now();
+  const cached = publicRequestCache.get(key);
+  if (cached && now < cached.expiresAt) {
+    return cached.promise || Promise.resolve(cached.value);
+  }
+  const promise = request()
+    .then((response) => {
+      publicRequestCache.set(key, { value: response, expiresAt: Date.now() + ttl });
+      return response;
+    })
+    .catch((error) => {
+      publicRequestCache.delete(key);
+      throw error;
+    });
+  publicRequestCache.set(key, { promise, expiresAt: now + ttl });
+  return promise;
+};
+
+let siteInfoPromise;
+
 // Attach New-Api-User header (required by backend auth middleware)
 api.interceptors.request.use((config) => {
   const userId = localStorage.getItem('dist_user_id');
@@ -193,9 +218,19 @@ export const getSiteInfo = () => {
       },
     });
   }
-  return api.get('/api/dist/site/info');
+  if (!siteInfoPromise) {
+    siteInfoPromise = api.get('/api/dist/site/info', {
+      timeout: 8000,
+      skipErrorHandler: true,
+    }).finally(() => {
+      siteInfoPromise = undefined;
+    });
+  }
+  return siteInfoPromise;
 };
-export const getSiteModels = () => getPreviewTheme() ? previewResponse(previewModels) : api.get('/api/dist/site/models');
+export const getSiteModels = () => getPreviewTheme()
+  ? previewResponse(previewModels)
+  : cachedPublicRequest('site-models', () => api.get('/api/dist/site/models'));
 export const getSitePricing = () => api.get('/api/dist/site/pricing');
 export const getSiteOfficialChannels = () => getPreviewTheme() ? previewResponse(previewOfficialChannels) : api.get('/api/dist/site/official-channels');
 export const getSiteOfficialChannelAvailability = (channelId, modelId, period = '24h') => {
@@ -225,7 +260,9 @@ export const getSiteOfficialChannelAvailability = (channelId, modelId, period = 
       })
     : api.get(`/api/dist/site/official-channels/${channelId}/availability`, { params });
 };
-export const getSitePackages = () => getPreviewTheme() ? previewResponse(previewPackages) : api.get('/api/dist/site/packages');
+export const getSitePackages = () => getPreviewTheme()
+  ? previewResponse(previewPackages)
+  : cachedPublicRequest('site-packages', () => api.get('/api/dist/site/packages'));
 export const getSiteKeyGroups = () => api.get('/api/dist/site/key-groups');
 export const getSiteKeyGroupPricing = (id) => api.get(`/api/dist/site/key-groups/${id}/pricing`);
 export const getSubDistributorInfo = () => api.get('/api/dist/site/sub-distributor/info');

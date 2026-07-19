@@ -2,6 +2,27 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getSiteInfo } from '../api';
 
 const SiteContext = createContext(null);
+const SITE_CACHE_KEY = 'dist-site-info';
+const SITE_CACHE_TTL = 24 * 60 * 60 * 1000;
+
+function readCachedSite() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const cached = JSON.parse(localStorage.getItem(SITE_CACHE_KEY) || 'null');
+    if (!cached?.site || typeof cached.cachedAt !== 'number') return null;
+    if (Date.now() - cached.cachedAt > SITE_CACHE_TTL) return null;
+    return cached.site;
+  } catch (e) {
+    return null;
+  }
+}
+
+function writeCachedSite(site) {
+  if (typeof window === 'undefined' || !site) return;
+  try {
+    localStorage.setItem(SITE_CACHE_KEY, JSON.stringify({ site, cachedAt: Date.now() }));
+  } catch (e) {}
+}
 
 // Map theme template name → CSS class(es) to apply on <body>
 const themeClassMap = {
@@ -76,8 +97,9 @@ function applySiteDocumentMeta(site) {
 }
 
 export function SiteProvider({ children }) {
-  const [site, setSite] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [initialSite] = useState(readCachedSite);
+  const [site, setSite] = useState(initialSite);
+  const [loading, setLoading] = useState(!initialSite);
 
   useEffect(() => {
     const previewTheme = getDevPreviewTheme();
@@ -106,17 +128,39 @@ export function SiteProvider({ children }) {
       return;
     }
 
-    getSiteInfo()
-      .then((res) => {
-        if (res.data.success) {
-          setSite(res.data.data);
-          // Apply theme class to body immediately
-          applyThemeClass(res.data.data?.theme_template);
-          applySiteDocumentMeta(res.data.data);
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    if (initialSite) {
+      applyThemeClass(initialSite.theme_template);
+      applySiteDocumentMeta(initialSite);
+    }
+
+    // The site request is deliberately background work. A cached site (or the
+    // starter theme fallback) lets the first route paint without waiting for it.
+    const refreshSite = () => {
+      getSiteInfo()
+        .then((res) => {
+          if (res.data.success) {
+            setSite(res.data.data);
+            writeCachedSite(res.data.data);
+            applyThemeClass(res.data.data?.theme_template);
+            applySiteDocumentMeta(res.data.data);
+          }
+        })
+        .catch(() => {})
+        .finally(() => setLoading(false));
+    };
+
+    let idleId;
+    let timerId;
+    if ('requestIdleCallback' in window) {
+      idleId = window.requestIdleCallback(refreshSite, { timeout: 1200 });
+    } else {
+      timerId = window.setTimeout(refreshSite, 0);
+    }
+
+    return () => {
+      if (idleId !== undefined) window.cancelIdleCallback(idleId);
+      if (timerId !== undefined) window.clearTimeout(timerId);
+    };
   }, []);
 
   return (
