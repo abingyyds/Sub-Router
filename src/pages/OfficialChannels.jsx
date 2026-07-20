@@ -119,11 +119,13 @@ export default function OfficialChannels() {
   const { symbol, rate } = useCurrency();
   const [channels, setChannels] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [detailChannel, setDetailChannel] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [createChannel, setCreateChannel] = useState(null);
 
   const loadChannels = useCallback(() => {
     setLoading(true);
-    getSiteOfficialChannels()
+    getSiteOfficialChannels({ details: 0 })
       .then((res) => {
         if (res.data.success) {
           setChannels(res.data.data || []);
@@ -137,10 +139,38 @@ export default function OfficialChannels() {
     loadChannels();
   }, [loadChannels]);
 
+  useEffect(() => {
+    if (!channelId) {
+      setDetailChannel(null);
+      setDetailLoading(false);
+      return undefined;
+    }
+    let active = true;
+    setDetailLoading(true);
+    getSiteOfficialChannels({ details: 1, channel_id: channelId })
+      .then((res) => {
+        if (active && res.data?.success) {
+          setDetailChannel(res.data.data?.[0] || null);
+        }
+      })
+      .catch(() => {
+        if (active) setDetailChannel(null);
+      })
+      .finally(() => {
+        if (active) setDetailLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [channelId]);
+
   const selectedChannel = useMemo(() => {
     if (!channelId) return null;
+    if (String(channelIdOf(detailChannel)) === String(channelId)) {
+      return detailChannel;
+    }
     return channels.find((channel) => String(channelIdOf(channel)) === String(channelId));
-  }, [channelId, channels]);
+  }, [channelId, channels, detailChannel]);
 
   const summary = useMemo(() => {
     return channels.reduce(
@@ -165,7 +195,7 @@ export default function OfficialChannels() {
   };
 
   if (channelId) {
-    if (loading) {
+    if ((loading || detailLoading) && !selectedChannel) {
       return <LoadingBlock label={t('common.loading')} />;
     }
     if (!selectedChannel) {
@@ -188,6 +218,7 @@ export default function OfficialChannels() {
           channel={selectedChannel}
           user={user}
           hideProviderInfo={Boolean(site?.hide_provider_info)}
+          detailsLoading={detailLoading}
           currencySymbol={symbol}
           onBack={() => navigate('/official-channels')}
           onOpenTokens={() => handleOpenTokens(selectedChannel)}
@@ -320,11 +351,16 @@ function OfficialChannelDetail({
   user,
   hideProviderInfo = false,
   currencySymbol = '$',
+  detailsLoading = false,
   onBack,
   onOpenTokens,
 }) {
   const { t } = useTranslation();
-  const models = Array.isArray(channel.models) ? channel.models : [];
+  const models = useMemo(
+    () => (Array.isArray(channel.models) ? channel.models : []),
+    [channel.models],
+  );
+  const officialChannelId = channelIdOf(channel);
   const [selectedModelId, setSelectedModelId] = useState(models[0]?.id || null);
   const selectedModel = models.find((model) => String(model.id) === String(selectedModelId)) || models[0];
   const [channelAvailability, setChannelAvailability] = useState(null);
@@ -333,9 +369,18 @@ function OfficialChannelDetail({
   const [modelAvailabilityLoading, setModelAvailabilityLoading] = useState(false);
 
   useEffect(() => {
+    setSelectedModelId((current) => {
+      if (models.some((model) => String(model.id) === String(current))) {
+        return current;
+      }
+      return models[0]?.id || null;
+    });
+  }, [officialChannelId, models]);
+
+  useEffect(() => {
     let active = true;
     setChannelAvailabilityLoading(true);
-    getSiteOfficialChannelAvailability(channelIdOf(channel), 0, '24h')
+    getSiteOfficialChannelAvailability(officialChannelId, 0, '24h')
       .then((res) => {
         if (active && res.data?.success) setChannelAvailability(res.data.data || null);
       })
@@ -348,7 +393,7 @@ function OfficialChannelDetail({
     return () => {
       active = false;
     };
-  }, [channel]);
+  }, [officialChannelId]);
 
   useEffect(() => {
     if (!selectedModel?.id) {
@@ -357,7 +402,7 @@ function OfficialChannelDetail({
     }
     let active = true;
     setModelAvailabilityLoading(true);
-    getSiteOfficialChannelAvailability(channelIdOf(channel), selectedModel.id, '24h')
+    getSiteOfficialChannelAvailability(officialChannelId, selectedModel.id, '24h')
       .then((res) => {
         if (active && res.data?.success) setModelAvailability(res.data.data || null);
       })
@@ -370,7 +415,7 @@ function OfficialChannelDetail({
     return () => {
       active = false;
     };
-  }, [channel, selectedModel?.id]);
+  }, [officialChannelId, selectedModel?.id]);
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
@@ -424,7 +469,12 @@ function OfficialChannelDetail({
             <span className="text-xs text-page-secondary">{formatCount(models.length)}</span>
           </div>
           <div className="max-h-[520px] space-y-2 overflow-y-auto pr-1">
-            {models.length === 0 ? (
+            {detailsLoading ? (
+              <div className="flex items-center justify-center px-3 py-8 text-sm text-page-secondary">
+                <Loader2 size={18} className="mr-2 animate-spin" />
+                {t('common.loading')}
+              </div>
+            ) : models.length === 0 ? (
               <div className="rounded-xl border border-dashed border-page-divider px-3 py-8 text-center text-sm text-page-secondary">
                 {t('officialChannels.noModels')}
               </div>

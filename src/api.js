@@ -232,7 +232,15 @@ export const getSiteModels = () => getPreviewTheme()
   ? previewResponse(previewModels)
   : cachedPublicRequest('site-models', () => api.get('/api/dist/site/models'));
 export const getSitePricing = () => api.get('/api/dist/site/pricing');
-export const getSiteOfficialChannels = () => getPreviewTheme() ? previewResponse(previewOfficialChannels) : api.get('/api/dist/site/official-channels');
+export const getSiteOfficialChannels = (params = {}) => getPreviewTheme()
+  ? previewResponse(
+      params.channel_id
+        ? previewOfficialChannels.filter(
+            (channel) => String(channel.official_channel_id) === String(params.channel_id),
+          )
+        : previewOfficialChannels,
+    )
+  : api.get('/api/dist/site/official-channels', { params });
 export const getSiteOfficialChannelAvailability = (channelId, modelId, period = '24h') => {
   const params = { period };
   if (modelId) params.model_id = modelId;
