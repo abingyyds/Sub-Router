@@ -624,6 +624,8 @@
     "topup.customAmount": "自定义金额",
     "topup.customAmountHint": "自定义金额会自动对齐到可支付档位，避免输入金额和实付金额不一致。",
     "topup.rechargeAmountLabel": "充值金额",
+    "topup.bonusAmount": "送 {{amount}}",
+    "topup.creditedAmount": "到账金额",
     "topup.amountPlaceholder": "输入金额（最低 {{min}}）",
     "topup.paymentMethod": "支付方式",
     "topup.otherPayment": "其他方式",

@@ -624,6 +624,8 @@
     "topup.customAmount": "Custom Amount",
     "topup.customAmountHint": "Custom amounts are automatically aligned to payable tiers so the entered and charged amounts stay consistent.",
     "topup.rechargeAmountLabel": "Recharge Amount",
+    "topup.bonusAmount": "+{{amount}} bonus",
+    "topup.creditedAmount": "Total credit",
     "topup.amountPlaceholder": "Enter amount (min {{min}})",
     "topup.paymentMethod": "Payment Method",
     "topup.otherPayment": "Other Methods",
