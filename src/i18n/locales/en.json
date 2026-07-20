@@ -622,7 +622,7 @@
     "topup.onlineTopup": "Online Top Up",
     "topup.selectAmount": "Select Amount",
     "topup.customAmount": "Custom Amount",
-    "topup.customAmountHint": "Custom amounts are automatically aligned to payable tiers so the entered and charged amounts stay consistent.",
+    "topup.customAmountHint": "Enter an amount in the current currency. Custom amounts do not receive tier bonuses.",
     "topup.rechargeAmountLabel": "Recharge Amount",
     "topup.bonusAmount": "+{{amount}} bonus",
     "topup.creditedAmount": "Total credit",

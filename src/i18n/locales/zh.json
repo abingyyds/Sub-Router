@@ -622,7 +622,7 @@
     "topup.onlineTopup": "在线充值",
     "topup.selectAmount": "选择金额",
     "topup.customAmount": "自定义金额",
-    "topup.customAmountHint": "自定义金额会自动对齐到可支付档位，避免输入金额和实付金额不一致。",
+    "topup.customAmountHint": "按当前币种输入充值金额；自定义金额不享受档位赠送。",
     "topup.rechargeAmountLabel": "充值金额",
     "topup.bonusAmount": "送 {{amount}}",
     "topup.creditedAmount": "到账金额",

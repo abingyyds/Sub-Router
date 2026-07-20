@@ -281,7 +281,7 @@ export default function Topup() {
       toast.error(t('topup.enterAmount'));
       return;
     }
-    const basePayAmount = selectedPreset === null ? payAmount : payAmount / topupRate;
+    const basePayAmount = payAmount / topupRate;
     const isGatewayPayment = isStripePayment(method) || isCreemPayment(method);
     if (isGatewayPayment && basePayAmount < getMethodMinTopup(method)) {
       showGatewayMinTopupError(method, getMethodMinTopup(method));
@@ -294,11 +294,13 @@ export default function Topup() {
     const creemProduct = isCreemPayment(method)
       ? selectedTier?.creem_product_id
         ? creemProducts.find((product) => product.productId === selectedTier.creem_product_id) || null
-        : findCompatibleCreemProduct(
-            creemProducts,
-            Math.round(basePayAmount),
-            selectedPreset === null ? '' : topupInfo?.currency,
-          )
+        : selectedPreset === null && Math.abs(basePayAmount - Math.round(basePayAmount)) > 0.000001
+          ? null
+          : findCompatibleCreemProduct(
+              creemProducts,
+              Math.round(basePayAmount),
+              selectedPreset === null ? '' : topupInfo?.currency,
+            )
       : null;
     if (isCreemPayment(method) && (selectedTier?.creem_supported === false || !creemProduct)) {
       toast.error(t('topup.creemUnsupportedAmount') || 'Current amount is not supported by Creem');
@@ -313,6 +315,7 @@ export default function Topup() {
         amount: payAmount,
         payment_method: method,
         return_url: returnUrl,
+        currency: topupCurrency,
         ...(selectedPreset !== null ? { tier_index: selectedPreset } : {}),
       };
 
@@ -321,6 +324,7 @@ export default function Topup() {
           product_id: creemProduct.productId,
           payment_method: 'creem',
           amount: payAmount,
+          currency: topupCurrency,
           ...(selectedPreset !== null ? { tier_index: selectedPreset } : {}),
           return_url: returnUrl,
         });
@@ -405,6 +409,7 @@ export default function Topup() {
         amount: payAmountVal,
         chain: selectedChain,
         token: selectedToken,
+        currency: topupCurrency,
         ...(selectedPreset !== null ? { tier_index: selectedPreset } : {}),
       });
       if (res.data.message === 'success' && res.data.data) {
@@ -609,6 +614,30 @@ export default function Topup() {
             </div>
           </div>
 
+          {/* Custom Amount */}
+          <div className='mb-6'>
+            <label className='block text-sm font-medium text-page-label mb-2'>{t('topup.customAmount')}</label>
+            <div className='relative'>
+              <span className='absolute left-3 top-1/2 -translate-y-1/2 text-page-muted'>{topupSymbol}</span>
+              <input
+                type='number'
+                value={amount}
+                onChange={(event) => {
+                  setAmount(event.target.value);
+                  setSelectedPreset(null);
+                }}
+                min={minTopup * topupRate}
+                max={10000 * topupRate}
+                step='0.01'
+                placeholder={t('topup.amountPlaceholder', {
+                  min: `${topupSymbol}${formatCurrencyAmount(minTopup * topupRate)}`,
+                })}
+                className='input w-full pl-8'
+              />
+            </div>
+            <p className='text-xs text-page-muted mt-2'>{t('topup.customAmountHint')}</p>
+          </div>
+
           {selectedTier && (
             <div className='mb-6 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-page-secondary'>
               <span>{t('topup.rechargeAmountLabel')}: {topupSymbol}{formatCurrencyAmount(selectedTier.amount)}</span>
@@ -629,9 +658,7 @@ export default function Topup() {
                 const isMethodStripe = isStripePayment(method.type);
                 const isMethodCreem = isCreemPayment(method.type);
                 const minForMethod = Number(method.min_topup) || 0;
-                const baseAmount = selectedPreset === null
-                  ? Number(amount || 0)
-                  : Number(amount || 0) / topupRate;
+                const baseAmount = Number(amount || 0) / topupRate;
                 const belowGatewayMin =
                   (isMethodStripe || isMethodCreem) &&
                   minForMethod > baseAmount;
