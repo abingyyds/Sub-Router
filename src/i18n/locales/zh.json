@@ -15,6 +15,7 @@
     "common.close": "关闭",
     "common.loading": "加载中",
     "common.refresh": "刷新",
+    "logs.clientIp": "客户端 IP",
 
     "officialChannels.badge": "官方渠道",
     "officialChannels.title": "官方渠道",

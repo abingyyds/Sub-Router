@@ -272,8 +272,7 @@ export default function Logs() {
   };
 
   const getExpandData = useCallback((log) => {
-    const other = getLogOther(log.other);
-    if (!other) return [];
+    const other = getLogOther(log.other) || {};
 
     const data = [];
     const billingSourceLabel = getBillingSourceLabel(other, t);
@@ -318,6 +317,9 @@ export default function Logs() {
     // Request ID
     if (log.request_id) {
       data.push({ key: 'Request ID', value: log.request_id });
+    }
+    if (log.ip) {
+      data.push({ key: t('logs.clientIp'), value: log.ip });
     }
 
     // Stream info
@@ -490,6 +492,7 @@ export default function Logs() {
                     <th className="text-left px-4 py-3 font-medium text-page-secondary">{t('logs.model')}</th>
                     <th className="text-left px-4 py-3 font-medium text-page-secondary">{t('logs.token')}</th>
                     <th className="text-left px-4 py-3 font-medium text-page-secondary">{t('logs.type')}</th>
+                    <th className="text-left px-4 py-3 font-medium text-page-secondary">{t('logs.clientIp')}</th>
                     <th className="text-right px-4 py-3 font-medium text-page-secondary">{t('logs.promptTokens')}</th>
                     <th className="text-right px-4 py-3 font-medium text-page-secondary">{t('logs.completionTokens')}</th>
                     <th className="text-right px-4 py-3 font-medium text-page-secondary">{t('logs.cost')}</th>
@@ -523,6 +526,7 @@ export default function Logs() {
                               {getLogTypeLabel(log.type, t)}
                             </span>
                           </td>
+                          <td className="px-4 py-3 font-mono text-xs text-page-secondary whitespace-nowrap">{log.ip || '-'}</td>
                           <td className="px-4 py-3 text-right font-mono text-xs text-page-label">{log.prompt_tokens?.toLocaleString() || '0'}</td>
                           <td className="px-4 py-3 text-right font-mono text-xs text-page-label">{log.completion_tokens?.toLocaleString() || '0'}</td>
                           <td className="px-4 py-3 text-right">
@@ -543,7 +547,7 @@ export default function Logs() {
                         </tr>
                         {isExpanded && hasExpandData && (
                           <tr className="border-b border-page-divider last:border-0 bg-page-surface/50">
-                            <td colSpan="9" className="px-4 py-3">
+                            <td colSpan="10" className="px-4 py-3">
                               <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-2 text-sm">
                                 {expandData.map((item, idx) => (
                                   <div key={idx} className="flex flex-col">
@@ -601,6 +605,9 @@ export default function Logs() {
                     </div>
                     {log.token_name && (
                       <div className="text-[11px] text-page-muted">{log.token_name}</div>
+                    )}
+                    {log.ip && (
+                      <div className="font-mono text-[11px] text-page-muted">{t('logs.clientIp')}: {log.ip}</div>
                     )}
                     {isExpanded && hasExpandData && (
                       <div className="mt-3 pt-3 border-t border-page-divider/50 grid grid-cols-2 gap-x-4 gap-y-2">

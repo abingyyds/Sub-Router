@@ -15,6 +15,7 @@
     "common.close": "Close",
     "common.loading": "Loading",
     "common.refresh": "Refresh",
+    "logs.clientIp": "Client IP",
 
     "officialChannels.badge": "Official Channels",
     "officialChannels.title": "Official Channels",
