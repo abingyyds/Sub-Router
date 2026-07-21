@@ -4,7 +4,7 @@ export const DOWNLOAD_TOOLS = [
   {
     id: 'cc-switch',
     title: 'CC Switch',
-    version: 'v3.14.1',
+    version: 'v3.17.0',
     descZh: '统一管理 Claude Code、Codex、Gemini CLI、OpenCode、OpenClaw、Hermes 等客户端，支持一键导入 Provider。',
     descEn: 'Manage Claude Code, Codex, Gemini CLI, OpenCode, OpenClaw, Hermes and more in one place, with one-click provider import.',
     officialRepo: 'https://github.com/farion1231/cc-switch',
@@ -41,7 +41,7 @@ export const DOWNLOAD_TOOLS = [
   {
     id: 'codex',
     title: 'Codex',
-    version: '0.128.0',
+    version: '0.144.5',
     descZh: 'OpenAI 官方 Codex 桌面版，提供 Windows / macOS 站内中转下载；Linux 可继续使用 npm 安装。',
     descEn: 'OpenAI official Codex desktop app with local relayed Windows and macOS downloads. Linux users can continue using npm installation.',
     installGuide: 'https://github.com/openai/codex#installation',
@@ -66,10 +66,10 @@ export const DOWNLOAD_TOOLS = [
   {
     id: 'cherry-studio',
     title: 'Cherry Studio',
-    version: 'v1.9.2',
+    version: 'v1.9.12',
     descZh: '支持接入 OpenAI / Anthropic / Gemini 服务商，可配合本站生成参数使用。',
     descEn: 'Connects to OpenAI, Anthropic and Gemini providers and works well with generated settings from this site.',
-    providerDocs: 'https://docs.cherry-ai.com/advanced-basic/providers/custom-providers',
+    providerDocs: 'https://docs.cherryai.com.cn/docs/en-us/pre-basic/providers/zi-ding-yi-fu-wu-shang',
     releases: 'https://github.com/CherryHQ/cherry-studio/releases/latest',
     groups: [
       {
@@ -101,7 +101,7 @@ export const DOWNLOAD_TOOLS = [
   {
     id: 'nodejs',
     title: 'Node.js',
-    version: 'v24.15.0',
+    version: 'v24.18.0',
     descZh: '运行 Codex CLI、Claude Code 相关工具和常见前端开发工具所需的 Node.js LTS 环境。',
     descEn: 'Node.js LTS runtime for Codex CLI, Claude Code related tools and common frontend tooling.',
     releases: 'https://nodejs.org/en/download',

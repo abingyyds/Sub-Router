@@ -63,6 +63,24 @@ const previewOfficialChannels = [
     usable_model_count: 24,
     available_key_count: 18,
     available_provider_count: 6,
+    key_availability: 92.4,
+    model_availability: 100,
+    models: [
+      {
+        id: 'preview-official-1',
+        model_name: 'gpt-4o-mini',
+        category: 'chat',
+        price_currency: 'USD',
+        official_input_price: 0.15,
+        official_output_price: 0.6,
+        final_input_price: 0.048,
+        final_output_price: 0.192,
+        final_price_discount: 0.32,
+        key_count: 12,
+        available_key_count: 11,
+        key_availability: 91.7,
+      },
+    ],
   },
   {
     official_channel_id: 2,
@@ -74,6 +92,24 @@ const previewOfficialChannels = [
     usable_model_count: 8,
     available_key_count: 9,
     available_provider_count: 4,
+    key_availability: 88.9,
+    model_availability: 100,
+    models: [
+      {
+        id: 'preview-official-2',
+        model_name: 'claude-sonnet-4-5',
+        category: 'chat',
+        price_currency: 'USD',
+        official_input_price: 3,
+        official_output_price: 15,
+        final_input_price: 1.2,
+        final_output_price: 6,
+        final_price_discount: 0.4,
+        key_count: 7,
+        available_key_count: 6,
+        key_availability: 85.7,
+      },
+    ],
   },
 ];
 
@@ -90,6 +126,31 @@ const api = axios.create({
   withCredentials: true, // CRITICAL: send session cookies on every request
   headers: { 'Content-Type': 'application/json' },
 });
+
+// Public bootstrap data is shared by the home page and public detail pages.
+// Keep one in-flight request and a very short cache to avoid duplicate work
+// during React StrictMode mounts and rapid route changes.
+const publicRequestCache = new Map();
+const cachedPublicRequest = (key, request, ttl = 30000) => {
+  const now = Date.now();
+  const cached = publicRequestCache.get(key);
+  if (cached && now < cached.expiresAt) {
+    return cached.promise || Promise.resolve(cached.value);
+  }
+  const promise = request()
+    .then((response) => {
+      publicRequestCache.set(key, { value: response, expiresAt: Date.now() + ttl });
+      return response;
+    })
+    .catch((error) => {
+      publicRequestCache.delete(key);
+      throw error;
+    });
+  publicRequestCache.set(key, { promise, expiresAt: now + ttl });
+  return promise;
+};
+
+let siteInfoPromise;
 
 // Attach New-Api-User header (required by backend auth middleware)
 api.interceptors.request.use((config) => {
@@ -157,12 +218,59 @@ export const getSiteInfo = () => {
       },
     });
   }
-  return api.get('/api/dist/site/info');
+  if (!siteInfoPromise) {
+    siteInfoPromise = api.get('/api/dist/site/info', {
+      timeout: 8000,
+      skipErrorHandler: true,
+    }).finally(() => {
+      siteInfoPromise = undefined;
+    });
+  }
+  return siteInfoPromise;
 };
-export const getSiteModels = () => getPreviewTheme() ? previewResponse(previewModels) : api.get('/api/dist/site/models');
+export const getSiteModels = () => getPreviewTheme()
+  ? previewResponse(previewModels)
+  : cachedPublicRequest('site-models', () => api.get('/api/dist/site/models'));
 export const getSitePricing = () => api.get('/api/dist/site/pricing');
-export const getSiteOfficialChannels = () => getPreviewTheme() ? previewResponse(previewOfficialChannels) : api.get('/api/dist/site/official-channels');
-export const getSitePackages = () => getPreviewTheme() ? previewResponse(previewPackages) : api.get('/api/dist/site/packages');
+export const getSiteOfficialChannels = (params = {}) => getPreviewTheme()
+  ? previewResponse(
+      params.channel_id
+        ? previewOfficialChannels.filter(
+            (channel) => String(channel.official_channel_id) === String(params.channel_id),
+          )
+        : previewOfficialChannels,
+    )
+  : api.get('/api/dist/site/official-channels', { params });
+export const getSiteOfficialChannelAvailability = (channelId, modelId, period = '24h') => {
+  const params = { period };
+  if (modelId) params.model_id = modelId;
+  return getPreviewTheme()
+    ? previewResponse({
+        official_channel_id: channelId,
+        official_model_id: modelId || 0,
+        period,
+        availability: modelId ? 100 : 92.4,
+        providers: modelId
+          ? [{
+              provider_index: 1,
+              key_count: 10,
+              availability: 100,
+              price_discount: 0.32,
+              buckets: [],
+            }]
+          : [],
+        buckets: Array.from({ length: period === '7d' ? 14 : 24 }, (_, index) => ({
+          bucket_time: index,
+          total: 10,
+          successes: modelId ? 10 : index === 3 ? 8 : 10,
+          availability: modelId ? 100 : index === 3 ? 80 : 100,
+        })),
+      })
+    : api.get(`/api/dist/site/official-channels/${channelId}/availability`, { params });
+};
+export const getSitePackages = () => getPreviewTheme()
+  ? previewResponse(previewPackages)
+  : cachedPublicRequest('site-packages', () => api.get('/api/dist/site/packages'));
 export const getSiteKeyGroups = () => api.get('/api/dist/site/key-groups');
 export const getSiteKeyGroupPricing = (id) => api.get(`/api/dist/site/key-groups/${id}/pricing`);
 export const getSubDistributorInfo = () => api.get('/api/dist/site/sub-distributor/info');
@@ -177,6 +285,10 @@ export const getUserSelf = (config) => api.get('/api/dist/user/self', config);
 export const updateUserPassword = (data) => api.put('/api/dist/user/password', data);
 export const getUserUsage = () => api.get('/api/dist/user/usage');
 export const getUserLogs = (params) => api.get('/api/dist/user/logs', { params });
+export const exportUserLogs = (params) => api.get('/api/dist/user/logs/export', {
+  params,
+  responseType: 'blob',
+});
 export const getUserLogsStat = (params) => api.get('/api/dist/user/logs/stat', { params });
 export const getUserTasks = (params) => api.get('/api/dist/user/tasks', { params });
 export const getUserMjTasks = (params) => api.get('/api/dist/user/mj', { params });

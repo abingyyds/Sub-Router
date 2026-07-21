@@ -51,24 +51,8 @@ const themeRegistry = {
   },
 };
 
-// Full-screen loading spinner shown while site info is being fetched
-// Prevents theme flash (rendering default theme before API returns the real one)
-function ThemeLoading() {
-  return (
-    <div className="flex items-center justify-center min-h-screen" style={{ background: 'var(--page-bg)' }}>
-      <div className="w-8 h-8 rounded-full animate-spin"
-        style={{ border: '2px solid var(--page-spinner-track)', borderTopColor: 'var(--page-spinner)' }} />
-    </div>
-  );
-}
-
 export function ThemeProvider({ children }) {
-  const { site, loading } = useSite();
-
-  // Block rendering until site info is loaded so we know the correct theme
-  if (loading) {
-    return <ThemeLoading />;
-  }
+  const { site } = useSite();
 
   const themeName = site?.theme_template || 'starter';
 

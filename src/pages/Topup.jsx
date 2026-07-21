@@ -54,12 +54,14 @@ function getCreemMinTopup(products) {
   return quotas.length > 0 ? Math.min(...quotas) : 1;
 }
 
-function findCompatibleCreemProduct(products, amount) {
+function findCompatibleCreemProduct(products, amount, currency = '') {
   const payAmount = Number(amount);
   if (!Number.isFinite(payAmount) || payAmount <= 0) return null;
+  const expectedCurrency = String(currency || '').trim().toUpperCase();
   return products.find((product) => {
     const quota = Number(product?.quota);
-    return quota > 0 && payAmount % quota === 0;
+    const productCurrency = String(product?.currency || 'USD').trim().toUpperCase();
+    return (!expectedCurrency || productCurrency === expectedCurrency) && quota > 0 && payAmount % quota === 0;
   }) || null;
 }
 
@@ -110,7 +112,7 @@ export default function Topup() {
   const { t } = useTranslation();
   const { user, refreshUser } = useAuth();
   const { site } = useSite();
-  const { symbol, rate } = useCurrency();
+  const { symbol, rate, code } = useCurrency();
 
   const [usage, setUsage] = useState(null);
   const [topupInfo, setTopupInfo] = useState(null);
@@ -122,7 +124,6 @@ export default function Topup() {
 
   // Online topup
   const [amount, setAmount] = useState('');
-  const [displayAmount, setDisplayAmount] = useState('');
   const [selectedPreset, setSelectedPreset] = useState(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [payingMethod, setPayingMethod] = useState('');
@@ -141,7 +142,34 @@ export default function Topup() {
 
   const enableTopup = site?.enable_topup && topupInfo;
   const topupConfig = site?.topup_config;
-  const presetAmounts = topupInfo?.amount_options || [1, 5, 10, 20, 50, 100];
+  const topupCurrency = String(topupInfo?.currency || code || 'CNY').toUpperCase();
+  const topupSymbol = topupCurrency === 'USD' ? '$' : '¥';
+  const configuredTopupRate = Number(topupInfo?.exchange_rate);
+  const topupRate = Number.isFinite(configuredTopupRate) && configuredTopupRate > 0
+    ? configuredTopupRate
+    : topupCurrency === code
+      ? rate
+      : topupCurrency === 'USD'
+        ? 1
+        : rate;
+  const amountTiers = useMemo(() => {
+    if (Array.isArray(topupInfo?.amount_tiers) && topupInfo.amount_tiers.length > 0) {
+      return topupInfo.amount_tiers
+        .map((tier) => ({
+          amount: Number(tier?.amount),
+          bonus: Math.max(0, Number(tier?.bonus) || 0),
+          creem_supported: tier?.creem_supported !== false,
+          creem_product_id: String(tier?.creem_product_id || ''),
+        }))
+        .filter((tier) => Number.isFinite(tier.amount) && tier.amount > 0);
+    }
+    return (topupInfo?.amount_options || [1, 10, 50, 100, 200, 500]).map((value) => ({
+      amount: Number(value) * topupRate,
+      bonus: 0,
+      creem_supported: true,
+    }));
+  }, [topupInfo?.amount_options, topupInfo?.amount_tiers, topupRate]);
+  const selectedTier = selectedPreset === null ? null : amountTiers[selectedPreset];
   const minTopup = topupInfo?.min_topup || 1;
   const payMethods = topupInfo?.pay_methods || [];
   const enableOnline = topupInfo?.enable_online_topup;
@@ -188,17 +216,6 @@ export default function Topup() {
     return Number(value).toFixed(2).replace(/\.?0+$/, '');
   }, []);
 
-  const toDisplayAmount = useCallback((quotaAmount) => {
-    if (quotaAmount === '' || quotaAmount == null) return '';
-    return formatCurrencyAmount(Number(quotaAmount) * rate);
-  }, [formatCurrencyAmount, rate]);
-
-  const toQuotaAmount = useCallback((currencyAmount) => {
-    const numeric = Number.parseFloat(currencyAmount);
-    if (!Number.isFinite(numeric) || numeric <= 0) return '';
-    return Math.max(minTopup, Math.round(numeric / rate));
-  }, [minTopup, rate]);
-
   // Redeem
   const handleRedeem = async (e) => {
     e.preventDefault();
@@ -216,10 +233,9 @@ export default function Topup() {
   };
 
   // Select preset
-  const handlePreset = (val) => {
-    setSelectedPreset(val);
-    setAmount(String(val));
-    setDisplayAmount(toDisplayAmount(val));
+  const handlePreset = (tier, index) => {
+    setSelectedPreset(index);
+    setAmount(String(tier.amount));
   };
 
   // Determine if a payment method is Stripe-based
@@ -260,24 +276,33 @@ export default function Topup() {
   // Pay handler for EPay, Stripe and Creem methods
   const handlePay = async (method) => {
     setSelectedPaymentMethod(method);
-    const payAmount = parseInt(amount);
+    const payAmount = Number.parseFloat(amount);
     if (!payAmount || payAmount <= 0) {
       toast.error(t('topup.enterAmount'));
       return;
     }
+    const basePayAmount = payAmount / topupRate;
     const isGatewayPayment = isStripePayment(method) || isCreemPayment(method);
-    if (isGatewayPayment && payAmount < getMethodMinTopup(method)) {
+    if (isGatewayPayment && basePayAmount < getMethodMinTopup(method)) {
       showGatewayMinTopupError(method, getMethodMinTopup(method));
       return;
     }
-    if (!isGatewayPayment && payAmount < minTopup) {
-      toast.error(t('topup.minimumAmount', { min: formatCurrencyAmount(minTopup * rate) }));
+    if (!isGatewayPayment && basePayAmount < minTopup) {
+      toast.error(t('topup.minimumAmount', { min: `${topupSymbol}${formatCurrencyAmount(minTopup * topupRate)}` }));
       return;
     }
     const creemProduct = isCreemPayment(method)
-      ? findCompatibleCreemProduct(creemProducts, payAmount)
+      ? selectedTier?.creem_product_id
+        ? creemProducts.find((product) => product.productId === selectedTier.creem_product_id) || null
+        : selectedPreset === null && Math.abs(basePayAmount - Math.round(basePayAmount)) > 0.000001
+          ? null
+          : findCompatibleCreemProduct(
+              creemProducts,
+              Math.round(basePayAmount),
+              selectedPreset === null ? '' : topupInfo?.currency,
+            )
       : null;
-    if (isCreemPayment(method) && !creemProduct) {
+    if (isCreemPayment(method) && (selectedTier?.creem_supported === false || !creemProduct)) {
       toast.error(t('topup.creemUnsupportedAmount') || 'Current amount is not supported by Creem');
       return;
     }
@@ -286,13 +311,21 @@ export default function Topup() {
     setPayingMethod(method);
     try {
       const returnUrl = window.location.origin + '/topup?payment=return';
-      const data = { amount: payAmount, payment_method: method, return_url: returnUrl };
+      const data = {
+        amount: payAmount,
+        payment_method: method,
+        return_url: returnUrl,
+        currency: topupCurrency,
+        ...(selectedPreset !== null ? { tier_index: selectedPreset } : {}),
+      };
 
       if (isCreemPayment(method)) {
         const res = await createCreemOrder({
           product_id: creemProduct.productId,
           payment_method: 'creem',
           amount: payAmount,
+          currency: topupCurrency,
+          ...(selectedPreset !== null ? { tier_index: selectedPreset } : {}),
           return_url: returnUrl,
         });
         if (res.data.message === 'success' && res.data.data?.checkout_url) {
@@ -356,7 +389,7 @@ export default function Topup() {
 
   // Crypto pay - needs chain + token
   const handleCryptoPay = async () => {
-    const payAmountVal = parseInt(amount);
+    const payAmountVal = Number.parseFloat(amount);
     if (!payAmountVal || payAmountVal <= 0) {
       toast.error(t('topup.enterAmount'));
       return;
@@ -376,6 +409,8 @@ export default function Topup() {
         amount: payAmountVal,
         chain: selectedChain,
         token: selectedToken,
+        currency: topupCurrency,
+        ...(selectedPreset !== null ? { tier_index: selectedPreset } : {}),
       });
       if (res.data.message === 'success' && res.data.data) {
         setCryptoOrder(res.data.data);
@@ -558,61 +593,61 @@ export default function Topup() {
           <div className="mb-6">
             <label className="block text-sm font-medium text-page-label mb-3">{t('topup.selectAmount')}</label>
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-              {presetAmounts.map((val) => (
+              {amountTiers.map((tier, index) => (
                 <button
-                  key={val}
-                  onClick={() => handlePreset(val)}
+                  key={`${tier.amount}-${index}`}
+                  onClick={() => handlePreset(tier, index)}
                   className={`py-2.5 px-3 rounded-xl text-sm font-medium transition-all ${
-                    selectedPreset === val
+                    selectedPreset === index
                       ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/25'
                       : 'glass-sm text-page-label hover:text-page hover:bg-page-surface-hover'
                   }`}
                 >
-                  {symbol}{formatCurrencyAmount(val * rate)}
+                  <span className='block'>{topupSymbol}{formatCurrencyAmount(tier.amount)}</span>
+                  {tier.bonus > 0 && (
+                    <span className={`block mt-0.5 text-[11px] ${selectedPreset === index ? 'text-white/85' : 'text-page-success'}`}>
+                      {t('topup.bonusAmount', { amount: `${topupSymbol}${formatCurrencyAmount(tier.bonus)}` })}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
           </div>
 
           {/* Custom Amount */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-page-label mb-2">{t('topup.customAmount')}</label>
-            <div className="flex gap-3">
+          <div className='mb-6'>
+            <label className='block text-sm font-medium text-page-label mb-2'>{t('topup.customAmount')}</label>
+            <div className='relative'>
+              <span className='absolute left-3 top-1/2 -translate-y-1/2 text-page-muted'>{topupSymbol}</span>
               <input
-                type="number"
-                value={displayAmount}
-                onChange={(e) => {
-                  const currentValue = e.target.value;
-                  setDisplayAmount(currentValue);
+                type='number'
+                value={amount}
+                onChange={(event) => {
+                  setAmount(event.target.value);
                   setSelectedPreset(null);
-                  const quotaAmount = toQuotaAmount(currentValue);
-                  setAmount(quotaAmount === '' ? '' : String(quotaAmount));
                 }}
-                onBlur={(e) => {
-                  const quotaAmount = toQuotaAmount(e.target.value);
-                  if (quotaAmount === '') {
-                    setDisplayAmount('');
-                    setAmount('');
-                    return;
-                  }
-                  setAmount(String(quotaAmount));
-                  setDisplayAmount(toDisplayAmount(quotaAmount));
-                }}
-                min={minTopup * rate}
-                step="0.01"
-                placeholder={t('topup.amountPlaceholder', { min: formatCurrencyAmount(minTopup * rate) })}
-                className="input flex-1"
+                min={minTopup * topupRate}
+                max={10000 * topupRate}
+                step='0.01'
+                placeholder={t('topup.amountPlaceholder', {
+                  min: `${topupSymbol}${formatCurrencyAmount(minTopup * topupRate)}`,
+                })}
+                className='input w-full pl-8'
               />
             </div>
-            <p className="text-xs text-page-muted mt-2">
-              {t('topup.customAmountHint')}
-            </p>
-            {amount ? (
-              <p className="text-xs text-page-muted mt-2">
-                {t('topup.rechargeAmountLabel')}: {symbol}{displayAmount || toDisplayAmount(amount)}
-              </p>
-            ) : null}
+            <p className='text-xs text-page-muted mt-2'>{t('topup.customAmountHint')}</p>
           </div>
+
+          {selectedTier && (
+            <div className='mb-6 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-page-secondary'>
+              <span>{t('topup.rechargeAmountLabel')}: {topupSymbol}{formatCurrencyAmount(selectedTier.amount)}</span>
+              {selectedTier.bonus > 0 && (
+                <span className='font-medium text-page-success'>
+                  {t('topup.creditedAmount')}: {topupSymbol}{formatCurrencyAmount(selectedTier.amount + selectedTier.bonus)}
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Payment Methods */}
           <div>
@@ -623,22 +658,28 @@ export default function Topup() {
                 const isMethodStripe = isStripePayment(method.type);
                 const isMethodCreem = isCreemPayment(method.type);
                 const minForMethod = Number(method.min_topup) || 0;
+                const baseAmount = Number(amount || 0) / topupRate;
                 const belowGatewayMin =
                   (isMethodStripe || isMethodCreem) &&
-                  minForMethod > Number(amount || 0);
+                  minForMethod > baseAmount;
+                const creemTierUnsupported =
+                  isMethodCreem && selectedTier?.creem_supported === false;
                 const disabled =
                   paymentLoading ||
                   !amount ||
                   (!enableOnline && !isMethodStripe && !isMethodCreem) ||
                   (!enableStripe && isMethodStripe) ||
-                  (!enableCreem && isMethodCreem);
+                  (!enableCreem && isMethodCreem) ||
+                  creemTierUnsupported;
                 return (
                   <button
                     key={method.type}
                     onClick={() => handlePay(method.type)}
                     disabled={disabled}
                     title={
-                      belowGatewayMin
+                      creemTierUnsupported
+                        ? t('topup.creemUnsupportedAmount')
+                        : belowGatewayMin
                         ? t('topup.gatewayMinimumAmount', {
                             channel: method.name,
                             amount: formatCurrencyAmount(minForMethod),
@@ -825,7 +866,19 @@ export default function Topup() {
               {history.map((item, i) => (
                 <div key={i} className="flex items-center justify-between glass-sm rounded-xl px-4 py-3">
                   <div>
-                    <p className="text-sm text-page">{symbol}{(Number(item.amount) * rate).toFixed(2)}</p>
+                    <p className="text-sm text-page">
+                      {item.currency === 'USD' ? '$' : item.currency === 'CNY' ? '¥' : topupSymbol}
+                      {Number(item.display_amount) > 0
+                        ? formatCurrencyAmount(item.display_amount)
+                        : formatCurrencyAmount(Number(item.amount) * topupRate)}
+                      {Number(item.bonus_amount) > 0 && (
+                        <span className='ml-2 text-xs font-medium text-page-success'>
+                          {t('topup.bonusAmount', {
+                            amount: `${item.currency === 'USD' ? '$' : item.currency === 'CNY' ? '¥' : topupSymbol}${formatCurrencyAmount(item.bonus_amount)}`,
+                          })}
+                        </span>
+                      )}
+                    </p>
                     <p className="text-xs text-page-muted">
                       {new Date(item.create_time * 1000).toLocaleString()} · {item.payment_method || t('topup.redeemCode')}
                     </p>
