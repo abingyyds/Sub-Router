@@ -228,9 +228,12 @@ export const getSiteInfo = () => {
   }
   return siteInfoPromise;
 };
-export const getSiteModels = () => getPreviewTheme()
+export const getSiteModels = (params = {}) => getPreviewTheme()
   ? previewResponse(previewModels)
-  : cachedPublicRequest('site-models', () => api.get('/api/dist/site/models'));
+  : cachedPublicRequest(
+    `site-models:${JSON.stringify(params)}`,
+    () => api.get('/api/dist/site/models', { params }),
+  );
 export const getSitePricing = () => api.get('/api/dist/site/pricing');
 export const getSiteOfficialChannels = (params = {}) => getPreviewTheme()
   ? previewResponse(

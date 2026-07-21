@@ -48,6 +48,8 @@ const emptyControlForm = () => ({
   model_limits: [],
   allow_ips: '',
   subrouter_sort_mode: 'token_price_first',
+  include_official_channels: false,
+  official_key_max_discount: '',
 });
 
 const padDatePart = (value) => String(value).padStart(2, '0');
@@ -124,8 +126,16 @@ const tokenToEditForm = (token, rate) => ({
   model_limits: parseModelLimits(token?.model_limits),
   allow_ips: token?.allow_ips || '',
   subrouter_sort_mode: token?.subrouter_sort_mode || 'token_price_first',
-  official_key_max_discount: normalizeOfficialKeyMaxDiscount(token?.official_key_max_discount),
+  include_official_channels: Boolean(token?.include_official_channels),
+  official_key_max_discount: token?.include_official_channels
+    ? normalizeOfficialKeyMaxDiscount(token?.official_key_max_discount) || ''
+    : normalizeOfficialKeyMaxDiscount(token?.official_key_max_discount),
 });
+
+const isValidOfficialRoutingMaxDiscount = (value) => {
+  const discount = Number(value);
+  return Number.isFinite(discount) && discount > 0 && discount <= 1;
+};
 
 export default function Tokens() {
   const { t } = useTranslation();
@@ -160,6 +170,7 @@ export default function Tokens() {
   const [createOfficialKeyMaxDiscount, setCreateOfficialKeyMaxDiscount] = useState(0);
   const [createControls, setCreateControls] = useState(emptyControlForm);
   const [creating, setCreating] = useState(false);
+  const officialChannelsEnabled = site?.show_official_channels !== false && site?.has_official_channels;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -177,18 +188,49 @@ export default function Tokens() {
   useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
-    getSiteModels()
-      .then((res) => {
-        if (!res.data.success) return;
-        const names = new Set();
-        (res.data.data || []).forEach((item) => {
-          const name = item?.model_name || item?.id || item?.name || item;
-          if (name) names.add(String(name));
-        });
-        setModelOptions([...names].sort());
-      })
-      .catch(() => {});
-  }, []);
+    const createOfficialRouting = officialChannelsEnabled && showCreate && createType === 'normal'
+      && createControls.include_official_channels
+      && isValidOfficialRoutingMaxDiscount(createControls.official_key_max_discount);
+    const editingOfficialToken = editingToken?.type === 'official' || editingToken?.group === 'dist_official';
+    const editOfficialRouting = officialChannelsEnabled && Boolean(editingToken) && !editingOfficialToken
+      && editForm?.include_official_channels
+      && isValidOfficialRoutingMaxDiscount(editForm?.official_key_max_discount);
+    const maxDiscount = createOfficialRouting
+      ? Number(createControls.official_key_max_discount)
+      : editOfficialRouting
+        ? Number(editForm.official_key_max_discount)
+        : 0;
+    const params = maxDiscount > 0
+      ? { include_official_channels: true, official_key_max_discount: maxDiscount }
+      : {};
+    let active = true;
+    const timer = window.setTimeout(() => {
+      getSiteModels(params)
+        .then((res) => {
+          if (!active || !res.data.success) return;
+          const names = new Set();
+          (res.data.data || []).forEach((item) => {
+            const name = item?.model_name || item?.id || item?.name || item;
+            if (name) names.add(String(name));
+          });
+          setModelOptions([...names].sort());
+        })
+        .catch(() => {});
+    }, maxDiscount > 0 ? 250 : 0);
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [
+    createControls.include_official_channels,
+    createControls.official_key_max_discount,
+    createType,
+    editForm?.include_official_channels,
+    editForm?.official_key_max_discount,
+    editingToken,
+    officialChannelsEnabled,
+    showCreate,
+  ]);
 
   // Group by vendor_category
   const groupedByVendor = useMemo(() => {
@@ -283,6 +325,18 @@ export default function Tokens() {
       Object.assign(payload, controlPayload);
       if (createType === 'official') {
         payload.official_key_max_discount = normalizeOfficialKeyMaxDiscount(createOfficialKeyMaxDiscount);
+      } else {
+        payload.include_official_channels = Boolean(createControls.include_official_channels);
+        if (payload.include_official_channels) {
+          if (!isValidOfficialRoutingMaxDiscount(createControls.official_key_max_discount)) {
+            toast.error(t('tokens.invalidOfficialRoutingMaxDiscount'));
+            setCreating(false);
+            return;
+          }
+          payload.official_key_max_discount = Number(createControls.official_key_max_discount);
+        } else {
+          payload.official_key_max_discount = 0;
+        }
       }
       const res = await createToken(payload);
       if (res.data.success) {
@@ -347,6 +401,18 @@ export default function Tokens() {
     payload.name = String(editForm.name || '').trim();
     if (isOfficialToken) {
       payload.official_key_max_discount = normalizeOfficialKeyMaxDiscount(editForm.official_key_max_discount);
+    } else {
+      payload.include_official_channels = officialChannelsEnabled
+        && Boolean(editForm.include_official_channels);
+      if (payload.include_official_channels) {
+        if (!isValidOfficialRoutingMaxDiscount(editForm.official_key_max_discount)) {
+          toast.error(t('tokens.invalidOfficialRoutingMaxDiscount'));
+          return;
+        }
+        payload.official_key_max_discount = Number(editForm.official_key_max_discount);
+      } else {
+        payload.official_key_max_discount = 0;
+      }
     }
     setSavingEdit(true);
     try {
@@ -422,7 +488,6 @@ export default function Tokens() {
   };
 
   const hasGroups = keyGroups.length > 0;
-  const officialChannelsEnabled = site?.show_official_channels !== false && site?.has_official_channels;
   const normalTokens = tokens.filter((token) => token.type !== 'official' && token.group !== 'dist_official');
   const officialTokens = tokens.filter((token) => token.type === 'official' || token.group === 'dist_official');
   const activeGroupPricing = activePricingGroup
@@ -595,6 +660,13 @@ export default function Tokens() {
                 </p>
               </div>
               )}
+              {createType === 'normal' && officialChannelsEnabled && (
+                <OfficialRoutingFields
+                  form={createControls}
+                  onChange={(field, value) => setCreateControls((prev) => ({ ...prev, [field]: value }))}
+                  t={t}
+                />
+              )}
               <TokenControlFields
                 form={createControls}
                 onChange={(field, value) => setCreateControls((prev) => ({ ...prev, [field]: value }))}
@@ -652,6 +724,13 @@ export default function Tokens() {
                       placeholder={t('tokens.officialKeyMaxDiscountPlaceholder')}
                     />
                   </div>
+                )}
+                {!(editingToken.type === 'official' || editingToken.group === 'dist_official') && officialChannelsEnabled && (
+                  <OfficialRoutingFields
+                    form={editForm}
+                    onChange={(field, value) => setEditForm((prev) => ({ ...prev, [field]: value }))}
+                    t={t}
+                  />
                 )}
                 <TokenControlFields
                   form={editForm}
@@ -845,6 +924,20 @@ function TokenListSection({
                       })}
                     </p>
                   )}
+                  {!official && token.include_official_channels && (
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                      <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-500">
+                        {t('tokens.includeOfficialChannelsBadge')}
+                      </span>
+                      {formatOfficialDiscount(token.official_key_max_discount) && (
+                        <span className="text-[11px] text-page-muted">
+                          {t('tokens.officialKeyTokenMaxDiscount', {
+                            discount: formatOfficialDiscount(token.official_key_max_discount),
+                          })}
+                        </span>
+                      )}
+                    </div>
+                  )}
                   <TokenControlSummary token={token} currency={currency} t={t} />
                 </div>
                 <span className="text-xs text-page-muted hidden md:block">
@@ -947,6 +1040,59 @@ function TokenListSection({
               )}
             </div>
           ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function OfficialRoutingFields({ form, onChange, t }) {
+  const enabled = Boolean(form.include_official_channels);
+  const discountHint = formatDiscountHint(form.official_key_max_discount, t);
+
+  return (
+    <div className="space-y-3 rounded-xl border border-page-divider bg-page-surface px-4 py-3">
+      <label className="flex items-start justify-between gap-4">
+        <span>
+          <span className="block text-sm font-medium text-page">
+            {t('tokens.includeOfficialChannels')}
+          </span>
+          <span className="mt-1 block text-xs text-page-secondary">
+            {t('tokens.includeOfficialChannelsDesc')}
+          </span>
+        </span>
+        <input
+          type="checkbox"
+          checked={enabled}
+          onChange={(event) => {
+            const next = event.target.checked;
+            onChange('include_official_channels', next);
+            if (!next) onChange('official_key_max_discount', '');
+          }}
+          className="mt-0.5 h-4 w-4 shrink-0 accent-brand-500"
+        />
+      </label>
+      {enabled && (
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-page-label">
+            {t('tokens.officialKeyMaxDiscount')}
+          </label>
+          <input
+            type="number"
+            min="0.01"
+            max="1"
+            step="0.01"
+            value={form.official_key_max_discount}
+            onChange={(event) => onChange('official_key_max_discount', event.target.value)}
+            className="input"
+            placeholder={t('tokens.officialRoutingMaxDiscountPlaceholder')}
+            required
+          />
+          <p className="mt-1.5 text-xs text-page-muted">
+            {discountHint
+              ? t('tokens.officialKeyMaxDiscountHint', { discount: discountHint })
+              : t('tokens.includeOfficialChannelsPriceDesc')}
+          </p>
         </div>
       )}
     </div>
