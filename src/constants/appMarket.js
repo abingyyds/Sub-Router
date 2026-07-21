@@ -10,6 +10,8 @@ const WEBNOVEL_WRITER_OWNER_AVATAR = 'https://github.com/lingfengQAQ.png';
 const MONEY_PRINTER_TURBO_REPO_RAW =
   'https://raw.githubusercontent.com/harry0703/MoneyPrinterTurbo/main';
 const MONEY_PRINTER_TURBO_OWNER_AVATAR = 'https://github.com/harry0703.png';
+const OPEN_DESIGN_REPO_RAW =
+  'https://raw.githubusercontent.com/nexu-io/open-design/main';
 
 const PLATFORM_APP_INTEGRATION = [
   'appMarket.integrationLogin',
@@ -136,6 +138,26 @@ export const APP_MARKET_APPS = [
       'appMarket.featureAiCopywriting',
       'appMarket.featureSubtitleVoiceover',
       'appMarket.featureBatchVideo',
+    ],
+  },
+  {
+    id: 'open-design',
+    name: 'Open Design',
+    categoryKey: 'appMarket.categoryCreative',
+    statusKey: 'appMarket.statusLive',
+    taglineKey: 'appMarket.openDesignTagline',
+    descriptionKey: 'appMarket.openDesignDescription',
+    logo: `${OPEN_DESIGN_REPO_RAW}/apps/landing-page/public/logo.svg`,
+    cover: `${OPEN_DESIGN_REPO_RAW}/apps/landing-page/public/blog/open-source-alternative-to-claude-design-cover.webp`,
+    appUrl: 'https://open-design-production-5b51.up.railway.app/',
+    sourceUrl: 'https://github.com/abingyyds/open-design',
+    license: 'Apache-2.0',
+    integration: PLATFORM_APP_INTEGRATION,
+    featureKeys: [
+      'appMarket.featureDesignPrototyping',
+      'appMarket.featureDesignSystems',
+      'appMarket.featureMultiFormatExport',
+      'appMarket.featureLocalFirst',
     ],
   },
 ];
