@@ -6,13 +6,17 @@ import {
   Boxes,
   ExternalLink,
   Layers3,
+  MessageSquare,
   ShieldCheck,
   Sparkles,
+  Star,
   WalletCards,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSite } from '../context/SiteContext';
 import { APP_MARKET_APPS } from '../constants/appMarket';
+import { getAppRatings } from '../api';
+import AppReviewSection from '../components/AppReviewSection';
 
 function CoverFallback({ app, t }) {
   return (
@@ -43,6 +47,8 @@ export default function AppMarket() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { site } = useSite();
+  const [ratingByApp, setRatingByApp] = React.useState({});
+  const [expandedAppId, setExpandedAppId] = React.useState(null);
   const visibleApps = React.useMemo(() => {
     if (!Array.isArray(site?.app_market_apps)) {
       return APP_MARKET_APPS;
@@ -50,6 +56,42 @@ export default function AppMarket() {
     const enabledAppIds = new Set(site.app_market_apps);
     return APP_MARKET_APPS.filter((app) => enabledAppIds.has(app.id));
   }, [site?.app_market_apps]);
+
+  const fetchRatings = React.useCallback(async () => {
+    try {
+      const response = await getAppRatings();
+      if (response.data.success) {
+        const next = {};
+        for (const item of response.data.data || []) {
+          next[item.app_id] = item;
+        }
+        setRatingByApp(next);
+      }
+    } catch {
+      // Keep the configured order when rating data is temporarily unavailable.
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchRatings();
+  }, [fetchRatings]);
+
+  const rankedApps = React.useMemo(
+    () =>
+      visibleApps
+        .map((app, index) => ({ app, index }))
+        .sort((left, right) => {
+          const leftRating = Number(ratingByApp[left.app.id]?.rating || 0);
+          const rightRating = Number(ratingByApp[right.app.id]?.rating || 0);
+          if (leftRating !== rightRating) return rightRating - leftRating;
+          const leftCount = Number(ratingByApp[left.app.id]?.review_count || 0);
+          const rightCount = Number(ratingByApp[right.app.id]?.review_count || 0);
+          if (leftCount !== rightCount) return rightCount - leftCount;
+          return left.index - right.index;
+        })
+        .map(({ app }) => app),
+    [ratingByApp, visibleApps],
+  );
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 sm:py-12">
@@ -107,7 +149,7 @@ export default function AppMarket() {
               {t('appMarket.emptyDesc')}
             </p>
           </div>
-        ) : visibleApps.map((app) => (
+        ) : rankedApps.map((app) => (
           <article
             key={app.id}
             className="glass overflow-hidden rounded-2xl shadow-sm"
@@ -132,6 +174,13 @@ export default function AppMarket() {
                         </span>
                         <span className="rounded-full border border-page-divider bg-page-surface px-2.5 py-1 text-xs font-semibold text-page-secondary">
                           {t(app.categoryKey)}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-sm font-semibold tabular-nums text-page">
+                          <Star className="h-4 w-4 text-amber-500" fill="currentColor" />
+                          {Number(ratingByApp[app.id]?.rating || 0).toFixed(1)}
+                          <span className="font-normal text-page-secondary">
+                            ({Number(ratingByApp[app.id]?.review_count || 0)})
+                          </span>
                         </span>
                       </div>
                       <p className="text-base font-medium text-page">
@@ -171,7 +220,7 @@ export default function AppMarket() {
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-3 sm:flex-row">
+                <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                   {user ? (
                     <a
                       href={app.appUrl}
@@ -209,6 +258,17 @@ export default function AppMarket() {
                     <ExternalLink className="mr-2 h-4 w-4" />
                     {t('appMarket.sourceLink')}
                   </a>
+                  <button
+                    type="button"
+                    className="btn-secondary inline-flex items-center justify-center"
+                    onClick={() => setExpandedAppId(expandedAppId === app.id ? null : app.id)}
+                    aria-expanded={expandedAppId === app.id}
+                  >
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                    {t('appMarket.reviews', {
+                      count: Number(ratingByApp[app.id]?.review_count || 0),
+                    })}
+                  </button>
                 </div>
               </div>
 
@@ -241,6 +301,9 @@ export default function AppMarket() {
                 </div>
               </div>
             </div>
+            {expandedAppId === app.id && (
+              <AppReviewSection appId={app.id} user={user} onChanged={fetchRatings} />
+            )}
           </article>
         ))}
       </section>
