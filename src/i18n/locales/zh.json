@@ -436,7 +436,7 @@
     "tokens.officialKeyCardMaxDiscount": "最终价 <= {{discount}}",
     "tokens.officialKeyTokenMaxDiscount": "最终价 <= {{discount}}",
     "tokens.includeOfficialChannels": "包含官方渠道",
-    "tokens.includeOfficialChannelsDesc": "开启后，智能路由可在本站已上架的官方渠道与普通商家之间选择最优线路。默认关闭。",
+    "tokens.includeOfficialChannelsDesc": "新建 Key 默认开启；开启后智能路由可在本站已上架的官方渠道与普通商家之间选择最优线路。",
     "tokens.includeOfficialChannelsPriceDesc": "必须设置大于 0 且不超过 1 的最高折扣价格，例如 0.5 表示 5 折。高于该价格的官方渠道不会参与路由。",
     "tokens.includeOfficialChannelsBadge": "包含官方渠道",
     "tokens.officialRoutingMaxDiscountPlaceholder": "例如 0.5（5 折）",

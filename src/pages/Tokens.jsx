@@ -48,7 +48,7 @@ const emptyControlForm = () => ({
   model_limits: [],
   allow_ips: '',
   subrouter_sort_mode: 'token_price_first',
-  include_official_channels: false,
+  include_official_channels: true,
   official_key_max_discount: '',
 });
 
@@ -326,7 +326,8 @@ export default function Tokens() {
       if (createType === 'official') {
         payload.official_key_max_discount = normalizeOfficialKeyMaxDiscount(createOfficialKeyMaxDiscount);
       } else {
-        payload.include_official_channels = Boolean(createControls.include_official_channels);
+        payload.include_official_channels = officialChannelsEnabled
+          && Boolean(createControls.include_official_channels);
         if (payload.include_official_channels) {
           if (!isValidOfficialRoutingMaxDiscount(createControls.official_key_max_discount)) {
             toast.error(t('tokens.invalidOfficialRoutingMaxDiscount'));
