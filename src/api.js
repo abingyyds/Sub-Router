@@ -228,9 +228,12 @@ export const getSiteInfo = () => {
   }
   return siteInfoPromise;
 };
-export const getSiteModels = () => getPreviewTheme()
+export const getSiteModels = (params = {}) => getPreviewTheme()
   ? previewResponse(previewModels)
-  : cachedPublicRequest('site-models', () => api.get('/api/dist/site/models'));
+  : cachedPublicRequest(
+    `site-models:${JSON.stringify(params)}`,
+    () => api.get('/api/dist/site/models', { params }),
+  );
 export const getSitePricing = () => api.get('/api/dist/site/pricing');
 export const getSiteOfficialChannels = (params = {}) => getPreviewTheme()
   ? previewResponse(
@@ -274,6 +277,8 @@ export const getSitePackages = () => getPreviewTheme()
 export const getSiteKeyGroups = () => api.get('/api/dist/site/key-groups');
 export const getSiteKeyGroupPricing = (id) => api.get(`/api/dist/site/key-groups/${id}/pricing`);
 export const getSubDistributorInfo = () => api.get('/api/dist/site/sub-distributor/info');
+export const getAppRatings = () => api.get('/api/dist/app-market/ratings');
+export const getAppReviews = (params) => api.get('/api/dist/app-market/reviews', { params });
 
 // ===== Auth =====
 export const register = (data) => api.post('/api/dist/user/register', data);
@@ -292,6 +297,16 @@ export const exportUserLogs = (params) => api.get('/api/dist/user/logs/export', 
 export const getUserLogsStat = (params) => api.get('/api/dist/user/logs/stat', { params });
 export const getUserTasks = (params) => api.get('/api/dist/user/tasks', { params });
 export const getUserMjTasks = (params) => api.get('/api/dist/user/mj', { params });
+export const getMyAppReview = (appId, config = {}) =>
+  api.get('/api/dist/app-market/reviews/self', {
+    ...config,
+    params: { ...(config.params || {}), app_id: appId },
+  });
+export const createAppReview = (data) => api.post('/api/dist/app-market/reviews', data);
+export const updateAppReview = (id, data) => api.put(`/api/dist/app-market/reviews/${id}`, data);
+export const deleteAppReview = (id) => api.delete(`/api/dist/app-market/reviews/${id}`);
+export const createAppReviewReply = (reviewId, content) =>
+  api.post(`/api/dist/app-market/reviews/${reviewId}/replies`, { content });
 
 // ===== Tokens =====
 export const getTokens = () => api.get('/api/dist/token/list');
