@@ -1311,6 +1311,7 @@ function TokenControlFields({
 function KeyGroupCard({ group, parseTags, onSelect, onViewPricing, t }) {
   const tags = parseTags(group.tags);
   const isUnavailable = group.is_unavailable;
+  const priceDiscount = Number(group.price_discount || 1);
 
   return (
     <div
@@ -1348,6 +1349,11 @@ function KeyGroupCard({ group, parseTags, onSelect, onViewPricing, t }) {
             {group.discount_label && (
               <span className="text-[11px] font-semibold text-page-success">
                 {group.discount_label}
+              </span>
+            )}
+            {priceDiscount > 0 && priceDiscount < 1 && (
+              <span className="text-[11px] font-semibold text-violet-500">
+                {t('tokens.groupSettlementDiscount', { discount: priceDiscount.toFixed(2) })}
               </span>
             )}
             {tags.map((tag, i) => (
@@ -1406,6 +1412,7 @@ function GroupPricingModal({
   }
 
   const displayGroup = pricingData?.group || group;
+  const priceDiscount = Number(displayGroup.price_discount || 1);
   const summary = pricingData?.summary;
   const hasItems = (pricingData?.items || []).length > 0;
   const regionRestricted = pricingData?.region_restricted === true;
@@ -1443,6 +1450,11 @@ function GroupPricingModal({
             {displayGroup.discount_label && (
               <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-green-500/10 text-page-success">
                 {displayGroup.discount_label}
+              </span>
+            )}
+            {priceDiscount > 0 && priceDiscount < 1 && (
+              <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-violet-500/10 text-violet-500">
+                {t('tokens.groupSettlementDiscount', { discount: priceDiscount.toFixed(2) })}
               </span>
             )}
             {displayGroup.rmb_per_usd > 0 && (
@@ -1483,6 +1495,9 @@ function GroupPricingModal({
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <p className="text-sm text-page-secondary">
               {t('tokens.groupPricingNotice')}
+              {priceDiscount > 0 && priceDiscount < 1 && (
+                <span className="mt-1 block text-xs text-page-muted">{t('tokens.groupDiscountCostFloor')}</span>
+              )}
             </p>
             <input
               type="text"
