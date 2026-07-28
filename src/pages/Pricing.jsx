@@ -169,6 +169,12 @@ function isTieredExprPrice(item) {
   return item?.is_tiered_expr || item?.billing_type === 'tiered_expr' || item?.billing_mode === 'tiered_expr';
 }
 
+function isPriceUnavailable(item) {
+  if (item?.pricing_source === 'unconfigured') return true;
+  if (isPerCallPrice(item) || isTieredExprPrice(item)) return false;
+  return item?.input_price == null && item?.output_price == null;
+}
+
 export default function Pricing() {
   const { t } = useTranslation();
   const { symbol, rate, code, usdRate } = useCurrency();
@@ -333,6 +339,7 @@ export default function Pricing() {
   };
 
   const renderPrimaryPrice = (item) => {
+    if (isPriceUnavailable(item)) return t('tokens.unavailable');
     if (isTieredExprPrice(item)) {
       const videoRows = getVideoRows(item);
       if (videoRows.length > 0) {
@@ -350,6 +357,7 @@ export default function Pricing() {
   };
 
   const renderSecondaryPrice = (item, type, modelName) => {
+    if (isPriceUnavailable(item)) return '-';
     if (isTieredExprPrice(item)) return '-';
     if (isPerCallPrice(item)) {
       return type === 'output' ? formatPerCallPrice(item.fixed_price) : '-';
