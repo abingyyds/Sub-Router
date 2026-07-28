@@ -133,8 +133,9 @@ const tokenToEditForm = (token, rate) => ({
 });
 
 const isValidOfficialRoutingMaxDiscount = (value) => {
+  if (String(value ?? '').trim() === '') return true;
   const discount = Number(value);
-  return Number.isFinite(discount) && discount > 0 && discount <= 1;
+  return Number.isFinite(discount) && discount >= 0 && discount <= 1;
 };
 
 export default function Tokens() {
@@ -189,19 +190,20 @@ export default function Tokens() {
 
   useEffect(() => {
     const createOfficialRouting = officialChannelsEnabled && showCreate && createType === 'normal'
-      && createControls.include_official_channels
-      && isValidOfficialRoutingMaxDiscount(createControls.official_key_max_discount);
+      && createControls.include_official_channels;
     const editingOfficialToken = editingToken?.type === 'official' || editingToken?.group === 'dist_official';
     const editOfficialRouting = officialChannelsEnabled && Boolean(editingToken) && !editingOfficialToken
-      && editForm?.include_official_channels
-      && isValidOfficialRoutingMaxDiscount(editForm?.official_key_max_discount);
+      && editForm?.include_official_channels;
     const maxDiscount = createOfficialRouting
       ? Number(createControls.official_key_max_discount)
       : editOfficialRouting
         ? Number(editForm.official_key_max_discount)
         : 0;
-    const params = maxDiscount > 0
-      ? { include_official_channels: true, official_key_max_discount: maxDiscount }
+    const params = createOfficialRouting || editOfficialRouting
+      ? {
+          include_official_channels: true,
+          ...(maxDiscount > 0 ? { official_key_max_discount: maxDiscount } : {}),
+        }
       : {};
     let active = true;
     const timer = window.setTimeout(() => {
@@ -325,18 +327,16 @@ export default function Tokens() {
       Object.assign(payload, controlPayload);
       if (createType === 'official') {
         payload.official_key_max_discount = normalizeOfficialKeyMaxDiscount(createOfficialKeyMaxDiscount);
-      } else {
-        payload.include_official_channels = officialChannelsEnabled
-          && Boolean(createControls.include_official_channels);
+      } else if (officialChannelsEnabled) {
+        payload.include_official_channels = Boolean(createControls.include_official_channels);
         if (payload.include_official_channels) {
           if (!isValidOfficialRoutingMaxDiscount(createControls.official_key_max_discount)) {
             toast.error(t('tokens.invalidOfficialRoutingMaxDiscount'));
             setCreating(false);
             return;
           }
-          payload.official_key_max_discount = Number(createControls.official_key_max_discount);
-        } else {
-          payload.official_key_max_discount = 0;
+          const maxDiscount = normalizeOfficialKeyMaxDiscount(createControls.official_key_max_discount);
+          if (maxDiscount > 0) payload.official_key_max_discount = maxDiscount;
         }
       }
       const res = await createToken(payload);
@@ -402,17 +402,15 @@ export default function Tokens() {
     payload.name = String(editForm.name || '').trim();
     if (isOfficialToken) {
       payload.official_key_max_discount = normalizeOfficialKeyMaxDiscount(editForm.official_key_max_discount);
-    } else {
-      payload.include_official_channels = officialChannelsEnabled
-        && Boolean(editForm.include_official_channels);
+    } else if (officialChannelsEnabled) {
+      payload.include_official_channels = Boolean(editForm.include_official_channels);
       if (payload.include_official_channels) {
         if (!isValidOfficialRoutingMaxDiscount(editForm.official_key_max_discount)) {
           toast.error(t('tokens.invalidOfficialRoutingMaxDiscount'));
           return;
         }
-        payload.official_key_max_discount = Number(editForm.official_key_max_discount);
-      } else {
-        payload.official_key_max_discount = 0;
+        const maxDiscount = normalizeOfficialKeyMaxDiscount(editForm.official_key_max_discount);
+        if (maxDiscount > 0) payload.official_key_max_discount = maxDiscount;
       }
     }
     setSavingEdit(true);
@@ -1080,14 +1078,13 @@ function OfficialRoutingFields({ form, onChange, t }) {
           </label>
           <input
             type="number"
-            min="0.01"
+            min="0"
             max="1"
             step="0.01"
             value={form.official_key_max_discount}
             onChange={(event) => onChange('official_key_max_discount', event.target.value)}
             className="input"
             placeholder={t('tokens.officialRoutingMaxDiscountPlaceholder')}
-            required
           />
           <p className="mt-1.5 text-xs text-page-muted">
             {discountHint

@@ -7,6 +7,7 @@ import { ThemeProvider, useTheme } from './context/ThemeContext';
 
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
+const OAuthCallback = lazy(() => import('./pages/OAuthCallback'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Tokens = lazy(() => import('./pages/Tokens'));
 const Packages = lazy(() => import('./pages/Packages'));
@@ -69,6 +70,7 @@ function ThemedRoutes() {
           <Route path="/apps" element={<AppMarketRoute />} />
           <Route path="/sub-site" element={<SubDistributor />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/oauth/:provider" element={<OAuthCallback />} />
           <Route path="/register" element={<Register />} />
           <Route path="/user-agreement" element={<LegalDocument type="agreement" />} />
           <Route path="/privacy-policy" element={<LegalDocument type="privacy" />} />

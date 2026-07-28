@@ -1,5 +1,11 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { getUserSelf, login as loginApi, register as registerApi, logout as logoutApi } from '../api';
+import {
+  completeOAuth as completeOAuthApi,
+  getUserSelf,
+  login as loginApi,
+  register as registerApi,
+  logout as logoutApi,
+} from '../api';
 import toast from 'react-hot-toast';
 
 const AuthContext = createContext(null);
@@ -86,6 +92,22 @@ export function AuthProvider({ children }) {
     return { success: false, message: res.data.message };
   }, []);
 
+  const completeOAuth = useCallback(async (provider, params) => {
+    const res = await completeOAuthApi(provider, params);
+    if (!res.data.success) {
+      return { success: false, message: res.data.message };
+    }
+    const userData = res.data.data;
+    if (userData?.id) {
+      localStorage.setItem('dist_user_id', String(userData.id));
+    }
+    const fullUser = await refreshUser({ skipErrorHandler: true });
+    if (!fullUser && userData) {
+      setUser(userData);
+    }
+    return { success: true };
+  }, [refreshUser]);
+
   const logout = useCallback(async () => {
     try { await logoutApi(); } catch (e) { /* ok */ }
     localStorage.removeItem('dist_user_id');
@@ -93,7 +115,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser, updateUser }}>
+    <AuthContext.Provider value={{ user, loading, login, register, completeOAuth, logout, refreshUser, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
