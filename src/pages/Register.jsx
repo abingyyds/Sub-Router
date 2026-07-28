@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useSite } from '../context/SiteContext';
 import { LegalAgreementCheckbox } from '../components/LegalLinks';
+import OAuthLoginButtons from '../components/OAuthLoginButtons';
 import toast from 'react-hot-toast';
 
 export default function Register() {
@@ -151,6 +152,8 @@ export default function Register() {
               {loading ? t('register.creating') : t('register.createAccountBtn')}
             </button>
           </form>
+
+          <OAuthLoginButtons agreedToTerms={agreedToTerms} disabled={loading} />
 
           <div className="mt-6 text-center">
             <p className="text-sm text-page-secondary">
