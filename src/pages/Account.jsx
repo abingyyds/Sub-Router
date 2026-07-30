@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileText, Lock, Save, UserCircle } from 'lucide-react';
+import { FileText, Lock, Mail, Save, Send, UserCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useSite } from '../context/SiteContext';
-import { createInvoice, getInvoiceHistory, getInvoiceInfo, updateUserPassword } from '../api';
+import { bindUserEmail, createInvoice, getInvoiceHistory, getInvoiceInfo, sendEmailBindingVerification, updateUserPassword } from '../api';
 
 const initialForm = {
   original_password: '',
@@ -74,10 +74,17 @@ const getInvoiceValidationError = ({ amount, summary, info, t }) => {
 
 export default function Account() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { site } = useSite();
   const [form, setForm] = useState(initialForm);
   const [saving, setSaving] = useState(false);
+  const [emailForm, setEmailForm] = useState({
+    email: '',
+    verification_code: '',
+  });
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailSaving, setEmailSaving] = useState(false);
+  const [emailCooldown, setEmailCooldown] = useState(0);
   const [invoiceSummary, setInvoiceSummary] = useState(null);
   const [invoiceHistory, setInvoiceHistory] = useState([]);
   const [invoiceAmount, setInvoiceAmount] = useState('');
@@ -108,6 +115,14 @@ export default function Account() {
   useEffect(() => {
     loadInvoice();
   }, [loadInvoice]);
+
+  useEffect(() => {
+    if (emailCooldown <= 0) return undefined;
+    const timer = window.setInterval(() => {
+      setEmailCooldown((current) => Math.max(0, current - 1));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [emailCooldown]);
 
   const handleChange = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -157,10 +172,55 @@ export default function Account() {
     setInvoiceInfo((current) => ({ ...current, [field]: value }));
   };
 
+  const handleSendEmailCode = async () => {
+    if (!emailForm.email.trim()) {
+      toast.error(t('account.emailRequired'));
+      return;
+    }
+    setEmailSending(true);
+    try {
+      const res = await sendEmailBindingVerification(emailForm.email);
+      if (res.data.success) {
+        toast.success(t('account.codeSent'));
+        setEmailCooldown(60);
+      }
+    } catch {
+      // shared interceptor handles user-facing errors
+    } finally {
+      setEmailSending(false);
+    }
+  };
+
+  const handleEmailBind = async (event) => {
+    event.preventDefault();
+    if (!emailForm.email.trim() || !emailForm.verification_code.trim()) {
+      toast.error(t('account.emailCodeRequired'));
+      return;
+    }
+    setEmailSaving(true);
+    try {
+      const res = await bindUserEmail(emailForm.email, emailForm.verification_code);
+      if (res.data.success) {
+        toast.success(t('account.emailBound'));
+        setEmailForm({ email: '', verification_code: '' });
+        await refreshUser();
+      }
+    } catch {
+      // shared interceptor handles user-facing errors
+    } finally {
+      setEmailSaving(false);
+    }
+  };
+
   const handleInvoiceSubmit = async (event) => {
     event.preventDefault();
     const amount = Number(invoiceAmount);
-    const validationError = getInvoiceValidationError({ amount, summary: invoiceSummary, info: invoiceInfo, t });
+    const validationError = getInvoiceValidationError({
+      amount,
+      summary: invoiceSummary,
+      info: invoiceInfo,
+      t,
+    });
     if (validationError) {
       toast.error(validationError);
       return;
@@ -219,36 +279,69 @@ export default function Account() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <PasswordField
-              label={t('account.currentPassword')}
-              value={form.original_password}
-              onChange={(value) => handleChange('original_password', value)}
-              autoComplete="current-password"
-            />
-            <PasswordField
-              label={t('account.newPassword')}
-              value={form.password}
-              onChange={(value) => handleChange('password', value)}
-              autoComplete="new-password"
-            />
-            <PasswordField
-              label={t('account.confirmPassword')}
-              value={form.confirm_password}
-              onChange={(value) => handleChange('confirm_password', value)}
-              autoComplete="new-password"
-            />
+            <PasswordField label={t('account.currentPassword')} value={form.original_password} onChange={(value) => handleChange('original_password', value)} autoComplete="current-password" />
+            <PasswordField label={t('account.newPassword')} value={form.password} onChange={(value) => handleChange('password', value)} autoComplete="new-password" />
+            <PasswordField label={t('account.confirmPassword')} value={form.confirm_password} onChange={(value) => handleChange('confirm_password', value)} autoComplete="new-password" />
 
             <button type="submit" disabled={saving} className="btn-primary inline-flex items-center justify-center gap-2">
-              {saving ? (
-                <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
+              {saving ? <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" /> : <Save className="h-4 w-4" />}
               {saving ? t('account.saving') : t('account.savePassword')}
             </button>
           </form>
         </section>
       </div>
+
+      <section className="glass rounded-2xl p-6 mt-6">
+        <div className="mb-5 flex items-center gap-2">
+          <Mail className="h-5 w-5 text-page-link" />
+          <div>
+            <h2 className="text-lg font-semibold text-page">{user?.email ? t('account.changeEmail') : t('account.bindEmail')}</h2>
+            <p className="text-sm text-page-secondary">{site?.email_service_configured ? t('account.emailBindingHint') : t('account.emailServiceUnavailable')}</p>
+          </div>
+        </div>
+
+        <form onSubmit={handleEmailBind} className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)_auto] gap-3 items-end">
+          <TextField
+            label={t('account.newEmail')}
+            type="email"
+            value={emailForm.email}
+            onChange={(value) => setEmailForm((current) => ({ ...current, email: value }))}
+            disabled={!site?.email_service_configured}
+          />
+          <label className="block">
+            <span className="block text-sm font-medium text-page-label mb-1.5">{t('account.verificationCode')}</span>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                value={emailForm.verification_code}
+                onChange={(event) =>
+                  setEmailForm((current) => ({
+                    ...current,
+                    verification_code: event.target.value,
+                  }))
+                }
+                disabled={!site?.email_service_configured}
+                className="input min-w-0 flex-1"
+                autoComplete="one-time-code"
+              />
+              <button
+                type="button"
+                onClick={handleSendEmailCode}
+                disabled={!site?.email_service_configured || emailSending || emailCooldown > 0 || !emailForm.email.trim()}
+                className="btn-secondary inline-flex items-center justify-center gap-1.5 whitespace-nowrap px-3"
+              >
+                <Send className="h-4 w-4" />
+                {emailSending ? t('account.sendingCode') : emailCooldown > 0 ? t('account.resendIn', { seconds: emailCooldown }) : t('account.sendCode')}
+              </button>
+            </div>
+          </label>
+          <button type="submit" disabled={!site?.email_service_configured || emailSaving} className="btn-primary inline-flex h-[42px] items-center justify-center gap-2 px-5">
+            {emailSaving ? t('account.bindingEmail') : user?.email ? t('account.changeEmail') : t('account.bindEmail')}
+          </button>
+        </form>
+      </section>
 
       {site?.enable_invoice && (
         <section id="invoice" className="scroll-mt-24 glass rounded-2xl p-6 mt-6">

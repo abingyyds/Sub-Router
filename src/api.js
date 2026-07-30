@@ -281,6 +281,7 @@ export const getAppRatings = () => api.get('/api/dist/app-market/ratings');
 export const getAppReviews = (params) => api.get('/api/dist/app-market/reviews', { params });
 
 // ===== Auth =====
+export const sendRegistrationEmailVerification = (email) => api.post('/api/dist/user/email-verification', { email });
 export const register = (data) => api.post('/api/dist/user/register', data);
 export const login = (data) => api.post('/api/dist/user/login', data);
 export const logout = () => api.post('/api/dist/user/logout');
@@ -293,12 +294,19 @@ export const completeOAuth = (provider, params) =>
 // ===== User =====
 export const getUserSelf = (config) => api.get('/api/dist/user/self', config);
 export const updateUserPassword = (data) => api.put('/api/dist/user/password', data);
+export const sendEmailBindingVerification = (email) => api.post('/api/dist/user/email/bind-verification', { email });
+export const bindUserEmail = (email, verificationCode) =>
+  api.put('/api/dist/user/email', {
+    email,
+    verification_code: verificationCode,
+  });
 export const getUserUsage = () => api.get('/api/dist/user/usage');
 export const getUserLogs = (params) => api.get('/api/dist/user/logs', { params });
-export const exportUserLogs = (params) => api.get('/api/dist/user/logs/export', {
-  params,
-  responseType: 'blob',
-});
+export const exportUserLogs = (params) =>
+  api.get('/api/dist/user/logs/export', {
+    params,
+    responseType: 'blob',
+  });
 export const getUserLogsStat = (params) => api.get('/api/dist/user/logs/stat', { params });
 export const getUserTasks = (params) => api.get('/api/dist/user/tasks', { params });
 export const getUserMjTasks = (params) => api.get('/api/dist/user/mj', { params });

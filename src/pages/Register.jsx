@@ -6,15 +6,25 @@ import { useSite } from '../context/SiteContext';
 import { LegalAgreementCheckbox } from '../components/LegalLinks';
 import OAuthLoginButtons from '../components/OAuthLoginButtons';
 import toast from 'react-hot-toast';
+import { sendRegistrationEmailVerification } from '../api';
 
 export default function Register() {
   const { t } = useTranslation();
   const { register, user } = useAuth();
   const { site } = useSite();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ username: '', password: '', password2: '', email: '' });
+  const [form, setForm] = useState({
+    username: '',
+    password: '',
+    password2: '',
+    email: '',
+    verification_code: '',
+  });
   const [loading, setLoading] = useState(false);
+  const [verificationLoading, setVerificationLoading] = useState(false);
+  const [verificationCooldown, setVerificationCooldown] = useState(0);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const emailVerificationRequired = Boolean(site?.registration_email_verification_enabled);
 
   // Capture aff code from URL and persist in localStorage
   useEffect(() => {
@@ -23,6 +33,33 @@ export default function Register() {
       localStorage.setItem('dist_aff', affCode);
     }
   }, []);
+
+  useEffect(() => {
+    if (verificationCooldown <= 0) return undefined;
+    const timer = window.setInterval(() => {
+      setVerificationCooldown((current) => Math.max(0, current - 1));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [verificationCooldown]);
+
+  const handleSendVerification = async () => {
+    if (!form.email) {
+      toast.error(t('register.emailRequired'));
+      return;
+    }
+    setVerificationLoading(true);
+    try {
+      const res = await sendRegistrationEmailVerification(form.email);
+      if (res.data.success) {
+        toast.success(t('register.codeSent'));
+        setVerificationCooldown(60);
+      }
+    } catch {
+      // The shared API interceptor shows the user-facing error.
+    } finally {
+      setVerificationLoading(false);
+    }
+  };
 
   // If already logged in, redirect via component
   if (user) {
@@ -33,6 +70,10 @@ export default function Register() {
     e.preventDefault();
     if (!form.username || !form.password) {
       toast.error(t('register.fillRequired'));
+      return;
+    }
+    if (emailVerificationRequired && (!form.email || !form.verification_code)) {
+      toast.error(t('register.emailVerificationRequired'));
       return;
     }
     if (form.password !== form.password2) {
@@ -58,6 +99,7 @@ export default function Register() {
         username: form.username,
         password: form.password,
         email: form.email || undefined,
+        verification_code: emailVerificationRequired ? form.verification_code : undefined,
         aff_code: affCode || undefined,
       });
       if (result.success) {
@@ -98,16 +140,49 @@ export default function Register() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-page-label mb-1.5">{t('register.email')}</label>
+              <label className="block text-sm font-medium text-page-label mb-1.5">
+                {t('register.email')}
+                {emailVerificationRequired ? ' *' : ''}
+              </label>
               <input
                 type="email"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 className="input"
-                placeholder={t('register.emailPlaceholder')}
+                placeholder={emailVerificationRequired ? t('register.emailRequiredPlaceholder') : t('register.emailPlaceholder')}
                 autoComplete="email"
+                required={emailVerificationRequired}
               />
             </div>
+
+            {emailVerificationRequired && (
+              <div>
+                <label className="block text-sm font-medium text-page-label mb-1.5">{t('register.verificationCode')} *</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={form.verification_code}
+                    onChange={(e) => setForm({ ...form, verification_code: e.target.value })}
+                    className="input min-w-0 flex-1"
+                    placeholder={t('register.verificationCodePlaceholder')}
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    required
+                  />
+                  <button type="button" onClick={handleSendVerification} disabled={verificationLoading || verificationCooldown > 0 || !form.email} className="btn-secondary whitespace-nowrap px-4">
+                    {verificationLoading
+                      ? t('register.sendingCode')
+                      : verificationCooldown > 0
+                        ? t('register.resendIn', {
+                            seconds: verificationCooldown,
+                          })
+                        : t('register.sendCode')}
+                  </button>
+                </div>
+                <p className="mt-1.5 text-xs text-page-muted">{t('register.verificationHint')}</p>
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-page-label mb-1.5">{t('register.password')} *</label>
