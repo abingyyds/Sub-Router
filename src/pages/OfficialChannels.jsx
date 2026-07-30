@@ -87,12 +87,12 @@ const availabilityClass = (value) => {
   return 'bg-emerald-500';
 };
 
-const formatModelPrice = (model, final = false) => {
+const formatModelPrice = (model, final = false, t) => {
   const input = Number(model?.[final ? 'final_input_price' : 'official_input_price'] || 0);
   const output = Number(model?.[final ? 'final_output_price' : 'official_output_price'] || 0);
   const fixed = Number(model?.[final ? 'final_fixed_price' : 'official_fixed_price'] || 0);
   const currency = model?.price_currency === 'CNY' ? '¥' : '$';
-  if (fixed > 0) return `${currency}${fixed.toFixed(fixed < 0.01 ? 6 : 4).replace(/\.?0+$/, '')}/次`;
+  if (fixed > 0) return `${currency}${fixed.toFixed(fixed < 0.01 ? 6 : 4).replace(/\.?0+$/, '')}/${t('pricing.perCallUnit')}`;
   if (input <= 0 && output <= 0) return '--';
   const format = (value) => value > 0 ? `${currency}${value.toFixed(value < 0.01 ? 6 : 4).replace(/\.?0+$/, '')}` : '-';
   return `${format(input)} / ${format(output)} / M`;
@@ -494,7 +494,7 @@ function OfficialChannelDetail({
                 <div className="mt-1 flex flex-wrap gap-2 text-xs text-page-secondary">
                   <span>{model.category || 'chat'}</span>
                   <span>{formatCount(model.available_key_count)} Key</span>
-                  <span>{formatModelPrice(model, true)}</span>
+                  <span>{formatModelPrice(model, true, t)}</span>
                 </div>
                 <AvailabilityMeter label={t('officialChannels.modelAvailability')} value={model.key_availability} compact />
               </button>
@@ -518,8 +518,8 @@ function OfficialChannelDetail({
                 </span>
               </div>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <Metric label={t('officialChannels.originalPrice')} value={formatModelPrice(selectedModel, false)} />
-                <Metric label={t('officialChannels.finalPrice')} value={formatModelPrice(selectedModel, true)} />
+                <Metric label={t('officialChannels.originalPrice')} value={formatModelPrice(selectedModel, false, t)} />
+                <Metric label={t('officialChannels.finalPrice')} value={formatModelPrice(selectedModel, true, t)} />
                 <Metric label={t('officialChannels.discount')} value={formatPriceMultiplier(selectedModel.final_price_discount, t)} />
                 <Metric label={t('officialChannels.modelKeys')} value={formatCount(selectedModel.key_count)} />
               </div>

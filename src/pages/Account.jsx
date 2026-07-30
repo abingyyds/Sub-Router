@@ -59,7 +59,7 @@ const getInvoiceValidationError = ({ amount, summary, info, t }) => {
     normalizedCountry === 'china' ||
     normalizedCountry === 'cn' ||
     normalizedCountry === 'prc' ||
-    normalizedCountry.includes('people\'s republic of china')
+    normalizedCountry.includes("people's republic of china")
   ) {
     return t('invoice.mainlandUnsupported');
   }
@@ -100,10 +100,7 @@ export default function Account() {
     }
     setInvoiceLoading(true);
     try {
-      const [infoRes, historyRes] = await Promise.all([
-        getInvoiceInfo(),
-        getInvoiceHistory({ page_size: 10 }),
-      ]);
+      const [infoRes, historyRes] = await Promise.all([getInvoiceInfo(), getInvoiceHistory({ page_size: 10 })]);
       if (infoRes.data.success) setInvoiceSummary(infoRes.data.data);
       if (historyRes.data.success) setInvoiceHistory(historyRes.data.data.items || []);
     } catch {
@@ -444,17 +441,21 @@ export default function Account() {
               </thead>
               <tbody>
                 {invoiceHistory.length === 0 ? (
-                  <tr><td colSpan={4} className="py-5 text-center text-page-secondary">{t('invoice.empty')}</td></tr>
-                ) : invoiceHistory.map((item) => (
-                  <tr key={item.id} className="border-t border-page-border">
-                    <td className="py-3 pr-3">{money(item.amount)}</td>
-                    <td className="py-3 pr-3">{money(item.tax_amount)}</td>
-                    <td className="py-3 pr-3">{t(`invoice.status.${item.status}`, item.status)}</td>
-                    <td className="py-3 pr-3">
-                      {t('invoice.emailDelivery')}
+                  <tr>
+                    <td colSpan={4} className="py-5 text-center text-page-secondary">
+                      {t('invoice.empty')}
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  invoiceHistory.map((item) => (
+                    <tr key={item.id} className="border-t border-page-border">
+                      <td className="py-3 pr-3">{money(item.amount)}</td>
+                      <td className="py-3 pr-3">{money(item.tax_amount)}</td>
+                      <td className="py-3 pr-3">{t(`invoice.status.${item.status}`, item.status)}</td>
+                      <td className="py-3 pr-3">{t('invoice.emailDelivery')}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -477,13 +478,7 @@ function TextField({ label, value, onChange, type = 'text', disabled = false }) 
   return (
     <label className="block">
       <span className="block text-sm font-medium text-page-label mb-1.5">{label}</span>
-      <input
-        type={type}
-        value={value}
-        disabled={disabled}
-        onChange={(event) => onChange?.(event.target.value)}
-        className="input"
-      />
+      <input type={type} value={value} disabled={disabled} onChange={(event) => onChange?.(event.target.value)} className="input" />
     </label>
   );
 }
@@ -492,13 +487,7 @@ function PasswordField({ label, value, onChange, autoComplete }) {
   return (
     <label className="block">
       <span className="block text-sm font-medium text-page-label mb-1.5">{label}</span>
-      <input
-        type="password"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="input"
-        autoComplete={autoComplete}
-      />
+      <input type="password" value={value} onChange={(event) => onChange(event.target.value)} className="input" autoComplete={autoComplete} />
     </label>
   );
 }

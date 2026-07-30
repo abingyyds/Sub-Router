@@ -114,7 +114,7 @@ export default function TerminalHome() {
                 <div key={model.id || index} className="rounded-lg border border-emerald-400/15 bg-[#07110d] p-4 font-mono transition-colors hover:border-emerald-400/35">
                   <div className="mb-3 flex items-center justify-between">
                     <Cpu className="h-4 w-4 text-emerald-300" />
-                    <span className="text-[10px] font-black text-emerald-400">READY</span>
+                    <span className="text-[10px] font-black text-emerald-400">{t('home.ready')}</span>
                   </div>
                   <p className="truncate text-sm font-bold text-emerald-50">{model.display_name || model.model_name}</p>
                   <p className="mt-2 text-xs text-emerald-100/45">route.auto=true</p>
@@ -212,7 +212,7 @@ function RouteConsole({ models, t }) {
             {rows.slice(0, 5).map((model, index) => (
               <div key={model.id || index} className="flex items-center justify-between rounded-lg border border-emerald-400/10 bg-emerald-400/[0.035] px-3 py-2 font-mono">
                 <span className="truncate text-xs text-emerald-100">{model.display_name || model.model_name}</span>
-                <span className="ml-3 text-[10px] font-black text-emerald-400">UP</span>
+                <span className="ml-3 text-[10px] font-black text-emerald-400">{t('officialChannels.online')}</span>
               </div>
             ))}
           </div>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getSiteModels, getSitePackages, Q } from '../../api';
 
 const previewModels = [
@@ -16,7 +17,7 @@ const previewPackages = [
   {
     id: 'preview-basic',
     name: 'Starter Pack',
-    description: '适合个人试用和轻量 API 调用。',
+    description_key: 'preview.starterDesc',
     price: 29,
     original_price: 49,
     duration: 30,
@@ -27,7 +28,7 @@ const previewPackages = [
   {
     id: 'preview-pro',
     name: 'Pro Relay',
-    description: '高频调用、自动路由、失败重试的主力套餐。',
+    description_key: 'preview.proDesc',
     price: 99,
     original_price: 149,
     duration: 30,
@@ -38,7 +39,7 @@ const previewPackages = [
   {
     id: 'preview-team',
     name: 'Team Scale',
-    description: '适合团队共享密钥、模型分组和稳定生产调用。',
+    description_key: 'preview.teamDesc',
     price: 299,
     original_price: 399,
     duration: 30,
@@ -54,6 +55,7 @@ const devPreviewTheme =
     : '';
 
 export function useHomeData() {
+  const { t } = useTranslation();
   const [models, setModels] = useState(devPreviewTheme ? previewModels : []);
   const [packages, setPackages] = useState(devPreviewTheme ? previewPackages : []);
 
@@ -64,7 +66,16 @@ export function useHomeData() {
   }, []);
 
   const enabledModels = useMemo(() => models.filter(m => m.enabled !== false), [models]);
-  const visiblePackages = useMemo(() => packages.filter(p => p.enabled), [packages]);
+  const visiblePackages = useMemo(
+    () =>
+      packages
+        .filter((p) => p.enabled)
+        .map((p) => ({
+          ...p,
+          description: p.description_key ? t(p.description_key) : p.description,
+        })),
+    [packages, t],
+  );
 
   return { models, packages, enabledModels, visiblePackages };
 }

@@ -141,7 +141,7 @@ export default function Dashboard() {
     navigator.clipboard.writeText(affLink).then(() => {
       toast.success(t('topup.copied'));
     }).catch(() => {
-      toast.error('Copy failed');
+      toast.error(t('officialChannels.copyFailed'));
     });
   };
 

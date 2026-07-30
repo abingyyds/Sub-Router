@@ -6,21 +6,61 @@ import { getStoredAppLanguage, normalizeAppLanguage } from './i18n/languageUtils
 export const Q = 500000; // QuotaPerUnit — single source of truth
 
 const previewModels = [
-  { id: 'preview-1', model_name: 'gpt-4o-mini', display_name: 'GPT-4o Mini', enabled: true },
-  { id: 'preview-2', model_name: 'claude-sonnet-4-5', display_name: 'Claude Sonnet 4.5', enabled: true },
-  { id: 'preview-3', model_name: 'gemini-2.5-pro', display_name: 'Gemini 2.5 Pro', enabled: true },
-  { id: 'preview-4', model_name: 'deepseek-chat', display_name: 'DeepSeek Chat', enabled: true },
-  { id: 'preview-5', model_name: 'qwen-max', display_name: 'Qwen Max', enabled: true },
-  { id: 'preview-6', model_name: 'grok-4', display_name: 'Grok 4', enabled: true },
-  { id: 'preview-7', model_name: 'claude-haiku-4-5', display_name: 'Claude Haiku 4.5', enabled: true },
-  { id: 'preview-8', model_name: 'gpt-5-mini', display_name: 'GPT-5 Mini', enabled: true },
+  {
+    id: 'preview-1',
+    model_name: 'gpt-4o-mini',
+    display_name: 'GPT-4o Mini',
+    enabled: true,
+  },
+  {
+    id: 'preview-2',
+    model_name: 'claude-sonnet-4-5',
+    display_name: 'Claude Sonnet 4.5',
+    enabled: true,
+  },
+  {
+    id: 'preview-3',
+    model_name: 'gemini-2.5-pro',
+    display_name: 'Gemini 2.5 Pro',
+    enabled: true,
+  },
+  {
+    id: 'preview-4',
+    model_name: 'deepseek-chat',
+    display_name: 'DeepSeek Chat',
+    enabled: true,
+  },
+  {
+    id: 'preview-5',
+    model_name: 'qwen-max',
+    display_name: 'Qwen Max',
+    enabled: true,
+  },
+  {
+    id: 'preview-6',
+    model_name: 'grok-4',
+    display_name: 'Grok 4',
+    enabled: true,
+  },
+  {
+    id: 'preview-7',
+    model_name: 'claude-haiku-4-5',
+    display_name: 'Claude Haiku 4.5',
+    enabled: true,
+  },
+  {
+    id: 'preview-8',
+    model_name: 'gpt-5-mini',
+    display_name: 'GPT-5 Mini',
+    enabled: true,
+  },
 ];
 
 const previewPackages = [
   {
     id: 'preview-basic',
     name: 'Starter Pack',
-    description: '适合个人试用和轻量 API 调用。',
+    description_key: 'preview.starterDesc',
     price: 29,
     original_price: 49,
     duration: 30,
@@ -31,7 +71,7 @@ const previewPackages = [
   {
     id: 'preview-pro',
     name: 'Pro Relay',
-    description: '高频调用、自动路由、失败重试的主力套餐。',
+    description_key: 'preview.proDesc',
     price: 99,
     original_price: 149,
     duration: 30,
@@ -42,7 +82,7 @@ const previewPackages = [
   {
     id: 'preview-team',
     name: 'Team Scale',
-    description: '适合团队共享密钥、模型分组和稳定生产调用。',
+    description_key: 'preview.teamDesc',
     price: 299,
     original_price: 399,
     duration: 30,
@@ -139,7 +179,10 @@ const cachedPublicRequest = (key, request, ttl = 30000) => {
   }
   const promise = request()
     .then((response) => {
-      publicRequestCache.set(key, { value: response, expiresAt: Date.now() + ttl });
+      publicRequestCache.set(key, {
+        value: response,
+        expiresAt: Date.now() + ttl,
+      });
       return response;
     })
     .catch((error) => {
@@ -158,9 +201,7 @@ api.interceptors.request.use((config) => {
   if (userId) {
     config.headers['New-Api-User'] = userId;
   }
-  config.headers['Accept-Language'] = normalizeAppLanguage(
-    getStoredAppLanguage() || i18n.resolvedLanguage || navigator.language,
-  );
+  config.headers['Accept-Language'] = normalizeAppLanguage(getStoredAppLanguage() || i18n.resolvedLanguage || navigator.language);
   return config;
 });
 
@@ -170,12 +211,7 @@ const shouldSkipErrorHandler = (config) => Boolean(config?.skipErrorHandler);
 api.interceptors.response.use(
   (res) => {
     // Handle success:false responses with user-visible errors
-    if (
-      res.data &&
-      res.data.success === false &&
-      res.data.message &&
-      !shouldSkipErrorHandler(res.config)
-    ) {
+    if (res.data && res.data.success === false && res.data.message && !shouldSkipErrorHandler(res.config)) {
       toast.error(res.data.message);
     }
     return res;
@@ -193,7 +229,7 @@ api.interceptors.response.use(
       toast.error(msg);
     }
     return Promise.reject(err);
-  }
+  },
 );
 
 // ===== Public =====
@@ -219,31 +255,24 @@ export const getSiteInfo = () => {
     });
   }
   if (!siteInfoPromise) {
-    siteInfoPromise = api.get('/api/dist/site/info', {
-      timeout: 8000,
-      skipErrorHandler: true,
-    }).finally(() => {
-      siteInfoPromise = undefined;
-    });
+    siteInfoPromise = api
+      .get('/api/dist/site/info', {
+        timeout: 8000,
+        skipErrorHandler: true,
+      })
+      .finally(() => {
+        siteInfoPromise = undefined;
+      });
   }
   return siteInfoPromise;
 };
-export const getSiteModels = (params = {}) => getPreviewTheme()
-  ? previewResponse(previewModels)
-  : cachedPublicRequest(
-    `site-models:${JSON.stringify(params)}`,
-    () => api.get('/api/dist/site/models', { params }),
-  );
+export const getSiteModels = (params = {}) =>
+  getPreviewTheme() ? previewResponse(previewModels) : cachedPublicRequest(`site-models:${JSON.stringify(params)}`, () => api.get('/api/dist/site/models', { params }));
 export const getSitePricing = () => api.get('/api/dist/site/pricing');
-export const getSiteOfficialChannels = (params = {}) => getPreviewTheme()
-  ? previewResponse(
-      params.channel_id
-        ? previewOfficialChannels.filter(
-            (channel) => String(channel.official_channel_id) === String(params.channel_id),
-          )
-        : previewOfficialChannels,
-    )
-  : api.get('/api/dist/site/official-channels', { params });
+export const getSiteOfficialChannels = (params = {}) =>
+  getPreviewTheme()
+    ? previewResponse(params.channel_id ? previewOfficialChannels.filter((channel) => String(channel.official_channel_id) === String(params.channel_id)) : previewOfficialChannels)
+    : api.get('/api/dist/site/official-channels', { params });
 export const getSiteOfficialChannelAvailability = (channelId, modelId, period = '24h') => {
   const params = { period };
   if (modelId) params.model_id = modelId;
@@ -254,13 +283,15 @@ export const getSiteOfficialChannelAvailability = (channelId, modelId, period = 
         period,
         availability: modelId ? 100 : 92.4,
         providers: modelId
-          ? [{
-              provider_index: 1,
-              key_count: 10,
-              availability: 100,
-              price_discount: 0.32,
-              buckets: [],
-            }]
+          ? [
+              {
+                provider_index: 1,
+                key_count: 10,
+                availability: 100,
+                price_discount: 0.32,
+                buckets: [],
+              },
+            ]
           : [],
         buckets: Array.from({ length: period === '7d' ? 14 : 24 }, (_, index) => ({
           bucket_time: index,
@@ -269,11 +300,19 @@ export const getSiteOfficialChannelAvailability = (channelId, modelId, period = 
           availability: modelId ? 100 : index === 3 ? 80 : 100,
         })),
       })
-    : api.get(`/api/dist/site/official-channels/${channelId}/availability`, { params });
+    : api.get(`/api/dist/site/official-channels/${channelId}/availability`, {
+        params,
+      });
 };
-export const getSitePackages = () => getPreviewTheme()
-  ? previewResponse(previewPackages)
-  : cachedPublicRequest('site-packages', () => api.get('/api/dist/site/packages'));
+export const getSitePackages = () =>
+  getPreviewTheme()
+    ? previewResponse(
+        previewPackages.map((item) => ({
+          ...item,
+          description: i18n.t(item.description_key),
+        })),
+      )
+    : cachedPublicRequest('site-packages', () => api.get('/api/dist/site/packages'));
 export const getSiteKeyGroups = () => api.get('/api/dist/site/key-groups');
 export const getSiteKeyGroupPricing = (id) => api.get(`/api/dist/site/key-groups/${id}/pricing`);
 export const getSubDistributorInfo = () => api.get('/api/dist/site/sub-distributor/info');
@@ -322,8 +361,7 @@ export const getMyAppReview = (appId, config = {}) =>
 export const createAppReview = (data) => api.post('/api/dist/app-market/reviews', data);
 export const updateAppReview = (id, data) => api.put(`/api/dist/app-market/reviews/${id}`, data);
 export const deleteAppReview = (id) => api.delete(`/api/dist/app-market/reviews/${id}`);
-export const createAppReviewReply = (reviewId, content) =>
-  api.post(`/api/dist/app-market/reviews/${reviewId}/replies`, { content });
+export const createAppReviewReply = (reviewId, content) => api.post(`/api/dist/app-market/reviews/${reviewId}/replies`, { content });
 
 // ===== Tokens =====
 export const getTokens = () => api.get('/api/dist/token/list');
@@ -335,8 +373,7 @@ export const deleteToken = (id) => api.delete(`/api/dist/token/${id}`);
 // ===== Purchase =====
 export const redeemCode = (key) => api.post('/api/dist/topup/redeem', { key }); // backend field is "key"
 export const subscribePackage = (packageId) => api.post('/api/dist/package/subscribe', { package_id: packageId });
-export const getActiveSubscriptions = (config) =>
-  api.get('/api/dist/package/subscriptions', config);
+export const getActiveSubscriptions = (config) => api.get('/api/dist/package/subscriptions', config);
 
 // ===== Online Topup =====
 export const getTopupInfo = () => api.get('/api/dist/topup/info');

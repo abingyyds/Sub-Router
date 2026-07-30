@@ -463,7 +463,7 @@ export default function Tasks() {
                   <th className="px-4 py-3 font-medium">{t('tasks.taskStatus')}</th>
                   <th className="px-4 py-3 font-medium">{t('tasks.progress')}</th>
                   <th className="px-4 py-3 font-medium whitespace-nowrap">{t('tasks.detail')}</th>
-                  {mode === 'image' && <th className="px-4 py-3 font-medium">Prompt</th>}
+                  {mode === 'image' && <th className="px-4 py-3 font-medium">{t('tasks.prompt')}</th>}
                 </tr>
               </thead>
               <tbody>{mode === 'image' ? renderImageRows() : renderVideoRows()}</tbody>

@@ -120,9 +120,7 @@ export default function Register() {
         <div className="glass rounded-2xl p-8">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-heading font-bold text-page mb-2">{t('register.createAccount')}</h1>
-            <p className="text-sm text-page-secondary">
-              {site?.name ? t('register.getStartedWith', { name: site.name }) : t('register.getStartedDefault')}
-            </p>
+            <p className="text-sm text-page-secondary">{site?.name ? t('register.getStartedWith', { name: site.name }) : t('register.getStartedDefault')}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -210,20 +208,10 @@ export default function Register() {
               />
             </div>
 
-            <LegalAgreementCheckbox
-              id="dist-register-agreement"
-              checked={agreedToTerms}
-              onChange={(e) => setAgreedToTerms(e.target.checked)}
-            />
+            <LegalAgreementCheckbox id="dist-register-agreement" checked={agreedToTerms} onChange={(e) => setAgreedToTerms(e.target.checked)} />
 
-            <button
-              type="submit"
-              disabled={loading || !agreedToTerms}
-              className="btn-primary w-full flex items-center justify-center gap-2"
-            >
-              {loading && (
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              )}
+            <button type="submit" disabled={loading || !agreedToTerms} className="btn-primary w-full flex items-center justify-center gap-2">
+              {loading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
               {loading ? t('register.creating') : t('register.createAccountBtn')}
             </button>
           </form>

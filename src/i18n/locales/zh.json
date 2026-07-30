@@ -16,7 +16,6 @@
     "common.loading": "加载中",
     "common.refresh": "刷新",
     "logs.clientIp": "客户端 IP",
-
     "officialChannels.badge": "官方渠道",
     "officialChannels.title": "官方渠道",
     "officialChannels.subtitle": "站长已上架的平台官方渠道。渠道类型和模型由平台统一维护，调用地址固定为官方 API；调用时请在 API 密钥页创建并使用官方渠道分组 Key。",
@@ -87,7 +86,6 @@
     "officialChannels.providerKeys": "Key 数",
     "officialChannels.providerModels": "模型数",
     "officialChannels.providerPrice": "最低价",
-
     "home.heroTagline": "AI API 平台",
     "home.heroSubtitle": "通过单一 API 端点访问全球最强大的 AI 模型。简单、实惠、可靠。",
     "home.getStarted": "免费开始",
@@ -123,7 +121,6 @@
     "home.apiEndpointOverseasDirect": "海外直链",
     "home.apiEndpointOverseasCdn": "海外CDN",
     "home.apiEndpointApiOnly": "仅支持 API",
-
     "login.welcomeBack": "欢迎回来",
     "login.signInTo": "登录到 {{name}}",
     "login.signInToDefault": "登录您的账户",
@@ -146,7 +143,6 @@
     "login.oauthUnsupported": "不支持的第三方登录方式。",
     "login.backToLogin": "返回登录页",
     "login.redirecting": "正在跳转...",
-
     "register.createAccount": "创建账户",
     "register.getStartedWith": "开始使用 {{name}}",
     "register.getStartedDefault": "开始使用我们的平台",
@@ -176,7 +172,6 @@
     "register.passwordMismatch": "两次密码不一致",
     "register.passwordLength": "密码长度需为 8-20 个字符",
     "register.accountCreated": "账户创建成功！请登录。",
-
     "legal.agreePrefix": "我已阅读并同意",
     "legal.agreeJoin": "和",
     "legal.agreeRequired": "请先阅读并同意用户协议和隐私政策",
@@ -220,7 +215,6 @@
     "legal.privacy.sections.cookies.body": "本站可能使用 Cookie、LocalStorage 或类似技术保存登录状态、语言偏好、界面设置和安全校验结果，以维持基本功能和改善使用体验。",
     "legal.privacy.sections.changes.title": "政策更新",
     "legal.privacy.sections.changes.body": "本政策可能根据服务功能、合规要求或安全实践调整。更新后的政策将在页面展示；您继续使用服务即表示理解更新内容。",
-
     "dashboard.welcome": "欢迎，",
     "dashboard.manageDesc": "管理您的 API 用量、密钥和账户",
     "dashboard.balance": "余额",
@@ -246,7 +240,6 @@
     "dashboard.modelPrices": "模型价格",
     "dashboard.apiDocs": "API 文档",
     "dashboard.comingSoon": "即将推出",
-
     "appMarket.badge": "应用市场",
     "appMarket.title": "内置 AI 应用",
     "appMarket.subtitle": "这里收录可直接使用本平台账号密码登录的 AI 工具。应用会自动获取你的订阅商家，并通过账户余额调用订阅商家的 API，帮助你把模型能力变成生产力工具。",
@@ -338,7 +331,6 @@
     "appMarket.cancel": "取消",
     "appMarket.previousPage": "上一页",
     "appMarket.nextPage": "下一页",
-
     "subDist.nav": "中转站搭建",
     "subDist.dashboardEntry": "开通可定价、可推广的专属中转站",
     "subDist.badge": "中转站搭建",
@@ -396,7 +388,6 @@
     "subDist.openedSuccess": "中转站已开通成功",
     "subDist.alreadyOpenTitle": "您已搭建中转站",
     "subDist.alreadyOpenDesc": "中转站 {{name}} 已完成开通，请使用同一账号进入主站控制台继续配置。",
-
     "tokens.title": "API 密钥",
     "tokens.subtitle": "管理您的 API 访问令牌",
     "tokens.newKey": "+ 新建密钥",
@@ -512,7 +503,6 @@
     "tokens.ipWhitelist": "IP 白名单",
     "tokens.ipWhitelistPlaceholder": "一行一个 IP 或 CIDR；留空则不限制",
     "tokens.ipLimited": "IP 限制",
-
     "config.title": "配置文件导出",
     "config.subtitle": "选择您的 API Key 和模型，一键生成配置文件",
     "config.selectKey": "选择 API Key",
@@ -553,7 +543,6 @@
     "config.ccswitchNotInstalledDesc": "如果 CC Switch 已经打开，可以忽略此提示；否则可以先下载安装，再回来继续一键导入。",
     "config.downloadCCSwitch": "下载 CC Switch",
     "config.openCCSwitchRepo": "打开项目主页",
-
     "downloads.badge": "站内中转下载",
     "downloads.title": "快捷安装与下载",
     "downloads.subtitle": "常用客户端安装包走本站 /downloads 中转下载，避免浏览器直接跳转 GitHub release，国内网络也更容易下载。",
@@ -561,7 +550,6 @@
     "downloads.installGuide": "安装说明",
     "downloads.providerDocs": "接入文档",
     "downloads.releases": "官方 Releases",
-
     "pricing.title": "模型定价",
     "pricing.subtitle": "透明的按量付费定价。价格以每百万 token 计。",
     "pricing.searchPlaceholder": "搜索模型...",
@@ -616,7 +604,6 @@
     "定价方式": "定价方式",
     "按次计费": "按次计费",
     "按量计费": "按量计费",
-
     "packages.title": "套餐方案",
     "packages.subtitle": "选择适合您用量的套餐。所有方案均可访问全部可用模型。",
     "packages.noPackages": "暂无可用套餐。",
@@ -652,7 +639,6 @@
     "packages.periodicQuota": "{{period}}额度 {{symbol}}{{amount}}",
     "packages.subscriptionInfo": "📋 此套餐为周期订阅（{{period}}），有效期 {{days}} 天。每个周期获得 {{symbol}}{{amount}} 额度，未用完作废。",
     "packages.officialEquiv": "相当于 {{model}} 官方 ${{amount}} 额度",
-
     "common.sessionExpired": "会话已过期，请重新登录",
     "common.requestFailed": "请求失败",
     "account.title": "账户设置",
@@ -693,9 +679,7 @@
     "account.passwordSame": "新密码需要和原密码不一致",
     "account.passwordMismatch": "两次输入的密码不一致",
     "account.passwordUpdated": "密码修改成功",
-
     "nav.topup": "充值",
-
     "topup.title": "充值中心",
     "topup.subtitle": "通过在线支付或兑换码为账户充值",
     "topup.onlineTopup": "在线充值",
@@ -750,7 +734,6 @@
     "topup.exactAmountLabel": "请完整匹配转账金额",
     "topup.exactAmountNotice": "必须按照上方数字完整转账，否则系统无法自动到账。",
     "topup.exactAmountDetail": "少付、多付、漏掉小数位或四舍五入都会导致订单无法匹配，需要人工处理。",
-
     "topup.inviteTitle": "邀请奖励",
     "topup.inviteSubtitle": "邀请好友注册，持续获得推广奖励",
     "topup.affAvailable": "可用奖励",
@@ -820,18 +803,14 @@
     "topup.kolApplySubmit": "提交申请",
     "topup.kolApplySuccess": "申请已提交，请等待审核",
     "topup.kolSocialRequired": "请填写社交媒体链接",
-
     "dashboard.topupDesc": "充值账户余额",
-
     "nav.logs": "日志",
-
     "dashboard.logs": "调用日志",
     "dashboard.viewLogs": "查看使用明细",
     "dashboard.account": "账户设置",
     "dashboard.accountDesc": "修改登录密码",
     "dashboard.invoice": "开票申请",
     "dashboard.invoiceDesc": "提交发票信息",
-
     "logs.title": "调用日志",
     "logs.callLogs": "调用日志",
     "logs.subtitle": "查看每次 API 调用的详细记录",
@@ -872,7 +851,6 @@
     "logs.prev": "上一页",
     "logs.next": "下一页",
     "tasks.finishTime": "结束时间",
-
     "tasks.title": "任务记录",
     "tasks.subtitle": "查看视频与图片生成任务的提交、进度和结果",
     "tasks.videoTasks": "视频任务",
@@ -946,7 +924,6 @@
     "后台订阅": "后台订阅",
     "计费方式": "计费方式",
     "订阅抵扣": "订阅抵扣",
-    "定价方式": "定价方式",
     "价格": "价格",
     "输入价格": "输入价格",
     "输出价格": "输出价格",
@@ -990,6 +967,43 @@
     "invoice.emailRequired": "请填写接收邮箱",
     "invoice.countryRequired": "请填写国家或地区",
     "invoice.addressRequired": "请填写注册地址或账单地址",
-    "invoice.contactRequired": "请填写联系人"
+    "invoice.contactRequired": "请填写联系人",
+    "common.toggleMenu": "切换菜单",
+    "common.openingPayment": "正在打开支付页面...",
+    "tasks.prompt": "提示词",
+    "任务 ID": "任务 ID",
+    "上游任务 ID": "上游任务 ID",
+    "原因": "原因",
+    "home.popular": "热门",
+    "home.maoqiuSubtitle": "智能 · 创造 · 无限可能",
+    "home.smartRoute": "智能路由",
+    "home.keysLabel": "密钥",
+    "home.themeLabel": "主题",
+    "home.ready": "就绪",
+    "home.custom": "自定义",
+    "home.best": "最优",
+    "home.primary": "主路由",
+    "home.balancedRoutePool": "均衡路由池",
+    "home.curatedModelShelf": "精选模型目录",
+    "home.providerReadyTransparentPrice": "供应商就绪 / 价格透明",
+    "home.catalog": "模型目录",
+    "home.routing": "路由",
+    "home.billing": "计费",
+    "home.auto": "自动",
+    "home.clear": "透明",
+    "home.fallback": "故障转移",
+    "home.armed": "已启用",
+    "home.routingWorkbench": "路由工作台",
+    "home.liveModelOrchestration": "实时模型编排",
+    "home.statusHealthy": "健康",
+    "home.routeDecision": "路由决策",
+    "home.policy": "策略",
+    "home.bestPriceLowLatency": "最优价格 + 低延迟",
+    "home.fallbackHealthyProviders": "在健康供应商间启用故障转移",
+    "preview.starterDesc": "适合个人试用和轻量 API 调用。",
+    "preview.proDesc": "高频调用、自动路由、失败重试的主力套餐。",
+    "preview.teamDesc": "适合团队共享密钥、模型分组和稳定生产调用。",
+    "common.mobileEffectWarning": "此效果未针对移动设备优化，请在桌面端查看。",
+    "legal.allRightsReserved": "保留所有权利。"
   }
 }

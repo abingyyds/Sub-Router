@@ -98,7 +98,7 @@ export default function CorporateLayout() {
             <button
               className="lg:hidden p-2 rounded-lg hover:bg-slate-50 transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Toggle menu"
+              aria-label={t('common.toggleMenu')}
             >
               <svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 {mobileMenuOpen ? (
@@ -140,7 +140,7 @@ export default function CorporateLayout() {
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div>
               <span className="text-sm font-bold text-slate-900 tracking-tight">{siteName}</span>
-              <p className="text-xs text-slate-400 mt-1">&copy; {new Date().getFullYear()} {siteName}. All rights reserved.</p>
+              <p className="text-xs text-slate-400 mt-1">&copy; {new Date().getFullYear()} {siteName}. {t('legal.allRightsReserved')}</p>
             </div>
             <div className="flex items-center gap-6">
               <FooterLegalLinks className="flex items-center gap-2 text-sm text-slate-400" linkClassName="hover:text-slate-600 transition-colors" />
