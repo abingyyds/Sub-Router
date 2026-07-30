@@ -65,8 +65,8 @@ function findCompatibleCreemProduct(products, amount, currency = '') {
   }) || null;
 }
 
-const paymentWindowPlaceholderHtml =
-  '<!doctype html><title>Opening payment...</title><body style="font-family: system-ui, sans-serif; padding: 24px;">Opening payment...</body>';
+const paymentWindowPlaceholderHtml = (label) =>
+  `<!doctype html><title>${label}</title><body style="font-family: system-ui, sans-serif; padding: 24px;">${label}</body>`;
 
 function shouldUseSameTabPaymentRedirect() {
   if (typeof window === 'undefined') return false;
@@ -77,12 +77,12 @@ function shouldUseSameTabPaymentRedirect() {
   );
 }
 
-function openPendingPaymentWindow() {
+function openPendingPaymentWindow(label) {
   if (shouldUseSameTabPaymentRedirect()) return null;
   try {
     const paymentWindow = window.open('', '_blank');
     if (paymentWindow) {
-      paymentWindow.document.write(paymentWindowPlaceholderHtml);
+      paymentWindow.document.write(paymentWindowPlaceholderHtml(label));
       paymentWindow.document.close();
     }
     return paymentWindow;
@@ -306,7 +306,7 @@ export default function Topup() {
       toast.error(t('topup.creemUnsupportedAmount') || 'Current amount is not supported by Creem');
       return;
     }
-    const paymentWindow = isCreemPayment(method) ? openPendingPaymentWindow() : null;
+    const paymentWindow = isCreemPayment(method) ? openPendingPaymentWindow(t('common.openingPayment')) : null;
     setPaymentLoading(true);
     setPayingMethod(method);
     try {

@@ -128,7 +128,7 @@ export default function AuroraHome() {
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {models.map((model, index) => (
-                <ModelTile key={model.id || index} model={model} index={index} />
+                <ModelTile key={model.id || index} model={model} index={index} t={t} />
               ))}
             </div>
           </div>
@@ -196,9 +196,9 @@ function SectionTitle({ title, desc, compact = false }) {
 function RoutingWorkbench({ models, t }) {
   const preview = models.slice(0, 4);
   const rows = [
-    { label: 'latency', value: '42ms', tone: 'text-blue-200' },
-    { label: 'fallback', value: 'armed', tone: 'text-teal-200' },
-    { label: 'providers', value: `${preview.length}+`, tone: 'text-slate-100' },
+    { label: t('home.latency'), value: '42ms', tone: 'text-blue-200' },
+    { label: t('home.fallback'), value: t('home.armed'), tone: 'text-teal-200' },
+    { label: t('officialChannels.providers'), value: `${preview.length}+`, tone: 'text-slate-100' },
   ];
 
   return (
@@ -210,11 +210,11 @@ function RoutingWorkbench({ models, t }) {
               <Route className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-sm font-black">Routing Workbench</p>
-              <p className="mt-1 text-xs font-medium text-slate-400">live model orchestration</p>
+              <p className="text-sm font-black">{t('home.routingWorkbench')}</p>
+              <p className="mt-1 text-xs font-medium text-slate-400">{t('home.liveModelOrchestration')}</p>
             </div>
           </div>
-          <span className="w-fit rounded-md bg-teal-400/15 px-2.5 py-1 text-xs font-black text-teal-200 ring-1 ring-teal-300/20">HEALTHY</span>
+          <span className="w-fit rounded-md bg-teal-400/15 px-2.5 py-1 text-xs font-black text-teal-200 ring-1 ring-teal-300/20">{t('home.statusHealthy')}</span>
         </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
@@ -230,7 +230,7 @@ function RoutingWorkbench({ models, t }) {
           <div className="mb-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-sm font-bold text-slate-100">
               <Layers3 className="h-4 w-4 text-blue-300" />
-              route decision
+              {t('home.routeDecision')}
             </div>
             <span className="font-mono text-xs text-slate-500">POST /v1/chat</span>
           </div>
@@ -242,6 +242,7 @@ function RoutingWorkbench({ models, t }) {
                 model={model}
                 index={index}
                 active={index === 0}
+                t={t}
               />
             ))}
           </div>
@@ -264,23 +265,23 @@ function RoutingWorkbench({ models, t }) {
           </div>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-4">
-          <p className="text-xs font-bold uppercase tracking-wide text-slate-400">policy</p>
-          <p className="mt-2 text-sm font-black text-slate-950">best price + low latency</p>
-          <p className="mt-2 text-xs leading-5 text-slate-500">fallback enabled across healthy providers</p>
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{t('home.policy')}</p>
+          <p className="mt-2 text-sm font-black text-slate-950">{t('home.bestPriceLowLatency')}</p>
+          <p className="mt-2 text-xs leading-5 text-slate-500">{t('home.fallbackHealthyProviders')}</p>
         </div>
       </div>
     </div>
   );
 }
 
-function RouteRow({ model, index, active }) {
+function RouteRow({ model, index, active, t }) {
   const width = ['82%', '64%', '52%', '38%'][index] || '44%';
   return (
     <div className={`rounded-lg border p-3 ${active ? 'border-blue-400/40 bg-blue-400/10' : 'border-white/10 bg-white/[0.035]'}`}>
       <div className="flex items-center justify-between gap-3">
         <span className="truncate font-mono text-xs font-semibold text-slate-200">{model.display_name || model.model_name}</span>
         <span className={active ? 'text-xs font-black text-blue-200' : 'text-xs font-semibold text-slate-500'}>
-          {active ? 'PRIMARY' : `R${index + 1}`}
+          {active ? t('home.primary') : `R${index + 1}`}
         </span>
       </div>
       <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
@@ -290,7 +291,7 @@ function RouteRow({ model, index, active }) {
   );
 }
 
-function ModelTile({ model, index }) {
+function ModelTile({ model, index, t }) {
   const active = index % 3 === 0;
   return (
     <div className="group rounded-xl border border-slate-200 bg-slate-50 p-4 transition-colors hover:border-blue-200 hover:bg-white">
@@ -299,11 +300,11 @@ function ModelTile({ model, index }) {
           <Cpu className="h-4 w-4" />
         </div>
         <span className={`rounded-md px-2 py-1 text-xs font-bold ${active ? 'bg-blue-50 text-blue-700' : 'bg-teal-50 text-teal-700'}`}>
-          {active ? 'PRIMARY' : 'ONLINE'}
+          {active ? t('home.primary') : t('officialChannels.online')}
         </span>
       </div>
       <p className="truncate font-mono text-sm font-semibold text-slate-900">{model.display_name || model.model_name}</p>
-      <p className="mt-2 text-xs font-semibold text-slate-500">balanced route pool</p>
+      <p className="mt-2 text-xs font-semibold text-slate-500">{t('home.balancedRoutePool')}</p>
     </div>
   );
 }

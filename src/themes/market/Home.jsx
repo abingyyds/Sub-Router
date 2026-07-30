@@ -115,7 +115,7 @@ export default function MarketHome() {
               )}
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {models.map((model, index) => <ModelCard key={model.id || index} model={model} index={index} />)}
+              {models.map((model, index) => <ModelCard key={model.id || index} model={model} index={index} t={t} />)}
             </div>
           </div>
         </section>
@@ -190,23 +190,23 @@ function MarketBoard({ models, t }) {
           </div>
           <div className="min-w-0">
             <p className="truncate font-black text-stone-950">{t('home.availableModels')}</p>
-            <p className="text-xs font-bold text-stone-500">curated model shelf</p>
+            <p className="text-xs font-bold text-stone-500">{t('home.curatedModelShelf')}</p>
           </div>
         </div>
-        <span className="shrink-0 rounded-md bg-orange-50 px-2.5 py-1 text-xs font-black text-orange-700">{rows.length}+ live</span>
+        <span className="shrink-0 rounded-md bg-orange-50 px-2.5 py-1 text-xs font-black text-orange-700">{rows.length}+ {t('officialChannels.online')}</span>
       </div>
 
       <div className="rounded-xl border border-stone-200 bg-[#fbfaf7] p-3">
         <div className="grid gap-3 sm:grid-cols-2">
-          {rows.slice(0, 6).map((model, index) => <ModelCard key={model.id || index} model={model} index={index} compact />)}
+          {rows.slice(0, 6).map((model, index) => <ModelCard key={model.id || index} model={model} index={index} compact t={t} />)}
         </div>
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
         {[
-          { label: 'Catalog', value: `${rows.length}+` },
-          { label: 'Routing', value: 'Auto' },
-          { label: 'Billing', value: 'Clear' },
+          { label: t('home.catalog'), value: `${rows.length}+` },
+          { label: t('home.routing'), value: t('home.auto') },
+          { label: t('home.billing'), value: t('home.clear') },
         ].map((item) => (
           <div key={item.label} className="rounded-xl border border-stone-200 bg-white p-3">
             <p className="text-[11px] font-bold uppercase tracking-wide text-stone-400">{item.label}</p>
@@ -218,7 +218,7 @@ function MarketBoard({ models, t }) {
   );
 }
 
-function ModelCard({ model, index, compact = false }) {
+function ModelCard({ model, index, compact = false, t }) {
   const accent = accents[index % accents.length];
   return (
     <div className={`group relative overflow-hidden rounded-xl border ${compact ? 'bg-white' : 'bg-[#fbfaf7]'} ${accent.border} p-4 shadow-sm transition-colors hover:bg-white`}>
@@ -227,10 +227,10 @@ function ModelCard({ model, index, compact = false }) {
         <div className={`flex ${compact ? 'h-9 w-9' : 'h-10 w-10'} shrink-0 items-center justify-center rounded-lg ${accent.soft} ${accent.text}`}>
           <Cpu className="h-4 w-4" />
         </div>
-        <span className={`rounded-md ${accent.soft} px-2 py-1 text-[10px] font-black ${accent.text}`}>LIVE</span>
+        <span className={`rounded-md ${accent.soft} px-2 py-1 text-[10px] font-black ${accent.text}`}>{t('officialChannels.online')}</span>
       </div>
       <p className="mt-4 truncate font-mono text-sm font-black text-stone-950">{model.display_name || model.model_name}</p>
-      {!compact && <p className="mt-2 text-xs font-semibold text-stone-500">provider ready / transparent price</p>}
+      {!compact && <p className="mt-2 text-xs font-semibold text-stone-500">{t('home.providerReadyTransparentPrice')}</p>}
     </div>
   );
 }

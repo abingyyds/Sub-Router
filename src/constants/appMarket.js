@@ -160,4 +160,24 @@ export const APP_MARKET_APPS = [
       'appMarket.featureLocalFirst',
     ],
   },
+  {
+    id: 'prism',
+    name: 'Prism',
+    categoryKey: 'appMarket.categoryEcommerce',
+    statusKey: 'appMarket.statusLive',
+    taglineKey: 'appMarket.prismTagline',
+    descriptionKey: 'appMarket.prismDescription',
+    logo: 'https://prism-production-0323.up.railway.app/logo.png',
+    cover:
+      'https://prism-production-0323.up.railway.app/images/cases/suite-watch.webp',
+    appUrl: 'https://prism-production-0323.up.railway.app/',
+    licenseKey: 'appMarket.selfDeveloped',
+    integration: PLATFORM_APP_INTEGRATION,
+    featureKeys: [
+      'appMarket.featureEcommerceVisualSuite',
+      'appMarket.featureProductRetouching',
+      'appMarket.featureSceneModelGeneration',
+      'appMarket.featureReviewFeedback',
+    ],
+  },
 ];

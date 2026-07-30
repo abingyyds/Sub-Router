@@ -1,9 +1,26 @@
 import { useTranslation } from 'react-i18next';
 import { DIST_SITE_LANGUAGES, normalizeAppLanguage } from '../i18n/languageUtils';
+import { updateUserLanguage } from '../api';
+import { useAuth } from '../context/AuthContext';
 
 export default function LanguageSwitch({ className = '' }) {
   const { i18n, t } = useTranslation();
+  const { user, updateUser } = useAuth();
   const currentLanguage = normalizeAppLanguage(i18n.resolvedLanguage || i18n.language);
+
+  const handleLanguageChange = async (event) => {
+    const language = normalizeAppLanguage(event.target.value);
+    await i18n.changeLanguage(language);
+    if (!user) return;
+    try {
+      const response = await updateUserLanguage(language);
+      if (response.data?.success) {
+        updateUser({ language });
+      }
+    } catch {
+      // The local language switch remains active even if persistence fails.
+    }
+  };
 
   return (
     <label className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs transition-colors ${className}`}>
@@ -14,7 +31,7 @@ export default function LanguageSwitch({ className = '' }) {
       </svg>
       <select
         value={currentLanguage}
-        onChange={(event) => i18n.changeLanguage(event.target.value)}
+        onChange={handleLanguageChange}
         className="bg-transparent text-current outline-none"
         aria-label={t('common.changeLanguage')}
       >

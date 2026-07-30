@@ -215,7 +215,7 @@ export default function AppMarket() {
                       </span>
                     ))}
                     <span className="rounded-full border border-page-divider bg-page-surface px-2.5 py-1 text-xs font-semibold text-page-secondary">
-                      {app.license}
+                      {app.licenseKey ? t(app.licenseKey) : app.license}
                     </span>
                   </div>
                 </div>
@@ -249,15 +249,17 @@ export default function AppMarket() {
                     <ExternalLink className="mr-2 h-4 w-4" />
                     {t('appMarket.visitSite')}
                   </a>
-                  <a
-                    href={app.sourceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center rounded-xl px-6 py-2.5 text-sm font-medium text-page-secondary transition-colors hover:bg-page-surface-hover hover:text-page"
-                  >
-                    <ExternalLink className="mr-2 h-4 w-4" />
-                    {t('appMarket.sourceLink')}
-                  </a>
+                  {app.sourceUrl && (
+                    <a
+                      href={app.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center rounded-xl px-6 py-2.5 text-sm font-medium text-page-secondary transition-colors hover:bg-page-surface-hover hover:text-page"
+                    >
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      {t('appMarket.sourceLink')}
+                    </a>
+                  )}
                   <button
                     type="button"
                     className="btn-secondary inline-flex items-center justify-center"
@@ -295,7 +297,7 @@ export default function AppMarket() {
                       {t('appMarket.onlineApp')}
                     </span>
                     <span className="rounded-lg bg-page-surface px-2 py-1">
-                      {t('appMarket.openSource')}
+                      {t(app.sourceUrl ? 'appMarket.openSource' : 'appMarket.selfDeveloped')}
                     </span>
                   </div>
                 </div>

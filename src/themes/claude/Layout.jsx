@@ -98,7 +98,7 @@ export default function ClaudeLayout() {
             <button
               className="lg:hidden p-2 rounded-lg hover:bg-[#E8DDD0]/50 transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Toggle menu"
+              aria-label={t('common.toggleMenu')}
             >
               <svg className="w-5 h-5 text-[#6B5D4F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 {mobileMenuOpen ? (

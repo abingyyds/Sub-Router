@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { motion, useMotionValue, useSpring } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 
 const springValues = {
   damping: 30,
@@ -22,6 +23,7 @@ export default function TiltedCard({
   overlayContent = null,
   displayOverlayContent = false
 }) {
+  const { t } = useTranslation();
   const ref = useRef(null);
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -85,7 +87,7 @@ export default function TiltedCard({
     >
       {showMobileWarning && (
         <div className="absolute top-4 text-center text-sm block sm:hidden">
-          This effect is not optimized for mobile. Check on desktop.
+          {t('common.mobileEffectWarning')}
         </div>
       )}
 

@@ -98,7 +98,7 @@ export default function CleanLayout() {
             <button
               className="lg:hidden p-2 rounded-lg hover:bg-gray-50 transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Toggle menu"
+              aria-label={t('common.toggleMenu')}
             >
               <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 {mobileMenuOpen ? (

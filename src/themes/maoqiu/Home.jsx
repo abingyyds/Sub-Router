@@ -82,7 +82,7 @@ export default function MaoqiuHome() {
           </FadeContent>
 
           <FadeContent blur duration={700} delay={180}>
-            <HeroPanel models={models} siteName={site?.name} />
+            <HeroPanel models={models} siteName={site?.name} t={t} />
           </FadeContent>
         </div>
       </section>
@@ -121,7 +121,7 @@ export default function MaoqiuHome() {
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {models.map((model, index) => (
-                <ModelTile key={model.id || index} model={model} index={index} />
+                <ModelTile key={model.id || index} model={model} index={index} t={t} />
               ))}
             </div>
           </div>
@@ -188,7 +188,7 @@ function SectionTitle({ title, desc, compact = false }) {
   );
 }
 
-function HeroPanel({ models, siteName }) {
+function HeroPanel({ models, siteName, t }) {
   const preview = models.slice(0, 4);
 
   return (
@@ -207,20 +207,20 @@ function HeroPanel({ models, siteName }) {
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 text-sm font-black">
                   <Layers3 className="h-4 w-4 text-[#7ac7ff]" />
-                  Smart Route
+                  {t('home.smartRoute')}
                 </div>
-                <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-bold text-[#f0b8ff]">LIVE</span>
+                <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-bold text-[#f0b8ff]">{t('officialChannels.online')}</span>
               </div>
               <div className="space-y-2">
                 {preview.slice(0, 4).map((model, index) => (
-                  <RouteRow key={model.id || index} model={model} index={index} />
+                  <RouteRow key={model.id || index} model={model} index={index} t={t} />
                 ))}
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <MiniStat icon={KeyRound} label="Keys" value="ready" />
-              <MiniStat icon={Palette} label="Theme" value="custom" />
+              <MiniStat icon={KeyRound} label={t('home.keysLabel')} value={t('home.ready')} />
+              <MiniStat icon={Palette} label={t('home.themeLabel')} value={t('home.custom')} />
             </div>
           </div>
         </div>
@@ -229,13 +229,13 @@ function HeroPanel({ models, siteName }) {
   );
 }
 
-function RouteRow({ model, index }) {
+function RouteRow({ model, index, t }) {
   const active = index === 0;
   return (
     <div className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2 ${active ? 'border-[#7ac7ff]/30 bg-white/12' : 'border-white/10 bg-white/[0.06]'}`}>
       <span className="min-w-0 truncate font-mono text-xs font-semibold text-slate-100">{model.display_name || model.model_name}</span>
       <span className={active ? 'text-xs font-black text-[#7ac7ff]' : 'text-xs font-semibold text-slate-400'}>
-        {active ? 'BEST' : `R${index + 1}`}
+        {active ? t('home.best') : `R${index + 1}`}
       </span>
     </div>
   );
@@ -253,7 +253,7 @@ function MiniStat({ icon: Icon, label, value }) {
   );
 }
 
-function ModelTile({ model, index }) {
+function ModelTile({ model, index, t }) {
   const active = index % 3 === 0;
   return (
     <div className="group rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-blue-200 hover:bg-white">
@@ -262,11 +262,11 @@ function ModelTile({ model, index }) {
           <Cpu className="h-4 w-4" />
         </div>
         <span className={`rounded-md px-2 py-1 text-xs font-bold ${active ? 'bg-blue-50 text-blue-700' : 'bg-fuchsia-50 text-fuchsia-700'}`}>
-          {active ? 'PRIMARY' : 'ONLINE'}
+          {active ? t('home.primary') : t('officialChannels.online')}
         </span>
       </div>
       <p className="truncate font-mono text-sm font-semibold text-[#071337]">{model.display_name || model.model_name}</p>
-      <p className="mt-2 text-xs font-semibold text-slate-500">balanced route pool</p>
+      <p className="mt-2 text-xs font-semibold text-slate-500">{t('home.balancedRoutePool')}</p>
     </div>
   );
 }

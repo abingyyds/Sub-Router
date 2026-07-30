@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import maoqiuAiImage from '../../assets/maoqiu-ai.png';
 
 export default function MaoqiuSplash() {
+  const { t } = useTranslation();
   const [visible, setVisible] = useState(true);
   const [leaving, setLeaving] = useState(false);
 
@@ -24,7 +26,7 @@ export default function MaoqiuSplash() {
         <img src={maoqiuAiImage} alt="Maoqiu AI" />
       </div>
       <div className="maoqiu-splash__title">毛球</div>
-      <div className="maoqiu-splash__subtitle">智能 · 创造 · 无限可能</div>
+      <div className="maoqiu-splash__subtitle">{t('home.maoqiuSubtitle')}</div>
       <div className="maoqiu-splash__beam" />
     </div>
   );
