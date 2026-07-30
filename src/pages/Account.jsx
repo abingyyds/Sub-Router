@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileText, Lock, Mail, Save, Send, UserCircle } from 'lucide-react';
+import { BellRing, FileText, Lock, Mail, Save, Send, UserCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useSite } from '../context/SiteContext';
-import { bindUserEmail, createInvoice, getInvoiceHistory, getInvoiceInfo, sendEmailBindingVerification, updateUserPassword } from '../api';
+import { bindUserEmail, createInvoice, getInvoiceHistory, getInvoiceInfo, sendEmailBindingVerification, updateAnnouncementEmailPreference, updateUserPassword } from '../api';
 
 const initialForm = {
   original_password: '',
@@ -85,6 +85,7 @@ export default function Account() {
   const [emailSending, setEmailSending] = useState(false);
   const [emailSaving, setEmailSaving] = useState(false);
   const [emailCooldown, setEmailCooldown] = useState(0);
+  const [announcementEmailSaving, setAnnouncementEmailSaving] = useState(false);
   const [invoiceSummary, setInvoiceSummary] = useState(null);
   const [invoiceHistory, setInvoiceHistory] = useState([]);
   const [invoiceAmount, setInvoiceAmount] = useState('');
@@ -209,6 +210,22 @@ export default function Account() {
       // shared interceptor handles user-facing errors
     } finally {
       setEmailSaving(false);
+    }
+  };
+
+  const handleAnnouncementEmailPreference = async () => {
+    const enabled = user?.announcement_email_enabled === false;
+    setAnnouncementEmailSaving(true);
+    try {
+      const res = await updateAnnouncementEmailPreference(enabled);
+      if (res.data.success) {
+        await refreshUser();
+        toast.success(enabled ? t('account.announcementEmailEnabled') : t('account.announcementEmailDisabled'));
+      }
+    } catch {
+      // shared interceptor handles user-facing errors
+    } finally {
+      setAnnouncementEmailSaving(false);
     }
   };
 
@@ -341,6 +358,35 @@ export default function Account() {
             {emailSaving ? t('account.bindingEmail') : user?.email ? t('account.changeEmail') : t('account.bindEmail')}
           </button>
         </form>
+      </section>
+
+      <section className="glass rounded-2xl p-6 mt-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <BellRing className="mt-0.5 h-5 w-5 shrink-0 text-page-link" />
+            <div>
+              <h2 className="text-lg font-semibold text-page">{t('account.announcementEmailTitle')}</h2>
+              <p className="mt-1 text-sm text-page-secondary">{t('account.announcementEmailDescription')}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleAnnouncementEmailPreference}
+            disabled={announcementEmailSaving}
+            aria-pressed={user?.announcement_email_enabled !== false}
+            className={`inline-flex min-w-28 items-center justify-center rounded-full px-4 py-2 text-sm font-medium transition-colors disabled:opacity-60 ${
+              user?.announcement_email_enabled !== false
+                ? 'bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/25'
+                : 'bg-page-surface text-page-secondary hover:text-page'
+            }`}
+          >
+            {announcementEmailSaving
+              ? t('account.announcementEmailSaving')
+              : user?.announcement_email_enabled !== false
+                ? t('account.announcementEmailOn')
+                : t('account.announcementEmailOff')}
+          </button>
+        </div>
       </section>
 
       {site?.enable_invoice && (

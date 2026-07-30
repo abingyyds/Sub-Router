@@ -295,6 +295,8 @@ export const completeOAuth = (provider, params) =>
 export const getUserSelf = (config) => api.get('/api/dist/user/self', config);
 export const updateUserLanguage = (language) =>
   api.put('/api/dist/user/language', { language });
+export const updateAnnouncementEmailPreference = (enabled) =>
+  api.put('/api/dist/user/announcement-email', { enabled });
 export const updateUserPassword = (data) => api.put('/api/dist/user/password', data);
 export const sendEmailBindingVerification = (email) => api.post('/api/dist/user/email/bind-verification', { email });
 export const bindUserEmail = (email, verificationCode) =>
