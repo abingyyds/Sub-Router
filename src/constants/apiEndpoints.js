@@ -4,7 +4,7 @@ export const SHARED_API_ENDPOINTS = [
     labelKey: 'home.apiEndpointOverseasDirect',
     nameKey: 'config.apiEndpointOverseasDirectName',
     descKey: 'config.apiEndpointOverseasDirectDesc',
-    url: 'https://test1122.up.railway.app',
+    url: 'https://api.43-161-200-52.sslip.io',
   },
   {
     id: 'overseas-cdn',
