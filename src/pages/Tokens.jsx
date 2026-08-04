@@ -16,7 +16,6 @@ import DownloadCatalog from '../components/DownloadCatalog';
 import { useCurrency, useSite } from '../context/SiteContext';
 import { formatPricingDetailRows } from '../utils/pricingDetails';
 import toast from 'react-hot-toast';
-import { Check, CircleDollarSign, Scale } from 'lucide-react';
 
 const normalizeOfficialKeyMaxDiscount = (value) => {
   const n = Number(value);
@@ -49,7 +48,6 @@ const emptyControlForm = () => ({
   model_limits: [],
   allow_ips: '',
   subrouter_sort_mode: 'token_price_first',
-  subrouter_route_preference: 'stability_first',
   include_official_channels: true,
   official_key_max_discount: '',
 });
@@ -113,7 +111,6 @@ const buildTokenControlPayload = (form, rate, t, includeModelLimits = true) => {
     remain_quota: remainQuota,
     allow_ips: String(form.allow_ips || '').trim(),
     subrouter_sort_mode: form.subrouter_sort_mode || 'token_price_first',
-    subrouter_route_preference: form.subrouter_route_preference || 'stability_first',
   };
   if (includeModelLimits) {
     payload.model_limits = parseModelLimits(form.model_limits).join(',');
@@ -129,7 +126,6 @@ const tokenToEditForm = (token, rate) => ({
   model_limits: parseModelLimits(token?.model_limits),
   allow_ips: token?.allow_ips || '',
   subrouter_sort_mode: token?.subrouter_sort_mode || 'token_price_first',
-  subrouter_route_preference: token?.subrouter_route_preference || 'price_first',
   include_official_channels: Boolean(token?.include_official_channels),
   official_key_max_discount: token?.include_official_channels
     ? normalizeOfficialKeyMaxDiscount(token?.official_key_max_discount) || ''
@@ -1234,65 +1230,17 @@ function TokenControlFields({
       </label>
 
       {showSortMode && (
-        <>
-          <div>
-            <label className="block text-sm font-medium text-page-label mb-1.5">{t('tokens.routePreference')}</label>
-            <div className="grid gap-2 sm:grid-cols-2" role="radiogroup">
-              {[
-                {
-                  value: 'price_first',
-                  title: t('tokens.priceFirst'),
-                  tag: t('tokens.lowPriceTag'),
-                  metric: t('tokens.compositePriceFirst'),
-                  description: t('tokens.priceFirstDesc'),
-                  icon: CircleDollarSign,
-                },
-                {
-                  value: 'stability_first',
-                  title: t('tokens.stabilityFirst'),
-                  tag: t('tokens.stabilityTag'),
-                  metric: t('tokens.successRateFirst'),
-                  description: t('tokens.stabilityFirstDesc'),
-                  icon: Scale,
-                },
-              ].map((option) => {
-                const selected = (form.subrouter_route_preference || 'stability_first') === option.value;
-                const Icon = option.icon;
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    role="radio"
-                    aria-checked={selected}
-                    onClick={() => onChange('subrouter_route_preference', option.value)}
-                    className={`min-h-[132px] rounded-lg border p-3 text-left transition ${selected ? 'border-brand-500 bg-brand-500/5' : 'border-page-divider bg-page-surface hover:border-brand-500/40'}`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <span className={`flex h-8 w-8 items-center justify-center rounded-md ${selected ? 'bg-brand-500 text-white' : 'bg-page-surface-hover text-page-secondary'}`}>
-                        <Icon size={17} />
-                      </span>
-                      {selected && <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-500"><Check size={13} />{t('tokens.selected')}</span>}
-                    </div>
-                    <div className="mt-2 text-sm font-semibold text-page">{option.title}</div>
-                    <div className="mt-1 text-[11px] font-medium text-page-secondary">{option.tag} · {option.metric}</div>
-                    <p className="mt-2 text-[11px] leading-relaxed text-page-secondary">{option.description}</p>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-page-label mb-1.5">{t('tokens.routeSortMode')}</label>
-            <select
-              className="input"
-              value={form.subrouter_sort_mode || 'token_price_first'}
-              onChange={(e) => onChange('subrouter_sort_mode', e.target.value)}
-            >
-              <option value="token_price_first">{t('tokens.tokenPriceFirst')}</option>
-              <option value="per_call_price_first">{t('tokens.perCallPriceFirst')}</option>
-            </select>
-          </div>
-        </>
+        <div>
+          <label className="block text-sm font-medium text-page-label mb-1.5">{t('tokens.routeSortMode')}</label>
+          <select
+            className="input"
+            value={form.subrouter_sort_mode || 'token_price_first'}
+            onChange={(e) => onChange('subrouter_sort_mode', e.target.value)}
+          >
+            <option value="token_price_first">{t('tokens.tokenPriceFirst')}</option>
+            <option value="per_call_price_first">{t('tokens.perCallPriceFirst')}</option>
+          </select>
+        </div>
       )}
 
       {canLimitModels && (
