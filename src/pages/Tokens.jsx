@@ -49,7 +49,7 @@ const emptyControlForm = () => ({
   model_limits: [],
   allow_ips: '',
   subrouter_sort_mode: 'token_price_first',
-  subrouter_route_preference: 'price_first',
+  subrouter_route_preference: 'stability_first',
   include_official_channels: true,
   official_key_max_discount: '',
 });
@@ -113,7 +113,7 @@ const buildTokenControlPayload = (form, rate, t, includeModelLimits = true) => {
     remain_quota: remainQuota,
     allow_ips: String(form.allow_ips || '').trim(),
     subrouter_sort_mode: form.subrouter_sort_mode || 'token_price_first',
-    subrouter_route_preference: form.subrouter_route_preference || 'price_first',
+    subrouter_route_preference: form.subrouter_route_preference || 'stability_first',
   };
   if (includeModelLimits) {
     payload.model_limits = parseModelLimits(form.model_limits).join(',');
