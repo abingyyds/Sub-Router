@@ -1256,7 +1256,7 @@ function TokenControlFields({
                   icon: Scale,
                 },
               ].map((option) => {
-                const selected = (form.subrouter_route_preference || 'price_first') === option.value;
+                const selected = (form.subrouter_route_preference || 'stability_first') === option.value;
                 const Icon = option.icon;
                 return (
                   <button
