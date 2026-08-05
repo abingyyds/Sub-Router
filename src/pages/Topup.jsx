@@ -226,7 +226,7 @@ export default function Topup() {
       if (res.data.success) {
         toast.success(t('topup.redeemSuccess'));
         setRedeemInput('');
-        await Promise.all([loadData(), refreshUser()]);
+        await Promise.all([loadData(), refreshUser(), showHistory ? loadHistory() : Promise.resolve()]);
       }
     } catch (err) { /* interceptor */ }
     setRedeeming(false);
@@ -537,9 +537,17 @@ export default function Topup() {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-10">
-      <div className="mb-8">
-        <h1 className="text-2xl font-heading font-bold text-page mb-1">{t('topup.title')}</h1>
-        <p className="text-sm text-page-secondary">{t('topup.subtitle')}</p>
+      <div className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-heading font-bold text-page mb-1">{t('topup.title')}</h1>
+          <p className="text-sm text-page-secondary">{t('topup.subtitle')}</p>
+        </div>
+        <button
+          onClick={() => { setShowHistory(!showHistory); if (!showHistory) loadHistory(); }}
+          className="shrink-0 text-sm text-page-secondary hover:text-page transition-colors"
+        >
+          {showHistory ? t('topup.hideHistory') : t('topup.viewHistory')}
+        </button>
       </div>
 
       {/* Balance Stats */}
@@ -579,14 +587,8 @@ export default function Topup() {
       {/* Online Topup */}
       {site?.enable_topup && (enableOnline || enableStripe || enableCreem || enableCrypto || redeemCodeShopUrl) && (topupPayMethods.length > 0 || enableCrypto || redeemCodeShopUrl) && (
         <div className="glass rounded-2xl p-6 mb-6">
-          <div className="flex items-center justify-between mb-6">
+          <div className="mb-6">
             <h2 className="text-lg font-semibold text-page">{t('topup.onlineTopup')}</h2>
-            <button
-              onClick={() => { setShowHistory(!showHistory); if (!showHistory) loadHistory(); }}
-              className="text-sm text-page-secondary hover:text-page transition-colors"
-            >
-              {showHistory ? t('topup.hideHistory') : t('topup.viewHistory')}
-            </button>
           </div>
 
           {/* Preset Amounts */}
@@ -880,7 +882,7 @@ export default function Topup() {
                       )}
                     </p>
                     <p className="text-xs text-page-muted">
-                      {new Date(item.create_time * 1000).toLocaleString()} · {item.payment_method || t('topup.redeemCode')}
+                      {new Date(item.create_time * 1000).toLocaleString()} · {item.payment_method === 'redemption' || !item.payment_method ? t('topup.redeemCode') : item.payment_method}
                     </p>
                   </div>
                   <span className={`text-xs px-2 py-1 rounded-full ${
