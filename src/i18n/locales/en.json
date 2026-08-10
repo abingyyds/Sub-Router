@@ -1041,6 +1041,12 @@
     "preview.proDesc": "Built for frequent calls, automatic routing, and retrying failed requests.",
     "preview.teamDesc": "Ideal for teams sharing keys, model groups, and stable production workloads.",
     "common.mobileEffectWarning": "This effect is not optimized for mobile. View it on desktop.",
-    "legal.allRightsReserved": "All rights reserved."
+    "legal.allRightsReserved": "All rights reserved.",
+    "logs.billingFailure": "Settlement issue",
+    "logs.billingFailureFallback": "Local billing settlement failed. Contact the administrator.",
+    "logs.walletRefundRecovery": "Difference refund",
+    "logs.walletRefundQueued": "Queued for automatic recovery",
+    "logs.platformAdvance": "Platform advance",
+    "logs.platformAdvanceOutstanding": "Outstanding"
   }
 }

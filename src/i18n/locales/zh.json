@@ -1041,6 +1041,12 @@
     "preview.proDesc": "高频调用、自动路由、失败重试的主力套餐。",
     "preview.teamDesc": "适合团队共享密钥、模型分组和稳定生产调用。",
     "common.mobileEffectWarning": "此效果未针对移动设备优化，请在桌面端查看。",
-    "legal.allRightsReserved": "保留所有权利。"
+    "legal.allRightsReserved": "保留所有权利。",
+    "logs.billingFailure": "结算异常",
+    "logs.billingFailureFallback": "本地账务结算失败，请联系管理员",
+    "logs.walletRefundRecovery": "差额退款",
+    "logs.walletRefundQueued": "已进入自动补偿队列",
+    "logs.platformAdvance": "平台垫付",
+    "logs.platformAdvanceOutstanding": "待偿还"
   }
 }
