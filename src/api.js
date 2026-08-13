@@ -293,6 +293,22 @@ export const getSiteOfficialChannelAvailability = (channelId, modelId, period = 
               },
             ]
           : [],
+        keys: modelId
+          ? [
+              {
+                key_index: 1,
+                provider_key_index: 1,
+                provider_index: 1,
+                availability: 100,
+                price_discount: 0.32,
+                fixed_price: 0.0448,
+                price_currency: 'USD',
+                probe_total: 10,
+                probe_successes: 10,
+                buckets: [],
+              },
+            ]
+          : [],
         buckets: Array.from({ length: period === '7d' ? 14 : 24 }, (_, index) => ({
           bucket_time: index,
           total: 10,
