@@ -427,7 +427,11 @@ export const getSharedPlans = () => api.get('/api/dist/shared-subscriptions/plan
 export const subscribeSharedPlan = (id) => api.post(`/api/dist/shared-subscriptions/plans/${id}/subscribe`);
 export const unsubscribeSharedPlan = (id) => api.delete(`/api/dist/shared-subscriptions/plans/${id}/subscribe`);
 export const getSharedSupplies = () => api.get('/api/dist/shared-subscriptions/supplies');
-export const importSharedAccounts = (accounts) => api.post('/api/dist/shared-subscriptions/accounts/import', { accounts }, idempotencyConfig());
+export const importSharedAccounts = (accounts, oauthOnly = false) => api.post(
+  '/api/dist/shared-subscriptions/accounts/import',
+  { accounts, oauth_only: oauthOnly },
+  { ...idempotencyConfig(), timeout: oauthOnly ? 0 : undefined },
+);
 export const updateSharedAccountStatus = (id, enabled) => api.patch(`/api/dist/shared-subscriptions/accounts/${id}/status`, { enabled });
 export const deleteSharedAccount = (id) => api.delete(`/api/dist/shared-subscriptions/accounts/${id}`);
 export const getSharedEarnings = (params = {}) => api.get('/api/dist/shared-subscriptions/earnings', { params });

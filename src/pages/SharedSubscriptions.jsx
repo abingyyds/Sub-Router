@@ -1,15 +1,16 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   CircleDollarSign,
   Database,
   ExternalLink,
+  FileUp,
   KeyRound,
   Loader2,
-  Plus,
   Power,
   RefreshCw,
   ShieldCheck,
   Trash2,
+  Upload,
   Wallet,
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -34,6 +35,7 @@ import {
   updateSharedAccountStatus,
 } from "../api";
 import { useCurrency } from "../context/SiteContext";
+import { parseSharedAccountBackup } from "../utils/sharedAccountBatchImport";
 
 const dataOf = (response) => response?.data?.data || {};
 
@@ -61,26 +63,6 @@ const initialOAuthForm = {
   proxy_password: "",
 };
 
-const advancedAccountExample = JSON.stringify(
-  [
-    {
-      name: "",
-      platform: "gemini",
-      type: "service_account",
-      credentials: { service_account_json: "" },
-      concurrency: 1,
-      priority: 0,
-      proxy: {
-        protocol: "socks5",
-        host: "8.8.8.8",
-        port: 1080,
-      },
-    },
-  ],
-  null,
-  2,
-);
-
 const openAuthorizationWindow = (url) => {
   if (!url) return;
   const popup = window.open(url, "_blank", "noopener,noreferrer");
@@ -104,7 +86,11 @@ export default function SharedSubscriptions() {
   const [payouts, setPayouts] = useState([]);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [accountJson, setAccountJson] = useState(advancedAccountExample);
+  const accountFileInputRef = useRef(null);
+  const [accountBackupFileName, setAccountBackupFileName] = useState("");
+  const [accountBackup, setAccountBackup] = useState(null);
+  const [accountImporting, setAccountImporting] = useState(false);
+  const [accountImportResult, setAccountImportResult] = useState(null);
   const [paymentForm, setPaymentForm] = useState({
     method: "alipay",
     details: "",
@@ -173,22 +159,69 @@ export default function SharedSubscriptions() {
     if (response.data.success) await load();
   };
 
-  const importAccounts = async () => {
-    let accounts;
+  const clearAccountBackup = () => {
+    setAccountBackupFileName("");
+    setAccountBackup(null);
+    setAccountImportResult(null);
+    if (accountFileInputRef.current) accountFileInputRef.current.value = "";
+  };
+
+  const selectAccountBackup = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setAccountBackupFileName(file.name);
+    setAccountBackup(null);
+    setAccountImportResult(null);
     try {
-      accounts = JSON.parse(accountJson);
-    } catch {
-      toast.error("账号数据不是有效 JSON");
+      if (!file.name.toLowerCase().endsWith(".json")) {
+        throw new Error("请选择 JSON (.json) 文件");
+      }
+      const parsed = parseSharedAccountBackup(await file.text());
+      setAccountBackup(parsed);
+      if (!parsed.oauthAccounts.length) {
+        toast.error("文件中没有可导入的 OAuth 账号");
+      }
+    } catch (error) {
+      toast.error(error.message || "账号备份文件解析失败");
+    }
+  };
+
+  const importAccounts = async () => {
+    if (!accountBackup?.oauthAccounts?.length) {
+      toast.error("请先选择包含 OAuth 账号的 JSON 备份文件");
       return;
     }
-    if (!Array.isArray(accounts) || accounts.length === 0) {
-      toast.error("请至少填写一个账号");
-      return;
-    }
-    const response = await importSharedAccounts(accounts);
-    if (response.data.success) {
-      toast.success("共享账号已导入");
-      await load();
+    setAccountImporting(true);
+    setAccountImportResult(null);
+    try {
+      const response = await importSharedAccounts(
+        accountBackup.oauthAccounts,
+        true,
+      );
+      if (!response.data.success) {
+        throw new Error(response.data.message || "批量导入失败");
+      }
+      const data = dataOf(response);
+      const result = {
+        succeeded: Number(data.succeeded || 0),
+        skipped: Number(data.skipped || 0) + Number(accountBackup.skipped || 0),
+        failed: Number(data.failed || 0),
+        items: Array.isArray(data.items) ? data.items : [],
+      };
+      setAccountImportResult(result);
+      if (result.succeeded > 0) await load();
+      const message = `成功 ${result.succeeded} 个，跳过 ${result.skipped} 个，失败 ${result.failed} 个`;
+      if (result.failed > 0 || result.succeeded === 0) {
+        toast.error(message);
+      } else {
+        toast.success(message);
+      }
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || error.message || "批量导入失败",
+      );
+    } finally {
+      setAccountImporting(false);
     }
   };
 
@@ -817,28 +850,110 @@ export default function SharedSubscriptions() {
               )}
             </section>
 
-            <details className="rounded-lg border border-page-divider bg-page-surface p-5">
-              <summary className="cursor-pointer text-sm font-medium text-page">
-                高级 JSON 导入
-              </summary>
+            <section className="rounded-lg border border-page-divider bg-page-surface p-5">
+              <div className="flex items-center gap-2">
+                <FileUp size={18} className="text-page-link" />
+                <h2 className="font-semibold text-page">批量导入托管账号</h2>
+              </div>
               <p className="mt-3 text-xs leading-5 text-page-muted">
-                用于服务账号或 Bedrock。OAuth 账号请使用安全授权入口。
+                上传账号管理页面导出的 JSON 文件，一次最多导入 200 个 OAuth
+                账号。代理配置、API Key 和其他认证类型会被跳过。
               </p>
-              <textarea
-                value={accountJson}
-                onChange={(event) => setAccountJson(event.target.value)}
-                className="input mt-3 min-h-64 resize-y font-mono text-xs"
-                spellCheck={false}
-              />
-              <button
-                type="button"
-                className="btn-secondary mt-3 w-full"
-                onClick={importAccounts}
-              >
-                <Plus size={16} className="mr-2" />
-                导入账号
-              </button>
-            </details>
+              <div className="mt-4 flex items-center gap-3 rounded-lg border border-dashed border-page-divider bg-page-inset px-3 py-3">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-page">
+                    {accountBackupFileName || "请选择 JSON 文件"}
+                  </p>
+                  <p className="mt-0.5 text-xs text-page-muted">JSON (.json)</p>
+                </div>
+                <button
+                  type="button"
+                  className="btn-secondary shrink-0"
+                  onClick={() => accountFileInputRef.current?.click()}
+                  disabled={accountImporting}
+                >
+                  选择文件
+                </button>
+                <input
+                  ref={accountFileInputRef}
+                  type="file"
+                  accept="application/json,.json"
+                  className="hidden"
+                  onChange={selectAccountBackup}
+                />
+              </div>
+              {accountBackup && (
+                <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                  <div className="rounded border border-page-divider px-2 py-2 text-page-muted">
+                    文件账号
+                    <strong className="mt-1 block text-sm text-page">
+                      {accountBackup.total}
+                    </strong>
+                  </div>
+                  <div className="rounded border border-page-divider px-2 py-2 text-page-muted">
+                    可导入
+                    <strong className="mt-1 block text-sm text-page-success">
+                      {accountBackup.oauthAccounts.length}
+                    </strong>
+                  </div>
+                  <div className="rounded border border-page-divider px-2 py-2 text-page-muted">
+                    跳过
+                    <strong className="mt-1 block text-sm text-page-warning">
+                      {accountBackup.skipped}
+                    </strong>
+                  </div>
+                </div>
+              )}
+              {accountImportResult && (
+                <div className="mt-3 text-xs leading-5 text-page-muted">
+                  <p>
+                    成功 {accountImportResult.succeeded} 个，跳过{" "}
+                    {accountImportResult.skipped} 个，失败{" "}
+                    {accountImportResult.failed} 个。
+                  </p>
+                  {accountImportResult.items.some(
+                    (item) => item.status === "failed",
+                  ) && (
+                    <div className="mt-2 max-h-24 overflow-y-auto text-page-danger">
+                      {accountImportResult.items
+                        .filter((item) => item.status === "failed")
+                        .slice(0, 5)
+                        .map((item) => (
+                          <div key={item.index}>
+                            第 {Number(item.index) + 1} 项：
+                            {item.message || "导入失败"}
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              )}
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  className="btn-secondary w-full"
+                  onClick={clearAccountBackup}
+                  disabled={accountImporting || !accountBackupFileName}
+                >
+                  取消
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary w-full"
+                  onClick={importAccounts}
+                  disabled={
+                    accountImporting || !accountBackup?.oauthAccounts?.length
+                  }
+                >
+                  {accountImporting ? (
+                    <Loader2 size={16} className="mr-2 animate-spin" />
+                  ) : (
+                    <Upload size={16} className="mr-2" />
+                  )}
+                  开始导入
+                </button>
+              </div>
+            </section>
           </div>
         </div>
       )}
