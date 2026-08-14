@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useSite } from '../context/SiteContext';
 import { bindUserEmail, createInvoice, getInvoiceHistory, getInvoiceInfo, sendEmailBindingVerification, updateAnnouncementEmailPreference, updateUserPassword } from '../api';
+import TwoFactorSettings from '../components/TwoFactorSettings';
 
 const initialForm = {
   original_password: '',
@@ -304,6 +305,8 @@ export default function Account() {
           </form>
         </section>
       </div>
+
+      <TwoFactorSettings />
 
       <section className="glass rounded-2xl p-6 mt-6">
         <div className="mb-5 flex items-center gap-2">

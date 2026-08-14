@@ -37,7 +37,7 @@ export default function Packages() {
   const { t } = useTranslation();
   const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
-  const { symbol, rate, fmtCNY } = useCurrency();
+  const { symbol, rate, fmtCNY, usdRate } = useCurrency();
   const [packages, setPackages] = useState([]);
   const [models, setModels] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -357,9 +357,13 @@ export default function Packages() {
 
       {/* Confirmation Modal */}
       {confirmPkg && (() => {
-        const userBalance = (user?.quota || 0) / Q * rate;
+        const userQuota = Number(user?.quota || 0);
+        const userBalance = userQuota / Q * rate;
         const pkgPrice = Number(confirmPkg.price);
-        const insufficient = userBalance < pkgPrice;
+        // Package prices are stored in CNY, while user quota is stored in USD units.
+        // Compare quota integers so changing the display currency cannot affect eligibility.
+        const pkgQuotaCost = Math.trunc((pkgPrice / usdRate) * Q);
+        const insufficient = userQuota < pkgQuotaCost;
         const resetPeriod = confirmPkg.quota_reset_period || 'never';
         const isSubscription = resetPeriod !== 'never';
         return (

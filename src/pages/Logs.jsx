@@ -285,6 +285,24 @@ export default function Logs() {
     if (billingSourceLabel) {
       data.push({ key: t('实际扣费来源'), value: billingSourceLabel });
     }
+    if (other.billing_settlement_failed) {
+      data.push({
+        key: t('logs.billingFailure'),
+        value: [other.billing_settlement_stage, other.billing_settlement_reason].filter(Boolean).join('：') || t('logs.billingFailureFallback'),
+      });
+    }
+    if (other.wallet_refund_queued) {
+      data.push({
+        key: t('logs.walletRefundRecovery'),
+        value: `${other.wallet_refund_reason || t('logs.walletRefundQueued')} · ${formatQuotaAmount(symbol, rate, other.wallet_refund_quota, false)}`,
+      });
+    }
+    if (other.platform_advanced) {
+      data.push({
+        key: t('logs.platformAdvance'),
+        value: `${formatQuotaAmount(symbol, rate, other.platform_advance_quota, false)} · ${other.platform_advance_status || t('logs.platformAdvanceOutstanding')}`,
+      });
+    }
 
     if (log.content) {
       data.push({ key: t('logs.content'), value: log.content });

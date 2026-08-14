@@ -167,6 +167,14 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+const idempotencyConfig = () => ({
+	headers: {
+		'Idempotency-Key': typeof crypto !== 'undefined' && crypto.randomUUID
+			? crypto.randomUUID()
+			: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+	},
+});
+
 // Public bootstrap data is shared by the home page and public detail pages.
 // Keep one in-flight request and a very short cache to avoid duplicate work
 // during React StrictMode mounts and rapid route changes.
@@ -293,6 +301,22 @@ export const getSiteOfficialChannelAvailability = (channelId, modelId, period = 
               },
             ]
           : [],
+        keys: modelId
+          ? [
+              {
+                key_index: 1,
+                provider_key_index: 1,
+                provider_index: 1,
+                availability: 100,
+                price_discount: 0.32,
+                fixed_price: 0.0448,
+                price_currency: 'USD',
+                probe_total: 10,
+                probe_successes: 10,
+                buckets: [],
+              },
+            ]
+          : [],
         buckets: Array.from({ length: period === '7d' ? 14 : 24 }, (_, index) => ({
           bucket_time: index,
           total: 10,
@@ -343,6 +367,13 @@ export const bindUserEmail = (email, verificationCode) =>
     email,
     verification_code: verificationCode,
   });
+export const getDist2FAStatus = (config = {}) => api.get('/api/dist/user/2fa/status', config);
+export const setupDist2FA = (config = {}) => api.post('/api/dist/user/2fa/setup', undefined, config);
+export const enableDist2FA = (code, config = {}) => api.post('/api/dist/user/2fa/enable', { code }, config);
+export const disableDist2FA = (code, config = {}) => api.post('/api/dist/user/2fa/disable', { code }, config);
+export const regenerateDist2FABackupCodes = (code, config = {}) => api.post('/api/dist/user/2fa/backup_codes', { code }, config);
+export const verifyDist2FA = (code, config = {}) => api.post('/api/dist/verify', { method: '2fa', code }, config);
+export const getDistVerificationStatus = (config = {}) => api.get('/api/dist/verify/status', config);
 export const getUserUsage = () => api.get('/api/dist/user/usage');
 export const getUserLogs = (params) => api.get('/api/dist/user/logs', { params });
 export const exportUserLogs = (params) =>
@@ -370,6 +401,55 @@ export const createToken = (data) => api.post('/api/dist/token/create', data);
 export const updateToken = (id, data) => api.put(`/api/dist/token/${id}`, data);
 export const deleteToken = (id) => api.delete(`/api/dist/token/${id}`);
 
+// ===== Full marketplace =====
+export const getMarketplaceModels = (params = {}) => api.get('/api/dist/marketplace/models', { params });
+export const getMarketplaceRankings = (params = {}) => api.get('/api/dist/marketplace/rankings', { params });
+export const getMarketplaceProviders = (params = {}) => api.get('/api/dist/marketplace/providers', { params });
+export const getMarketplaceProvider = (slug) => api.get(`/api/dist/marketplace/providers/${encodeURIComponent(slug)}`);
+export const getMarketplaceProviderAnnouncements = (slug) =>
+  api.get(`/api/dist/marketplace/providers/${encodeURIComponent(slug)}/announcements`);
+export const getMarketplaceProviderProbes = (slug, period = '24h') =>
+  api.get(`/api/dist/marketplace/providers/${encodeURIComponent(slug)}/probes`, { params: { period } });
+export const getMarketplaceReviews = (params = {}) => api.get('/api/dist/marketplace/reviews', { params });
+export const getMarketplaceSelfReview = (params = {}) => api.get('/api/dist/marketplace/reviews/self', { params });
+export const createMarketplaceReview = (data) => api.post('/api/dist/marketplace/reviews', data);
+export const updateMarketplaceReview = (id, data) => api.put(`/api/dist/marketplace/reviews/${id}`, data);
+export const deleteMarketplaceReview = (id) => api.delete(`/api/dist/marketplace/reviews/${id}`);
+export const getMarketplaceSubscriptionStatus = (providerIds) =>
+  api.get('/api/dist/marketplace/subscription-status', { params: { provider_ids: providerIds.join(',') } });
+export const subscribeMarketplaceProvider = (providerId) => api.post('/api/dist/marketplace/subscribe', { provider_id: providerId });
+export const unsubscribeMarketplaceProvider = (providerId) => api.delete(`/api/dist/marketplace/subscribe/${providerId}`);
+export const getMarketplaceQuickStart = () => api.get('/api/dist/marketplace/quick-start');
+export const saveMarketplaceQuickStart = (data) => api.post('/api/dist/marketplace/quick-start', data);
+
+// ===== Shared subscriptions =====
+export const getSharedPlans = () => api.get('/api/dist/shared-subscriptions/plans');
+export const subscribeSharedPlan = (id) => api.post(`/api/dist/shared-subscriptions/plans/${id}/subscribe`);
+export const unsubscribeSharedPlan = (id) => api.delete(`/api/dist/shared-subscriptions/plans/${id}/subscribe`);
+export const getSharedSupplies = () => api.get('/api/dist/shared-subscriptions/supplies');
+export const importSharedAccounts = (accounts) => api.post('/api/dist/shared-subscriptions/accounts/import', { accounts }, idempotencyConfig());
+export const updateSharedAccountStatus = (id, enabled) => api.patch(`/api/dist/shared-subscriptions/accounts/${id}/status`, { enabled });
+export const deleteSharedAccount = (id) => api.delete(`/api/dist/shared-subscriptions/accounts/${id}`);
+export const getSharedEarnings = (params = {}) => api.get('/api/dist/shared-subscriptions/earnings', { params });
+export const transferSharedEarnings = (data) => api.post('/api/dist/shared-subscriptions/earnings/transfer', data, idempotencyConfig());
+export const getSharedPaymentProfile = () => api.get('/api/dist/shared-subscriptions/payment-profile');
+export const saveSharedPaymentProfile = (data) => api.put('/api/dist/shared-subscriptions/payment-profile', data);
+export const getSharedPayouts = () => api.get('/api/dist/shared-subscriptions/payouts');
+export const createSharedPayout = (data) => api.post('/api/dist/shared-subscriptions/payouts', data, idempotencyConfig());
+export const cancelSharedPayout = (id) => api.post(`/api/dist/shared-subscriptions/payouts/${id}/cancel`);
+export const getSharedOAuthCapabilities = (platform) =>
+  api.get('/api/dist/shared-subscriptions/oauth/capabilities', {
+    params: { platform },
+    skipErrorHandler: true,
+  });
+export const startSharedOAuth = (data) => api.post('/api/dist/shared-subscriptions/oauth/start', data);
+export const completeSharedOAuth = (data) => api.post('/api/dist/shared-subscriptions/oauth/complete', data);
+
+// ===== Provider application =====
+export const getProviderApplication = () => api.get('/api/dist/provider/application');
+export const sendProviderApplicationVerification = () => api.post('/api/dist/provider/application/email-verification');
+export const submitProviderApplication = (data) => api.post('/api/dist/provider/application', data);
+
 // ===== Purchase =====
 export const redeemCode = (key) => api.post('/api/dist/topup/redeem', { key }); // backend field is "key"
 export const subscribePackage = (packageId) => api.post('/api/dist/package/subscribe', { package_id: packageId });
@@ -395,7 +475,7 @@ export const getAffCode = () => api.get('/api/dist/aff');
 export const transferAffQuota = (data) => api.post('/api/dist/aff_transfer', data);
 export const getAffEarnings = (params) => api.get('/api/dist/aff_earnings', { params });
 export const getAffPayouts = (params) => api.get('/api/dist/aff_payouts', { params });
-export const requestAffWithdraw = (data) => api.post('/api/dist/aff_withdraw', data);
+export const requestAffWithdraw = (data, config = {}) => api.post('/api/dist/aff_withdraw', data, config);
 export const submitDistKolApply = (data) => api.post('/api/dist/kol_apply', data);
 export const getDistKolStatus = () => api.get('/api/dist/kol_status');
 export const createSubDistributorOrder = (data) => api.post('/api/dist/site/sub-distributor/pay', data);

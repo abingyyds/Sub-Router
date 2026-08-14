@@ -20,6 +20,10 @@ const Tasks = lazy(() => import('./pages/Tasks'));
 const SubDistributor = lazy(() => import('./pages/SubDistributor'));
 const Account = lazy(() => import('./pages/Account'));
 const LegalDocument = lazy(() => import('./pages/LegalDocument'));
+const Marketplace = lazy(() => import('./pages/Marketplace'));
+const MarketplaceProvider = lazy(() => import('./pages/MarketplaceProvider'));
+const SharedSubscriptions = lazy(() => import('./pages/SharedSubscriptions'));
+const ProviderApplication = lazy(() => import('./pages/ProviderApplication'));
 
 const Loading = () => (
   <div className="flex items-center justify-center min-h-screen" style={{ background: 'var(--page-bg)' }}>
@@ -54,6 +58,16 @@ function OfficialChannelsRoute() {
   return <OfficialChannels />;
 }
 
+function FullModeRoute({ children, requireApplication = false }) {
+	const { site, loading } = useSite();
+	if (loading) return <Loading />;
+	const fullMode = site?.full_mode === true || site?.display_mode === 'full';
+	if (!fullMode || (requireApplication && !site?.allow_provider_registration)) {
+		return <Navigate to='/' replace />;
+	}
+	return children;
+}
+
 function ThemedRoutes() {
   const { Home, Layout } = useTheme();
 
@@ -63,7 +77,9 @@ function ThemedRoutes() {
         {/* Public pages with themed layout */}
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
-          <Route path="/pricing" element={<Pricing />} />
+		  <Route path="/pricing" element={<Pricing />} />
+		  <Route path="/marketplace" element={<FullModeRoute><Marketplace /></FullModeRoute>} />
+		  <Route path="/marketplace/providers/:slug" element={<FullModeRoute><MarketplaceProvider /></FullModeRoute>} />
           <Route path="/official-channels" element={<OfficialChannelsRoute />} />
           <Route path="/official-channels/:channelId" element={<OfficialChannelsRoute />} />
           <Route path="/packages" element={<Packages />} />
@@ -78,7 +94,9 @@ function ThemedRoutes() {
           {/* Protected pages */}
           <Route element={<AuthGuard />}>
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/tokens" element={<Tokens />} />
+			<Route path="/tokens" element={<Tokens />} />
+			<Route path="/shared-subscriptions" element={<FullModeRoute><SharedSubscriptions /></FullModeRoute>} />
+			<Route path="/provider-application" element={<FullModeRoute requireApplication><ProviderApplication /></FullModeRoute>} />
             <Route path="/logs" element={<Logs />} />
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/topup" element={<Topup />} />

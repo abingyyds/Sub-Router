@@ -1,11 +1,15 @@
 export function getSiteNavItems({ t, site }) {
-  const showAppMarket = site?.show_app_market !== false;
+	const showAppMarket = site?.show_app_market !== false;
+	const fullMode = site?.full_mode === true || site?.display_mode === 'full';
   const showOfficialChannels =
     site?.show_official_channels !== false && site?.has_official_channels;
 
   return [
     { to: '/', label: t('nav.home'), auth: false },
-    { to: '/pricing', label: t('nav.pricing'), auth: false },
+	  { to: '/pricing', label: t('nav.pricing'), auth: false },
+	  ...(fullMode
+		? [{ to: '/marketplace', label: t('nav.marketplace'), auth: false }]
+		: []),
     ...(showOfficialChannels
       ? [{ to: '/official-channels', label: t('nav.officialChannels'), auth: false }]
       : []),
@@ -17,7 +21,13 @@ export function getSiteNavItems({ t, site }) {
       ? [{ to: '/sub-site', label: t('subDist.nav'), auth: false }]
       : []),
     { to: '/dashboard', label: t('nav.dashboard'), auth: true },
-    { to: '/tokens', label: t('nav.apiKeys'), auth: true },
+	  { to: '/tokens', label: t('nav.apiKeys'), auth: true },
+	  ...(fullMode
+		? [{ to: '/shared-subscriptions', label: t('nav.sharedSubscriptions'), auth: true }]
+		: []),
+	  ...(fullMode && site?.allow_provider_registration
+		? [{ to: '/provider-application', label: t('nav.providerApplication'), auth: true }]
+		: []),
     { to: '/logs', label: t('nav.logs'), auth: true },
     ...(site?.enable_topup
       ? [{ to: '/topup', label: t('nav.topup'), auth: true }]

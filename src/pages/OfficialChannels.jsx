@@ -367,6 +367,8 @@ function OfficialChannelDetail({
   const [channelAvailabilityLoading, setChannelAvailabilityLoading] = useState(true);
   const [modelAvailability, setModelAvailability] = useState(null);
   const [modelAvailabilityLoading, setModelAvailabilityLoading] = useState(false);
+  const [modelSupplyView, setModelSupplyView] = useState('keys');
+  const [modelAvailabilityPeriod, setModelAvailabilityPeriod] = useState('24h');
 
   useEffect(() => {
     setSelectedModelId((current) => {
@@ -402,7 +404,7 @@ function OfficialChannelDetail({
     }
     let active = true;
     setModelAvailabilityLoading(true);
-    getSiteOfficialChannelAvailability(officialChannelId, selectedModel.id, '24h')
+    getSiteOfficialChannelAvailability(officialChannelId, selectedModel.id, modelAvailabilityPeriod)
       .then((res) => {
         if (active && res.data?.success) setModelAvailability(res.data.data || null);
       })
@@ -415,7 +417,7 @@ function OfficialChannelDetail({
     return () => {
       active = false;
     };
-  }, [officialChannelId, selectedModel?.id]);
+  }, [officialChannelId, modelAvailabilityPeriod, selectedModel?.id]);
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
@@ -514,7 +516,7 @@ function OfficialChannelDetail({
                   <p className="mt-2 text-sm text-page-secondary">{selectedModel.description || t('officialChannels.modelPriceHint')}</p>
                 </div>
                 <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-page-success">
-                  {formatPercent(channel.model_availability)}
+                  {formatPercent(modelAvailability?.availability ?? selectedModel.key_availability)}
                 </span>
               </div>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -528,6 +530,15 @@ function OfficialChannelDetail({
                 data={modelAvailability}
                 loading={modelAvailabilityLoading}
                 compact
+              />
+              <ModelKeySupplySection
+                data={modelAvailability}
+                loading={modelAvailabilityLoading}
+                hideProviderInfo={hideProviderInfo}
+                view={modelSupplyView}
+                onViewChange={setModelSupplyView}
+                period={modelAvailabilityPeriod}
+                onPeriodChange={setModelAvailabilityPeriod}
               />
               <div className="mt-4 rounded-xl border border-page-divider bg-page-inset px-4 py-3 text-xs text-page-secondary">
                 {t('officialChannels.priceUnitHint', { currency: selectedModel.price_currency || currencySymbol })}
@@ -591,6 +602,114 @@ function OfficialChannelDetail({
       </section>
     </div>
   );
+}
+
+function ModelKeySupplySection({ data, loading, hideProviderInfo, view, onViewChange, period, onPeriodChange }) {
+  const { t } = useTranslation();
+  const keys = Array.isArray(data?.keys) ? data.keys : [];
+  const providers = Array.isArray(data?.providers) ? data.providers : [];
+  const items = view === 'keys' ? keys : providers;
+
+  return (
+    <section className="mt-4 rounded-2xl border border-page-divider bg-page-surface p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-sm font-semibold text-page">{t('officialChannels.modelSupplyDetails')}</h3>
+          <p className="mt-1 text-xs text-page-secondary">{t('officialChannels.modelSupplyDetailsDesc')}</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <SegmentedControl
+            value={view}
+            options={[
+              ['keys', t('officialChannels.keyDetails')],
+              ['providers', t('officialChannels.providerSummary')],
+            ]}
+            onChange={onViewChange}
+          />
+          <SegmentedControl
+            value={period}
+            options={[
+              ['24h', t('officialChannels.twentyFourHours')],
+              ['7d', t('officialChannels.sevenDays')],
+            ]}
+            onChange={onPeriodChange}
+          />
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="mt-4 flex h-16 items-center justify-center text-xs text-page-secondary">{t('common.loading')}</div>
+      ) : items.length === 0 ? (
+        <div className="mt-4 rounded-xl border border-dashed border-page-divider px-3 py-6 text-center text-xs text-page-secondary">
+          {t('officialChannels.noModelSupplyDetails')}
+        </div>
+      ) : (
+        <div className="mt-4 space-y-2">
+          {items.map((item, index) => {
+            const isKey = view === 'keys';
+            const providerName = item.provider_name || t('officialChannels.providerFallback', { number: item.provider_index || index + 1 });
+            const keyNumber = hideProviderInfo ? item.key_index : item.provider_key_index || item.key_index;
+            const keyName = t('officialChannels.keyNumber', { number: keyNumber || index + 1 });
+            return (
+              <div key={`${isKey ? 'key' : 'provider'}-${item.provider_id || item.provider_index || index}-${item.provider_key_index || ''}`} className="rounded-xl border border-page-divider bg-page-inset px-3 py-3">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold text-page">
+                      {isKey ? `${hideProviderInfo ? '' : `${providerName} · `}${keyName}` : providerName}
+                    </div>
+                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-page-secondary">
+                      {isKey ? (
+                        <>
+                          <span>{formatPriceMultiplier(item.price_discount, t)}</span>
+                          <span>{formatSupplyPrice(item, t)}</span>
+                          <span>{formatCount(item.probe_successes)}/{formatCount(item.probe_total)} {t('officialChannels.requests')}</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>{formatCount(item.key_count)} Key</span>
+                          <span>{formatPriceMultiplier(item.price_discount, t)}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <span className="shrink-0 text-sm font-semibold text-page">{formatPercent(item.availability)}</span>
+                </div>
+                <AvailabilityMeter label={t('officialChannels.keyAvailability')} value={item.availability} compact />
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function SegmentedControl({ value, options, onChange }) {
+  return (
+    <div className="inline-flex w-fit rounded-lg border border-page-divider bg-page-inset p-1">
+      {options.map(([option, label]) => (
+        <button
+          key={option}
+          type="button"
+          onClick={() => onChange(option)}
+          className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${value === option ? 'bg-page-surface text-page shadow-sm' : 'text-page-secondary hover:text-page'}`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function formatSupplyPrice(item, t) {
+  const currency = item?.price_currency === 'CNY' ? '¥' : '$';
+  const fixed = Number(item?.fixed_price || 0);
+  const input = Number(item?.input_price || 0);
+  const output = Number(item?.output_price || 0);
+  const format = (value) => value > 0 ? `${currency}${value.toFixed(value < 0.01 ? 6 : 4).replace(/\.?0+$/, '')}` : '-';
+  if (fixed > 0) return `${format(fixed)}/${t('pricing.perCallUnit')}`;
+  if (input <= 0 && output <= 0) return '--';
+  return `${format(input)} / ${format(output)} / M`;
 }
 
 function ProviderSupplySection({ providers }) {
