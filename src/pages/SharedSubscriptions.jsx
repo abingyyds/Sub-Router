@@ -53,6 +53,12 @@ const initialOAuthForm = {
   name: "",
   concurrency: 1,
   priority: 0,
+  proxy_enabled: false,
+  proxy_protocol: "socks5",
+  proxy_host: "",
+  proxy_port: "",
+  proxy_username: "",
+  proxy_password: "",
 };
 
 const advancedAccountExample = JSON.stringify(
@@ -64,6 +70,11 @@ const advancedAccountExample = JSON.stringify(
       credentials: { service_account_json: "" },
       concurrency: 1,
       priority: 0,
+      proxy: {
+        protocol: "socks5",
+        host: "8.8.8.8",
+        port: 1080,
+      },
     },
   ],
   null,
@@ -227,6 +238,22 @@ export default function SharedSubscriptions() {
     }
     setOAuthCompleting(true);
     try {
+      const proxy = oauthForm.proxy_enabled
+        ? {
+            protocol: oauthForm.proxy_protocol,
+            host: oauthForm.proxy_host.trim(),
+            port: Number(oauthForm.proxy_port || 0),
+            username: oauthForm.proxy_username.trim(),
+            password: oauthForm.proxy_password,
+          }
+        : undefined;
+      if (
+        oauthForm.proxy_enabled &&
+        (!proxy.host || proxy.port <= 0 || proxy.port > 65535)
+      ) {
+        toast.error("请输入有效的公网代理 IP 和端口");
+        return;
+      }
       const response = await completeSharedOAuth({
         state: oauthSession.state,
         provider_state: oauthSession.provider_state || "",
@@ -234,6 +261,7 @@ export default function SharedSubscriptions() {
         name: oauthForm.name.trim(),
         concurrency: Math.max(1, Number(oauthForm.concurrency || 1)),
         priority: Number(oauthForm.priority || 0),
+        proxy,
       });
       if (response.data.success) {
         toast.success("共享账号授权并导入成功");
@@ -426,6 +454,11 @@ export default function SharedSubscriptions() {
                           <span className="min-w-0 flex-1 truncate text-page">
                             {account.name || `Account #${account.id}`}
                           </span>
+                          {account.proxy_bound && (
+                            <span className="shrink-0 rounded border border-page-divider px-1.5 py-0.5 text-[10px] text-page-muted">
+                              专属代理
+                            </span>
+                          )}
                           <button
                             type="button"
                             className="rounded p-1.5 text-page-link hover:bg-page-surface-hover"
@@ -600,6 +633,121 @@ export default function SharedSubscriptions() {
                       }
                     />
                   </label>
+                </div>
+                <div className="rounded-lg border border-page-divider p-3">
+                  <label className="flex items-start justify-between gap-3">
+                    <span>
+                      <span className="block text-sm font-medium text-page-label">
+                        绑定专属代理 IP
+                      </span>
+                      <span className="mt-1 block text-xs leading-5 text-page-muted">
+                        仅绑定当前账号，提交前测试连通性；只允许公网 IP。
+                      </span>
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={oauthForm.proxy_enabled}
+                      onChange={(event) =>
+                        setOAuthForm((previous) => ({
+                          ...previous,
+                          proxy_enabled: event.target.checked,
+                        }))
+                      }
+                      className="mt-1 h-4 w-4"
+                    />
+                  </label>
+                  {oauthForm.proxy_enabled && (
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      <label>
+                        <span className="mb-1.5 block text-sm font-medium text-page-label">
+                          协议
+                        </span>
+                        <select
+                          className="input"
+                          value={oauthForm.proxy_protocol}
+                          onChange={(event) =>
+                            setOAuthForm((previous) => ({
+                              ...previous,
+                              proxy_protocol: event.target.value,
+                            }))
+                          }
+                        >
+                          <option value="http">HTTP</option>
+                          <option value="https">HTTPS</option>
+                          <option value="socks5">SOCKS5</option>
+                          <option value="socks5h">SOCKS5H</option>
+                        </select>
+                      </label>
+                      <label>
+                        <span className="mb-1.5 block text-sm font-medium text-page-label">
+                          公网 IP
+                        </span>
+                        <input
+                          className="input font-mono"
+                          value={oauthForm.proxy_host}
+                          onChange={(event) =>
+                            setOAuthForm((previous) => ({
+                              ...previous,
+                              proxy_host: event.target.value,
+                            }))
+                          }
+                          placeholder="8.8.8.8"
+                        />
+                      </label>
+                      <label>
+                        <span className="mb-1.5 block text-sm font-medium text-page-label">
+                          端口
+                        </span>
+                        <input
+                          type="number"
+                          min="1"
+                          max="65535"
+                          className="input"
+                          value={oauthForm.proxy_port}
+                          onChange={(event) =>
+                            setOAuthForm((previous) => ({
+                              ...previous,
+                              proxy_port: event.target.value,
+                            }))
+                          }
+                          placeholder="1080"
+                        />
+                      </label>
+                      <label>
+                        <span className="mb-1.5 block text-sm font-medium text-page-label">
+                          用户名（可选）
+                        </span>
+                        <input
+                          className="input"
+                          value={oauthForm.proxy_username}
+                          onChange={(event) =>
+                            setOAuthForm((previous) => ({
+                              ...previous,
+                              proxy_username: event.target.value,
+                            }))
+                          }
+                          autoComplete="off"
+                        />
+                      </label>
+                      <label className="sm:col-span-2">
+                        <span className="mb-1.5 block text-sm font-medium text-page-label">
+                          密码（可选）
+                        </span>
+                        <input
+                          type="password"
+                          className="input"
+                          value={oauthForm.proxy_password}
+                          onChange={(event) =>
+                            setOAuthForm((previous) => ({
+                              ...previous,
+                              proxy_password: event.target.value,
+                            }))
+                          }
+                          autoComplete="new-password"
+                        />
+                      </label>
+                    </div>
+                  )}
                 </div>
               </div>
 
