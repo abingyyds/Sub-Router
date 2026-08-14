@@ -54,6 +54,7 @@ const emptyControlForm = () => ({
 	subrouter_providers: [],
 	subrouter_model_providers: '',
 	subrouter_model_price_limits: '',
+	include_provider_self: true,
 	include_official_channels: true,
 	official_key_max_discount: '',
 	include_shared_subscriptions: true,
@@ -129,6 +130,7 @@ const buildTokenControlPayload = (form, rate, t, includeModelLimits = true, full
 	  payload.subrouter_providers = parseModelLimits(form.subrouter_providers).join(',');
 	  payload.subrouter_model_providers = String(form.subrouter_model_providers || '').trim();
 	  payload.subrouter_model_price_limits = String(form.subrouter_model_price_limits || '').trim();
+	  payload.include_provider_self = Boolean(form.include_provider_self);
 	  payload.include_shared_subscriptions = Boolean(form.include_shared_subscriptions);
 	  payload.shared_subscription_max_discount = Number(form.shared_subscription_max_discount || 0);
 	}
@@ -147,6 +149,7 @@ const tokenToEditForm = (token, rate) => ({
 	subrouter_providers: parseModelLimits(token?.subrouter_providers),
 	subrouter_model_providers: token?.subrouter_model_providers || '',
 	subrouter_model_price_limits: token?.subrouter_model_price_limits || '',
+	include_provider_self: token?.include_provider_self !== false,
 	include_official_channels: Boolean(token?.include_official_channels),
   official_key_max_discount: token?.include_official_channels
     ? normalizeOfficialKeyMaxDiscount(token?.official_key_max_discount) || ''
@@ -236,12 +239,18 @@ export default function Tokens() {
       : editOfficialRouting
         ? Number(editForm.official_key_max_discount)
         : 0;
+    const includeProviderSelf = showCreate
+      ? Boolean(createControls.include_provider_self)
+      : editForm
+        ? Boolean(editForm.include_provider_self)
+        : true;
     const params = createOfficialRouting || editOfficialRouting
       ? {
+          include_provider_self: includeProviderSelf,
           include_official_channels: true,
           ...(maxDiscount > 0 ? { official_key_max_discount: maxDiscount } : {}),
         }
-      : {};
+      : { include_provider_self: includeProviderSelf };
     let active = true;
     const timer = window.setTimeout(() => {
       getSiteModels(params)
@@ -262,9 +271,11 @@ export default function Tokens() {
     };
   }, [
     createControls.include_official_channels,
+    createControls.include_provider_self,
     createControls.official_key_max_discount,
     createType,
     editForm?.include_official_channels,
+    editForm?.include_provider_self,
     editForm?.official_key_max_discount,
     editingToken,
     officialChannelsEnabled,
@@ -292,6 +303,7 @@ export default function Tokens() {
 		...emptyControlForm(),
 		subrouter_route_preference:
 		  site?.subrouter_route_preference || 'first_token_first,authenticity_first,stability_first,price_first',
+		include_provider_self: fullMode ? true : site?.include_provider_self !== false,
 		subrouter_providers: fullMode ? providerOptions.map((provider) => provider.slug) : [],
 	  });
     setCreateModelSearch('');
@@ -307,6 +319,7 @@ export default function Tokens() {
 		...emptyControlForm(),
 		subrouter_route_preference:
 		  site?.subrouter_route_preference || 'first_token_first,authenticity_first,stability_first,price_first',
+		include_provider_self: fullMode ? true : site?.include_provider_self !== false,
 		subrouter_providers: fullMode ? providerOptions.map((provider) => provider.slug) : [],
 	  });
     setCreateModelSearch('');
@@ -1207,6 +1220,11 @@ function TokenControlSummary({ token, currency, t }) {
 		  订阅共享
 		</span>
 	  )}
+	  {token.include_provider_self && (
+		<span className="px-2 py-0.5 rounded-full text-[11px] bg-emerald-500/10 text-emerald-600">
+		  {t('tokens.includeProviderSelfBadge')}
+		</span>
+	  )}
     </div>
   );
 }
@@ -1358,6 +1376,9 @@ function TokenControlFields({
 			  {providerOptions.map((provider) => <label key={provider.id} className="flex cursor-pointer items-center gap-2 rounded-lg border border-page-divider px-3 py-2 text-sm text-page"><input type="checkbox" checked={selectedProviders.includes(provider.slug)} onChange={() => toggleProvider(provider.slug)} /> <span className="truncate">{provider.company_name}</span></label>)}
 			</div>
 			{firstToken && <label className="mt-3 flex items-center gap-2 text-sm text-page"><input type="checkbox" checked={Boolean(form.auto_subscribe_new)} onChange={(event) => onChange('auto_subscribe_new', event.target.checked)} />以后自动订阅本站新准入商家</label>}
+		  </div>
+		  <div className="rounded-xl border border-page-divider bg-page-surface p-4">
+			<label className="flex items-center justify-between gap-4"><span><span className="block text-sm font-medium text-page">{t('tokens.includeProviderSelf')}</span><span className="mt-1 block text-xs text-page-secondary">{t('tokens.includeProviderSelfDesc')}</span></span><input type="checkbox" checked={Boolean(form.include_provider_self)} onChange={(event) => onChange('include_provider_self', event.target.checked)} /></label>
 		  </div>
 		  <div className="rounded-xl border border-page-divider bg-page-surface p-4 space-y-3">
 			<label className="flex items-center justify-between gap-4"><span><span className="block text-sm font-medium text-page">启用订阅共享线路</span><span className="mt-1 block text-xs text-page-secondary">仅使用已订阅的共享计划。</span></span><input type="checkbox" checked={Boolean(form.include_shared_subscriptions)} onChange={(event) => onChange('include_shared_subscriptions', event.target.checked)} /></label>
