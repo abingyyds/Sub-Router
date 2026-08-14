@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import {
   Clock3,
   CircleDollarSign,
+  ClipboardPaste,
   Copy,
   Database,
   ExternalLink,
@@ -46,6 +47,7 @@ import {
 } from "../api";
 import { useCurrency, useSite } from "../context/SiteContext";
 import { parseSharedAccountBackup } from "../utils/sharedAccountBatchImport";
+import { parseSharedProxyInput } from "../utils/sharedProxy";
 
 const dataOf = (response) => response?.data?.data || {};
 
@@ -1039,9 +1041,40 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
       password: proxyPassword,
     };
     if (!proxy.host || proxy.port <= 0 || proxy.port > 65535) {
-      throw new Error("请输入有效的公网代理 IP 和端口");
+      throw new Error("请输入有效的公网代理主机和端口");
     }
     return proxy;
+  };
+
+  const applyProxyString = (value) => {
+    const parsed = parseSharedProxyInput(value, proxyProtocol);
+    if (!parsed) {
+      toast.error("无法识别代理格式，请检查主机、端口和认证信息");
+      return false;
+    }
+    setProxyProtocol(parsed.protocol);
+    setProxyHost(parsed.host);
+    setProxyPort(parsed.port);
+    setProxyUsername(parsed.username);
+    setProxyPassword(parsed.password);
+    toast.success("已自动识别代理信息");
+    return true;
+  };
+
+  const pasteProxyString = async () => {
+    try {
+      const value = await navigator.clipboard.readText();
+      applyProxyString(value);
+    } catch {
+      toast.error("无法读取剪贴板，请直接粘贴到主机输入框");
+    }
+  };
+
+  const handleProxyFieldPaste = (event) => {
+    const value = event.clipboardData?.getData("text") || "";
+    if (!parseSharedProxyInput(value, proxyProtocol)) return;
+    event.preventDefault();
+    applyProxyString(value);
   };
 
   const startOAuth = async () => {
@@ -1228,11 +1261,11 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
           <label className="flex items-start justify-between gap-4">
             <span>
               <span className="block text-sm font-medium text-page-label">
-                绑定专属代理 IP
+                绑定专属代理
               </span>
               <span className="mt-1 block text-xs leading-5 text-page-muted">
-                可选。代理仅绑定当前托管账号，提交前会测试连通性；仅支持公网
-                IP。
+                可选。代理仅绑定当前托管账号，提交前会测试连通性；支持公网 IP
+                或域名。
               </span>
             </span>
             <input
@@ -1244,6 +1277,19 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
           </label>
           {proxyEnabled && (
             <div className="mt-4 grid gap-4 sm:grid-cols-3">
+              <div className="flex flex-wrap items-center gap-3 sm:col-span-3">
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={pasteProxyString}
+                >
+                  <ClipboardPaste size={14} className="mr-2" />
+                  粘贴并自动识别
+                </button>
+                <span className="text-xs text-page-muted">
+                  支持 URL、主机:端口:用户名:密码等常见格式
+                </span>
+              </div>
               <label className="text-sm font-medium text-page-label">
                 协议
                 <select
@@ -1258,12 +1304,13 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
                 </select>
               </label>
               <label className="text-sm font-medium text-page-label sm:col-span-2">
-                公网 IP
+                公网 IP / 域名
                 <input
                   className="input mt-2 font-mono"
                   value={proxyHost}
                   onChange={(event) => setProxyHost(event.target.value)}
-                  placeholder="8.8.8.8"
+                  onPaste={handleProxyFieldPaste}
+                  placeholder="48.45.22.14 或 proxy.example.com"
                 />
               </label>
               <label className="text-sm font-medium text-page-label">
