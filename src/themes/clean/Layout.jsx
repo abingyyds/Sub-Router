@@ -41,21 +41,23 @@ export default function CleanLayout() {
 
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3 group">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <Link to="/" className="flex min-w-0 items-center gap-3 group">
             {site?.logo ? (
-              <img src={site.logo} alt={siteName} className="h-8 w-auto" />
+              <img src={site.logo} alt={siteName} className="h-8 w-auto max-w-[110px] object-contain sm:max-w-[150px]" />
             ) : (
               <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">
                 {siteName.charAt(0)}
               </div>
             )}
-            <span className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-              {siteName}
-            </span>
+            {!site?.logo && (
+              <span className="truncate text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                {siteName}
+              </span>
+            )}
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-1">
+          <nav className="hidden xl:flex items-center gap-1">
             {headerNavItems.map((n) => (
               <Link
                 key={n.to}
@@ -71,7 +73,7 @@ export default function CleanLayout() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <LanguageSwitch className="text-gray-400 hover:text-gray-700 hover:bg-gray-50" />
 
             {user ? (
@@ -96,7 +98,7 @@ export default function CleanLayout() {
             )}
 
             <button
-              className="lg:hidden p-2 rounded-lg hover:bg-gray-50 transition-colors"
+              className="xl:hidden p-2 rounded-lg hover:bg-gray-50 transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label={t('common.toggleMenu')}
             >
@@ -112,8 +114,8 @@ export default function CleanLayout() {
         </div>
 
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-gray-100 bg-white">
-            <nav className="max-w-6xl mx-auto px-6 py-3 flex flex-col gap-1">
+          <div className="xl:hidden border-t border-gray-100 bg-white">
+            <nav className="max-w-7xl mx-auto px-6 py-3 flex flex-col gap-1">
               {mobileNavItems.map((n) => (
                 <Link
                   key={n.to}

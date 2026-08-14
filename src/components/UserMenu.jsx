@@ -1,6 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, ClipboardList, KeyRound, LogOut, UserCircle } from 'lucide-react';
+import {
+  BriefcaseBusiness,
+  ChevronDown,
+  ClipboardList,
+  KeyRound,
+  LayoutDashboard,
+  LogOut,
+  UserCircle,
+  WalletCards,
+} from 'lucide-react';
 
 function getUserInitial(user) {
   const name = user?.display_name || user?.username || user?.email || 'U';
@@ -8,8 +17,11 @@ function getUserInitial(user) {
 }
 
 function getMenuIcon(to) {
+  if (to === '/dashboard') return LayoutDashboard;
   if (to === '/tokens') return KeyRound;
   if (to === '/logs') return ClipboardList;
+  if (to === '/topup') return WalletCards;
+  if (to === '/provider-application') return BriefcaseBusiness;
   return UserCircle;
 }
 
@@ -70,7 +82,7 @@ export default function UserMenu({
           {getUserInitial(user)}
         </span>
         {showName && userName && (
-          <span className="hidden max-w-[120px] truncate lg:inline xl:max-w-[160px]">
+          <span className="hidden max-w-[160px] truncate min-[1600px]:inline">
             {userName}
           </span>
         )}
@@ -80,7 +92,7 @@ export default function UserMenu({
       {open && (
         <div
           role="menu"
-          className={`absolute right-0 top-full z-50 mt-2 min-w-[190px] overflow-hidden rounded-xl border p-1.5 shadow-xl backdrop-blur-xl ${menuClassName}`}
+          className={`absolute right-0 top-full z-50 mt-2 min-w-[210px] overflow-hidden rounded-xl border p-1.5 shadow-xl backdrop-blur-xl ${menuClassName}`}
         >
           {items.map((item) => (
             <UserMenuLink
@@ -90,6 +102,7 @@ export default function UserMenu({
               onSelect={() => setOpen(false)}
             />
           ))}
+          <div className="my-1 border-t border-current/10" />
           <button
             type="button"
             role="menuitem"

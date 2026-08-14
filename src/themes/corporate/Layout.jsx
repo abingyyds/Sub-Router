@@ -42,20 +42,22 @@ export default function CorporateLayout() {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3 group">
+          <Link to="/" className="flex min-w-0 items-center gap-3 group">
             {site?.logo ? (
-              <img src={site.logo} alt={siteName} className="h-8 w-auto" />
+              <img src={site.logo} alt={siteName} className="h-8 w-auto max-w-[110px] object-contain sm:max-w-[150px]" />
             ) : (
               <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-white font-bold text-sm">
                 {siteName.charAt(0)}
               </div>
             )}
-            <span className="text-lg font-bold text-slate-900 tracking-tight">
-              {siteName}
-            </span>
+            {!site?.logo && (
+              <span className="truncate text-lg font-bold text-slate-900 tracking-tight">
+                {siteName}
+              </span>
+            )}
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-0.5">
+          <nav className="hidden xl:flex items-center gap-0.5">
             {headerNavItems.map((n) => (
               <Link
                 key={n.to}
@@ -71,7 +73,7 @@ export default function CorporateLayout() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-3">
             <LanguageSwitch className="text-slate-400 hover:text-slate-700 hover:bg-slate-50" />
 
             {user ? (
@@ -96,7 +98,7 @@ export default function CorporateLayout() {
             )}
 
             <button
-              className="lg:hidden p-2 rounded-lg hover:bg-slate-50 transition-colors"
+              className="xl:hidden p-2 rounded-lg hover:bg-slate-50 transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label={t('common.toggleMenu')}
             >
@@ -112,7 +114,7 @@ export default function CorporateLayout() {
         </div>
 
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-gray-200 bg-white">
+          <div className="xl:hidden border-t border-gray-200 bg-white">
             <nav className="max-w-7xl mx-auto px-6 py-3 flex flex-col">
               {mobileNavItems.map((n) => (
                 <Link

@@ -41,19 +41,16 @@ export default function MinimalLayout() {
 
       {/* Header — minimal */}
       <header className="sticky top-0 z-50 backdrop-blur-lg bg-neutral-950/80 border-b border-neutral-800/40">
-        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5 group">
+        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
+          <Link to="/" className="flex min-w-0 items-center gap-2.5 group">
             {site?.logo ? (
-              <img src={site.logo} alt={siteName} className="h-7 w-auto" />
+              <img src={site.logo} alt={siteName} className="h-7 w-auto max-w-[110px] object-contain sm:max-w-[150px]" />
             ) : (
-              <span className="text-base font-semibold text-white">{siteName}</span>
-            )}
-            {site?.logo && (
-              <span className="text-base font-semibold text-white">{siteName}</span>
+              <span className="truncate text-base font-semibold text-white">{siteName}</span>
             )}
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-5">
+          <nav className="hidden xl:flex items-center gap-3">
             {headerNavItems.map((n) => (
               <Link
                 key={n.to}
@@ -69,7 +66,7 @@ export default function MinimalLayout() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-3">
             <LanguageSwitch className="text-neutral-500 hover:text-white hover:bg-white/5" />
 
             {user ? (
@@ -92,7 +89,7 @@ export default function MinimalLayout() {
                 </Link>
               </>
             )}
-            <button className="lg:hidden p-1" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            <button className="xl:hidden p-1" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
               <svg className="w-5 h-5 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 {mobileMenuOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16M4 18h16" />}
               </svg>
@@ -101,8 +98,8 @@ export default function MinimalLayout() {
         </div>
 
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-neutral-800/40 bg-neutral-950/95">
-            <nav className="max-w-5xl mx-auto px-6 py-3 flex flex-col gap-1">
+          <div className="xl:hidden border-t border-neutral-800/40 bg-neutral-950/95">
+            <nav className="max-w-7xl mx-auto px-6 py-3 flex flex-col gap-1">
               {mobileNavItems.map((n) => (
                 <Link key={n.to} to={n.to} onClick={() => setMobileMenuOpen(false)}
                   className={`px-3 py-2 text-sm rounded transition-colors ${isNavActive(n.to) ? 'text-white' : 'text-neutral-500 hover:text-white'}`}>

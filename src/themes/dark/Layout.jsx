@@ -42,20 +42,22 @@ export default function DarkLayout() {
       {/* Header */}
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-[#030712]/80 border-b border-emerald-500/[0.08]">
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3 group">
+          <Link to="/" className="flex min-w-0 items-center gap-3 group">
             {site?.logo ? (
-              <img src={site.logo} alt={siteName} className="h-7 w-auto" />
+              <img src={site.logo} alt={siteName} className="h-7 w-auto max-w-[110px] object-contain sm:max-w-[150px]" />
             ) : (
               <div className="w-8 h-8 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold font-mono text-sm">
                 {siteName.charAt(0)}
               </div>
             )}
-            <span className="text-base font-semibold text-emerald-400 font-mono group-hover:text-emerald-300 transition-colors tracking-wide">
-              {siteName}
-            </span>
+            {!site?.logo && (
+              <span className="truncate text-base font-semibold text-emerald-400 font-mono group-hover:text-emerald-300 transition-colors tracking-wide">
+                {siteName}
+              </span>
+            )}
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-1">
+          <nav className="hidden xl:flex items-center gap-1">
             {headerNavItems.map((n) => (
               <Link
                 key={n.to}
@@ -71,7 +73,7 @@ export default function DarkLayout() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <LanguageSwitch className="text-neutral-500 hover:text-emerald-400 hover:bg-emerald-500/5 font-mono" />
 
             {user ? (
@@ -94,7 +96,7 @@ export default function DarkLayout() {
                 </Link>
               </>
             )}
-            <button className="lg:hidden p-1.5 rounded hover:bg-white/5" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            <button className="xl:hidden p-1.5 rounded hover:bg-white/5" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
               <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 {mobileMenuOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />}
               </svg>
@@ -103,7 +105,7 @@ export default function DarkLayout() {
         </div>
 
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-emerald-500/[0.08] bg-[#030712]/95 backdrop-blur-xl">
+          <div className="xl:hidden border-t border-emerald-500/[0.08] bg-[#030712]/95 backdrop-blur-xl">
             <nav className="max-w-7xl mx-auto px-6 py-3 flex flex-col gap-1">
               {mobileNavItems.map((n) => (
                 <Link key={n.to} to={n.to} onClick={() => setMobileMenuOpen(false)}

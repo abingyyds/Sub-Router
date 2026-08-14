@@ -59,7 +59,14 @@ export function getVisibleNavItems(navItems, user) {
   return navItems.filter((item) => !item.auth || user);
 }
 
-const userMenuNavItems = ["/account", "/logs", "/tokens"];
+const userMenuNavItems = [
+  "/dashboard",
+  "/tokens",
+  "/logs",
+  "/topup",
+  "/provider-application",
+  "/account",
+];
 const userMenuNavTargets = new Set(userMenuNavItems);
 
 export function getHeaderNavItems(navItems) {

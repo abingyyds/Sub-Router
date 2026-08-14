@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { ChevronDown, Languages } from 'lucide-react';
 import { DIST_SITE_LANGUAGES, normalizeAppLanguage } from '../i18n/languageUtils';
 import { updateUserLanguage } from '../api';
 import { useAuth } from '../context/AuthContext';
@@ -7,6 +8,9 @@ export default function LanguageSwitch({ className = '' }) {
   const { i18n, t } = useTranslation();
   const { user, updateUser } = useAuth();
   const currentLanguage = normalizeAppLanguage(i18n.resolvedLanguage || i18n.language);
+  const currentLanguageLabel =
+    DIST_SITE_LANGUAGES.find((language) => language.code === currentLanguage)?.label ||
+    currentLanguage;
 
   const handleLanguageChange = async (event) => {
     const language = normalizeAppLanguage(event.target.value);
@@ -23,16 +27,16 @@ export default function LanguageSwitch({ className = '' }) {
   };
 
   return (
-    <label className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs transition-colors ${className}`}>
-      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3.6 9h16.8M3.6 15h16.8" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3a15.3 15.3 0 0 1 4 9 15.3 15.3 0 0 1-4 9 15.3 15.3 0 0 1-4-9 15.3 15.3 0 0 1 4-9Z" />
-      </svg>
+    <label
+      className={`relative inline-flex h-9 items-center gap-1.5 rounded-md px-2.5 text-xs transition-colors focus-within:ring-2 focus-within:ring-current/20 ${className}`}
+    >
+      <Languages className="h-3.5 w-3.5 shrink-0" />
+      <span className="hidden whitespace-nowrap sm:inline">{currentLanguageLabel}</span>
+      <ChevronDown className="hidden h-3 w-3 shrink-0 opacity-60 sm:block" />
       <select
         value={currentLanguage}
         onChange={handleLanguageChange}
-        className="bg-transparent text-current outline-none"
+        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
         aria-label={t('common.changeLanguage')}
       >
         {DIST_SITE_LANGUAGES.map((language) => (

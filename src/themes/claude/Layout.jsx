@@ -41,21 +41,23 @@ export default function ClaudeLayout() {
 
       {/* Header */}
       <header className="sticky top-0 z-50 bg-[#FAF6F1]/85 backdrop-blur-xl border-b border-[#E8DDD0]">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3 group">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <Link to="/" className="flex min-w-0 items-center gap-3 group">
             {site?.logo ? (
-              <img src={site.logo} alt={siteName} className="h-8 w-auto" />
+              <img src={site.logo} alt={siteName} className="h-8 w-auto max-w-[110px] object-contain sm:max-w-[150px]" />
             ) : (
               <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-[#D97757] to-[#C4613F] flex items-center justify-center text-white font-bold text-sm shadow-sm">
                 {siteName.charAt(0)}
               </div>
             )}
-            <span className="text-lg font-semibold text-[#3D3024] group-hover:text-[#D97757] transition-colors">
-              {siteName}
-            </span>
+            {!site?.logo && (
+              <span className="truncate text-lg font-semibold text-[#3D3024] group-hover:text-[#D97757] transition-colors">
+                {siteName}
+              </span>
+            )}
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-1">
+          <nav className="hidden xl:flex items-center gap-1">
             {headerNavItems.map((n) => (
               <Link
                 key={n.to}
@@ -71,7 +73,7 @@ export default function ClaudeLayout() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <LanguageSwitch className="text-[#8B7D6E] hover:text-[#3D3024] hover:bg-[#E8DDD0]/50" />
 
             {user ? (
@@ -96,7 +98,7 @@ export default function ClaudeLayout() {
             )}
 
             <button
-              className="lg:hidden p-2 rounded-lg hover:bg-[#E8DDD0]/50 transition-colors"
+              className="xl:hidden p-2 rounded-lg hover:bg-[#E8DDD0]/50 transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label={t('common.toggleMenu')}
             >
@@ -112,8 +114,8 @@ export default function ClaudeLayout() {
         </div>
 
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-[#E8DDD0] bg-[#FAF6F1]">
-            <nav className="max-w-6xl mx-auto px-6 py-3 flex flex-col gap-1">
+          <div className="xl:hidden border-t border-[#E8DDD0] bg-[#FAF6F1]">
+            <nav className="max-w-7xl mx-auto px-6 py-3 flex flex-col gap-1">
               {mobileNavItems.map((n) => (
                 <Link
                   key={n.to}
