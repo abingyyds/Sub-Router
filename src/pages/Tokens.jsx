@@ -8,7 +8,9 @@ import {
   getSiteKeyGroups,
   getSiteKeyGroupPricing,
   getSiteModels,
-  getTokenSupportedModels,
+	getTokenSupportedModels,
+	getMarketplaceProviders,
+	saveMarketplaceQuickStart,
   Q,
 } from '../api';
 import ConfigExporter from '../components/ConfigExporter';
@@ -47,9 +49,16 @@ const emptyControlForm = () => ({
   expired_time: '',
   model_limits: [],
   allow_ips: '',
-  subrouter_sort_mode: 'token_price_first',
-  include_official_channels: true,
-  official_key_max_discount: '',
+	subrouter_sort_mode: 'token_price_first',
+	subrouter_route_preference: 'first_token_first,authenticity_first,stability_first,price_first',
+	subrouter_providers: [],
+	subrouter_model_providers: '',
+	subrouter_model_price_limits: '',
+	include_official_channels: true,
+	official_key_max_discount: '',
+	include_shared_subscriptions: true,
+	shared_subscription_max_discount: '',
+	auto_subscribe_new: false,
 });
 
 const padDatePart = (value) => String(value).padStart(2, '0');
@@ -93,7 +102,7 @@ const parseModelLimits = (value) => {
     .filter(Boolean);
 };
 
-const buildTokenControlPayload = (form, rate, t, includeModelLimits = true) => {
+const buildTokenControlPayload = (form, rate, t, includeModelLimits = true, fullMode = false) => {
   const expiredTime = parseDateTimeLocal(form.expired_time);
   if (expiredTime === null) {
     toast.error(t('tokens.invalidExpireTime'));
@@ -112,10 +121,18 @@ const buildTokenControlPayload = (form, rate, t, includeModelLimits = true) => {
     allow_ips: String(form.allow_ips || '').trim(),
     subrouter_sort_mode: form.subrouter_sort_mode || 'token_price_first',
   };
-  if (includeModelLimits) {
-    payload.model_limits = parseModelLimits(form.model_limits).join(',');
-  }
-  return payload;
+	if (includeModelLimits) {
+	  payload.model_limits = parseModelLimits(form.model_limits).join(',');
+	}
+	if (fullMode && includeModelLimits) {
+	  payload.subrouter_route_preference = form.subrouter_route_preference;
+	  payload.subrouter_providers = parseModelLimits(form.subrouter_providers).join(',');
+	  payload.subrouter_model_providers = String(form.subrouter_model_providers || '').trim();
+	  payload.subrouter_model_price_limits = String(form.subrouter_model_price_limits || '').trim();
+	  payload.include_shared_subscriptions = Boolean(form.include_shared_subscriptions);
+	  payload.shared_subscription_max_discount = Number(form.shared_subscription_max_discount || 0);
+	}
+	return payload;
 };
 
 const tokenToEditForm = (token, rate) => ({
@@ -125,11 +142,17 @@ const tokenToEditForm = (token, rate) => ({
   expired_time: timestampToDateTimeLocal(token?.expired_time),
   model_limits: parseModelLimits(token?.model_limits),
   allow_ips: token?.allow_ips || '',
-  subrouter_sort_mode: token?.subrouter_sort_mode || 'token_price_first',
-  include_official_channels: Boolean(token?.include_official_channels),
+	subrouter_sort_mode: token?.subrouter_sort_mode || 'token_price_first',
+	subrouter_route_preference: token?.subrouter_route_preference || 'first_token_first,authenticity_first,stability_first,price_first',
+	subrouter_providers: parseModelLimits(token?.subrouter_providers),
+	subrouter_model_providers: token?.subrouter_model_providers || '',
+	subrouter_model_price_limits: token?.subrouter_model_price_limits || '',
+	include_official_channels: Boolean(token?.include_official_channels),
   official_key_max_discount: token?.include_official_channels
     ? normalizeOfficialKeyMaxDiscount(token?.official_key_max_discount) || ''
-    : normalizeOfficialKeyMaxDiscount(token?.official_key_max_discount),
+		: normalizeOfficialKeyMaxDiscount(token?.official_key_max_discount),
+	include_shared_subscriptions: token?.include_shared_subscriptions !== false,
+	shared_subscription_max_discount: token?.shared_subscription_max_discount || '',
 });
 
 const isValidOfficialRoutingMaxDiscount = (value) => {
@@ -152,7 +175,8 @@ export default function Tokens() {
   const [savingEdit, setSavingEdit] = useState(false);
   const [expandedTokens, setExpandedTokens] = useState({});
   const [tokenModels, setTokenModels] = useState({});
-  const [modelOptions, setModelOptions] = useState([]);
+	const [modelOptions, setModelOptions] = useState([]);
+	const [providerOptions, setProviderOptions] = useState([]);
   const [createModelSearch, setCreateModelSearch] = useState('');
   const [editModelSearch, setEditModelSearch] = useState('');
 
@@ -171,7 +195,8 @@ export default function Tokens() {
   const [createOfficialKeyMaxDiscount, setCreateOfficialKeyMaxDiscount] = useState(0);
   const [createControls, setCreateControls] = useState(emptyControlForm);
   const [creating, setCreating] = useState(false);
-  const officialChannelsEnabled = site?.show_official_channels !== false && site?.has_official_channels;
+	const officialChannelsEnabled = site?.show_official_channels !== false && site?.has_official_channels;
+	const fullMode = site?.full_mode === true || site?.display_mode === 'full';
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -186,7 +211,19 @@ export default function Tokens() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+	useEffect(() => { load(); }, [load]);
+
+	useEffect(() => {
+	  if (!fullMode) {
+		setProviderOptions([]);
+		return;
+	  }
+	  getMarketplaceProviders({ page_size: 200 })
+		.then((res) => {
+		  if (res.data.success) setProviderOptions(res.data.data || []);
+		})
+		.catch(() => {});
+	}, [fullMode]);
 
   useEffect(() => {
     const createOfficialRouting = officialChannelsEnabled && showCreate && createType === 'normal'
@@ -249,19 +286,29 @@ export default function Tokens() {
     if (group.is_unavailable) return;
     setCreateType('normal');
     setSelectedGroupId(group.id);
-    setCreateName(group.name);
-    setCreateOfficialKeyMaxDiscount(0);
-    setCreateControls(emptyControlForm());
+	  setCreateName(group.name);
+	  setCreateOfficialKeyMaxDiscount(0);
+	  setCreateControls({
+		...emptyControlForm(),
+		subrouter_route_preference:
+		  site?.subrouter_route_preference || 'first_token_first,authenticity_first,stability_first,price_first',
+		subrouter_providers: fullMode ? providerOptions.map((provider) => provider.slug) : [],
+	  });
     setCreateModelSearch('');
     setShowCreate(true);
   };
 
-  const openCreateDefault = () => {
+	const openCreateDefault = () => {
     setCreateType('normal');
     setSelectedGroupId(0);
     setCreateName('');
     setCreateOfficialKeyMaxDiscount(0);
-    setCreateControls(emptyControlForm());
+	  setCreateControls({
+		...emptyControlForm(),
+		subrouter_route_preference:
+		  site?.subrouter_route_preference || 'first_token_first,authenticity_first,stability_first,price_first',
+		subrouter_providers: fullMode ? providerOptions.map((provider) => provider.slug) : [],
+	  });
     setCreateModelSearch('');
     setShowCreate(true);
   };
@@ -319,12 +366,26 @@ export default function Tokens() {
     try {
       const payload = { name: createName.trim(), type: createType };
       if (createType === 'normal' && selectedGroupId > 0) payload.key_group_id = selectedGroupId;
-      const controlPayload = buildTokenControlPayload(createControls, rate, t, createType !== 'official');
+	  const controlPayload = buildTokenControlPayload(createControls, rate, t, createType !== 'official', fullMode);
       if (!controlPayload) {
         setCreating(false);
         return;
       }
-      Object.assign(payload, controlPayload);
+		Object.assign(payload, controlPayload);
+		if (fullMode && createType === 'normal') {
+		  const selectedSlugs = new Set(parseModelLimits(createControls.subrouter_providers));
+		  if (selectedSlugs.size === 0) {
+			toast.error('请至少选择一个普通商家');
+			setCreating(false);
+			return;
+		  }
+		  if (normalTokens.length === 0) {
+			await saveMarketplaceQuickStart({
+			  provider_ids: providerOptions.filter((provider) => selectedSlugs.has(provider.slug)).map((provider) => provider.id),
+			  auto_subscribe_new: Boolean(createControls.auto_subscribe_new),
+			});
+		  }
+		}
       if (createType === 'official') {
         payload.official_key_max_discount = normalizeOfficialKeyMaxDiscount(createOfficialKeyMaxDiscount);
       } else if (officialChannelsEnabled) {
@@ -377,9 +438,13 @@ export default function Tokens() {
     } catch (e) { /* interceptor */ }
   };
 
-  const openEditToken = (token) => {
-    setEditingToken(token);
-    setEditForm(tokenToEditForm(token, rate));
+	const openEditToken = (token) => {
+	  setEditingToken(token);
+	  const next = tokenToEditForm(token, rate);
+	  if (fullMode && token.group !== 'dist_official' && next.subrouter_providers.length === 0) {
+		next.subrouter_providers = providerOptions.map((provider) => provider.slug);
+	  }
+	  setEditForm(next);
     setEditModelSearch('');
   };
 
@@ -397,7 +462,7 @@ export default function Tokens() {
       return;
     }
     const isOfficialToken = editingToken.type === 'official' || editingToken.group === 'dist_official';
-    const payload = buildTokenControlPayload(editForm, rate, t, !isOfficialToken);
+	const payload = buildTokenControlPayload(editForm, rate, t, !isOfficialToken, fullMode);
     if (!payload) return;
     payload.name = String(editForm.name || '').trim();
     if (isOfficialToken) {
@@ -673,7 +738,10 @@ export default function Tokens() {
                 modelSearch={createModelSearch}
                 onModelSearchChange={setCreateModelSearch}
                 canLimitModels={createType !== 'official'}
-                showSortMode={createType === 'normal'}
+				showSortMode={createType === 'normal'}
+				fullMode={fullMode && createType === 'normal'}
+				providerOptions={providerOptions}
+				firstToken={normalTokens.length === 0}
                 currency={{ symbol, rate }}
                 t={t}
               />
@@ -738,7 +806,9 @@ export default function Tokens() {
                   modelSearch={editModelSearch}
                   onModelSearchChange={setEditModelSearch}
                   canLimitModels={!(editingToken.type === 'official' || editingToken.group === 'dist_official')}
-                  showSortMode={!(editingToken.type === 'official' || editingToken.group === 'dist_official')}
+				  showSortMode={!(editingToken.type === 'official' || editingToken.group === 'dist_official')}
+				  fullMode={fullMode && !(editingToken.type === 'official' || editingToken.group === 'dist_official')}
+				  providerOptions={providerOptions}
                   currency={{ symbol, rate }}
                   t={t}
                 />
@@ -1122,11 +1192,21 @@ function TokenControlSummary({ token, currency, t }) {
           {t('tokens.modelLimitedCount', { count: modelCount })}
         </span>
       )}
-      {String(token.allow_ips || '').trim() && (
+	  {String(token.allow_ips || '').trim() && (
         <span className="px-2 py-0.5 rounded-full text-[11px] bg-page-surface text-page-secondary">
           {t('tokens.ipLimited')}
         </span>
-      )}
+	  )}
+	  {token.subrouter_route_preference && (
+		<span className="px-2 py-0.5 rounded-full text-[11px] bg-page-surface text-page-secondary">
+		  {token.subrouter_route_preference}
+		</span>
+	  )}
+	  {token.include_shared_subscriptions && (
+		<span className="px-2 py-0.5 rounded-full text-[11px] bg-cyan-500/10 text-cyan-600">
+		  订阅共享
+		</span>
+	  )}
     </div>
   );
 }
@@ -1138,12 +1218,16 @@ function TokenControlFields({
   modelSearch,
   onModelSearchChange,
   canLimitModels,
-  showSortMode,
+	showSortMode,
+	fullMode = false,
+	providerOptions = [],
+	firstToken = false,
   currency,
   t,
 }) {
   const { symbol = '$' } = currency || {};
-  const selectedModels = parseModelLimits(form.model_limits);
+	const selectedModels = parseModelLimits(form.model_limits);
+	const selectedProviders = parseModelLimits(form.subrouter_providers);
   const filteredModels = (modelOptions || [])
     .filter((name) => !selectedModels.includes(name))
     .filter((name) => !modelSearch.trim() || name.toLowerCase().includes(modelSearch.trim().toLowerCase()))
@@ -1164,9 +1248,18 @@ function TokenControlFields({
     onModelSearchChange('');
   };
 
-  const removeModel = (modelName) => {
+	const removeModel = (modelName) => {
     onChange('model_limits', selectedModels.filter((name) => name !== modelName));
-  };
+	};
+
+	const toggleProvider = (slug) => {
+	  onChange(
+		'subrouter_providers',
+		selectedProviders.includes(slug)
+		  ? selectedProviders.filter((item) => item !== slug)
+		  : [...selectedProviders, slug],
+	  );
+	};
 
   return (
     <div className="space-y-4 border-t border-page-divider pt-4">
@@ -1229,9 +1322,10 @@ function TokenControlFields({
         />
       </label>
 
-      {showSortMode && (
-        <div>
-          <label className="block text-sm font-medium text-page-label mb-1.5">{t('tokens.routeSortMode')}</label>
+	  {showSortMode && (
+		<div className="grid gap-4 md:grid-cols-2">
+		  <div>
+		  <label className="block text-sm font-medium text-page-label mb-1.5">{t('tokens.routeSortMode')}</label>
           <select
             className="input"
             value={form.subrouter_sort_mode || 'token_price_first'}
@@ -1239,9 +1333,42 @@ function TokenControlFields({
           >
             <option value="token_price_first">{t('tokens.tokenPriceFirst')}</option>
             <option value="per_call_price_first">{t('tokens.perCallPriceFirst')}</option>
-          </select>
-        </div>
-      )}
+		  </select>
+		  </div>
+		  {fullMode && (
+			<div>
+			  <label className="block text-sm font-medium text-page-label mb-1.5">路由偏好</label>
+			  <select className="input" value={form.subrouter_route_preference} onChange={(event) => onChange('subrouter_route_preference', event.target.value)}>
+				<option value="first_token_first,authenticity_first,stability_first,price_first">综合路由</option>
+				<option value="price_first">价格优先</option>
+				<option value="stability_first">稳定性优先</option>
+				<option value="first_token_first">首 Token 延迟优先</option>
+				<option value="authenticity_first">真实性优先</option>
+			  </select>
+			</div>
+		  )}
+		</div>
+	  )}
+
+	  {fullMode && (
+		<>
+		  <div className="rounded-xl border border-page-divider bg-page-surface p-4">
+			<div className="flex items-center justify-between gap-3"><div><p className="text-sm font-medium text-page">普通商家范围</p>{firstToken && <p className="mt-1 text-xs text-page-secondary">首次创建默认全选本站准入商家。</p>}</div><span className="text-xs text-page-muted">{selectedProviders.length}/{providerOptions.length}</span></div>
+			<div className="mt-3 grid max-h-44 gap-2 overflow-y-auto sm:grid-cols-2">
+			  {providerOptions.map((provider) => <label key={provider.id} className="flex cursor-pointer items-center gap-2 rounded-lg border border-page-divider px-3 py-2 text-sm text-page"><input type="checkbox" checked={selectedProviders.includes(provider.slug)} onChange={() => toggleProvider(provider.slug)} /> <span className="truncate">{provider.company_name}</span></label>)}
+			</div>
+			{firstToken && <label className="mt-3 flex items-center gap-2 text-sm text-page"><input type="checkbox" checked={Boolean(form.auto_subscribe_new)} onChange={(event) => onChange('auto_subscribe_new', event.target.checked)} />以后自动订阅本站新准入商家</label>}
+		  </div>
+		  <div className="rounded-xl border border-page-divider bg-page-surface p-4 space-y-3">
+			<label className="flex items-center justify-between gap-4"><span><span className="block text-sm font-medium text-page">启用订阅共享线路</span><span className="mt-1 block text-xs text-page-secondary">仅使用已订阅的共享计划。</span></span><input type="checkbox" checked={Boolean(form.include_shared_subscriptions)} onChange={(event) => onChange('include_shared_subscriptions', event.target.checked)} /></label>
+			{form.include_shared_subscriptions && <div><label className="mb-1.5 block text-sm font-medium text-page-label">共享线路最高价格（基点）</label><input type="number" min="0" max="10000" step="100" className="input" value={form.shared_subscription_max_discount} onChange={(event) => onChange('shared_subscription_max_discount', event.target.value)} placeholder="0 表示不限制" /></div>}
+		  </div>
+		  <div className="grid gap-4 md:grid-cols-2">
+			<label><span className="mb-1.5 block text-sm font-medium text-page-label">模型商家来源过滤</span><textarea rows={4} className="input resize-y font-mono text-xs" value={form.subrouter_model_providers} onChange={(event) => onChange('subrouter_model_providers', event.target.value)} placeholder={'{"gpt-5":["provider-slug"]}'} /></label>
+			<label><span className="mb-1.5 block text-sm font-medium text-page-label">模型价格上限</span><textarea rows={4} className="input resize-y font-mono text-xs" value={form.subrouter_model_price_limits} onChange={(event) => onChange('subrouter_model_price_limits', event.target.value)} placeholder={'{"gpt-5":{"input":1,"output":5}}'} /></label>
+		  </div>
+		</>
+	  )}
 
       {canLimitModels && (
         <div>
