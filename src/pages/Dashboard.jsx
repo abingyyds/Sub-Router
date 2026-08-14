@@ -10,12 +10,14 @@ import {
   getAffEarnings,
   getAffPayouts,
   requestAffWithdraw,
+  verifyDist2FA,
   getDistKolStatus,
   submitDistKolApply,
   Q,
 } from '../api';
 import { useCurrency, useSite } from '../context/SiteContext';
 import CountUp from '../components/bits/CountUp';
+import SecurityVerificationModal from '../components/SecurityVerificationModal';
 import toast from 'react-hot-toast';
 import { Award, ChevronDown } from 'lucide-react';
 
@@ -44,6 +46,9 @@ export default function Dashboard() {
   const [withdrawMethod, setWithdrawMethod] = useState('');
   const [withdrawRemark, setWithdrawRemark] = useState('');
   const [withdrawing, setWithdrawing] = useState(false);
+  const [pendingWithdraw, setPendingWithdraw] = useState(null);
+  const [showSecurityVerification, setShowSecurityVerification] = useState(false);
+  const [securityVerificationLoading, setSecurityVerificationLoading] = useState(false);
   const [distKolStatus, setDistKolStatus] = useState(null);
   const [showKolApplyModal, setShowKolApplyModal] = useState(false);
   const [kolApplyLoading, setKolApplyLoading] = useState(false);
@@ -307,6 +312,34 @@ export default function Dashboard() {
       maximumFractionDigits: 2,
     })}%`;
 
+  const submitWithdrawRequest = async (data) => {
+    setWithdrawing(true);
+    try {
+      const res = await requestAffWithdraw(data, { skipErrorHandler: true });
+      if (!res.data?.success) {
+        throw new Error(res.data?.message || t('common.requestFailed'));
+      }
+      toast.success(res.data.message || t('topup.withdrawSuccess'));
+      setShowWithdrawModal(false);
+      resetWithdrawForm();
+      await Promise.all([loadData(), refreshUser(), loadAffPayouts()]);
+      setAffDetailTab('payouts');
+      setShowAffEarnings(true);
+      return true;
+    } catch (error) {
+      const verificationCodes = ['VERIFICATION_REQUIRED', 'VERIFICATION_EXPIRED', 'VERIFICATION_INVALID'];
+      if (error.response?.status === 403 && verificationCodes.includes(error.response?.data?.code)) {
+        setPendingWithdraw(data);
+        setShowSecurityVerification(true);
+        return false;
+      }
+      toast.error(error.response?.data?.message || error.message || t('common.requestFailed'));
+      return false;
+    } finally {
+      setWithdrawing(false);
+    }
+  };
+
   const handleWithdraw = async () => {
     const amount = Number.parseFloat(withdrawAmount);
     if (!Number.isFinite(amount) || amount <= 0) {
@@ -322,25 +355,43 @@ export default function Dashboard() {
       return;
     }
 
-    setWithdrawing(true);
+    await submitWithdrawRequest({
+      amount: amount / rate,
+      payment_method: withdrawMethod.trim(),
+      remark: withdrawRemark.trim(),
+    });
+  };
+
+  const handleSecurityVerification = async (code) => {
+    if (!pendingWithdraw) return;
+    setSecurityVerificationLoading(true);
     try {
-      const res = await requestAffWithdraw({
-        amount: amount / rate,
-        payment_method: withdrawMethod.trim(),
-        remark: withdrawRemark.trim(),
-      });
-      if (res.data.success) {
-        toast.success(res.data.message || t('topup.withdrawSuccess'));
-        setShowWithdrawModal(false);
-        resetWithdrawForm();
-        await Promise.all([loadData(), refreshUser(), loadAffPayouts()]);
-        setAffDetailTab('payouts');
-        setShowAffEarnings(true);
+      const res = await verifyDist2FA(code, { skipErrorHandler: true });
+      if (!res.data?.success) {
+        throw new Error(res.data?.message || t('security.verificationFailed'));
       }
-    } catch (err) {
-      /* interceptor */
+      const withdrawData = pendingWithdraw;
+      setPendingWithdraw(null);
+      setShowSecurityVerification(false);
+      await submitWithdrawRequest(withdrawData);
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message || t('security.verificationFailed'));
+    } finally {
+      setSecurityVerificationLoading(false);
     }
-    setWithdrawing(false);
+  };
+
+  const closeSecurityVerification = () => {
+    if (securityVerificationLoading) return;
+    setPendingWithdraw(null);
+    setShowSecurityVerification(false);
+  };
+
+  const openSecuritySettings = () => {
+    setPendingWithdraw(null);
+    setShowSecurityVerification(false);
+    setShowWithdrawModal(false);
+    window.location.assign('/account#security');
   };
 
   const handleKolApply = async () => {
@@ -916,6 +967,14 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      <SecurityVerificationModal
+        open={showSecurityVerification}
+        loading={securityVerificationLoading}
+        onClose={closeSecurityVerification}
+        onVerify={handleSecurityVerification}
+        onOpenSettings={openSecuritySettings}
+      />
 
       {showKolApplyModal && (
         <div

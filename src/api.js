@@ -359,6 +359,13 @@ export const bindUserEmail = (email, verificationCode) =>
     email,
     verification_code: verificationCode,
   });
+export const getDist2FAStatus = (config = {}) => api.get('/api/dist/user/2fa/status', config);
+export const setupDist2FA = (config = {}) => api.post('/api/dist/user/2fa/setup', undefined, config);
+export const enableDist2FA = (code, config = {}) => api.post('/api/dist/user/2fa/enable', { code }, config);
+export const disableDist2FA = (code, config = {}) => api.post('/api/dist/user/2fa/disable', { code }, config);
+export const regenerateDist2FABackupCodes = (code, config = {}) => api.post('/api/dist/user/2fa/backup_codes', { code }, config);
+export const verifyDist2FA = (code, config = {}) => api.post('/api/dist/verify', { method: '2fa', code }, config);
+export const getDistVerificationStatus = (config = {}) => api.get('/api/dist/verify/status', config);
 export const getUserUsage = () => api.get('/api/dist/user/usage');
 export const getUserLogs = (params) => api.get('/api/dist/user/logs', { params });
 export const exportUserLogs = (params) =>
@@ -411,7 +418,7 @@ export const getAffCode = () => api.get('/api/dist/aff');
 export const transferAffQuota = (data) => api.post('/api/dist/aff_transfer', data);
 export const getAffEarnings = (params) => api.get('/api/dist/aff_earnings', { params });
 export const getAffPayouts = (params) => api.get('/api/dist/aff_payouts', { params });
-export const requestAffWithdraw = (data) => api.post('/api/dist/aff_withdraw', data);
+export const requestAffWithdraw = (data, config = {}) => api.post('/api/dist/aff_withdraw', data, config);
 export const submitDistKolApply = (data) => api.post('/api/dist/kol_apply', data);
 export const getDistKolStatus = () => api.get('/api/dist/kol_status');
 export const createSubDistributorOrder = (data) => api.post('/api/dist/site/sub-distributor/pay', data);
