@@ -122,6 +122,10 @@ export default function OfficialChannels() {
   const [detailChannel, setDetailChannel] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [createChannel, setCreateChannel] = useState(null);
+  const canViewProviders =
+    site?.can_view_providers === true ||
+    site?.full_mode === true ||
+    site?.display_mode === 'full';
 
   const loadChannels = useCallback(() => {
     setLoading(true);
@@ -217,6 +221,7 @@ export default function OfficialChannels() {
         <OfficialChannelDetail
           channel={selectedChannel}
           user={user}
+          canViewProviders={canViewProviders}
           hideProviderInfo={Boolean(site?.hide_provider_info)}
           detailsLoading={detailLoading}
           currencySymbol={symbol}
@@ -280,6 +285,7 @@ export default function OfficialChannels() {
             <OfficialChannelCard
               key={channelIdOf(channel)}
               channel={channel}
+              canViewProviders={canViewProviders}
               hideProviderInfo={Boolean(site?.hide_provider_info)}
               onOpen={() => navigate(`/official-channels/${channelIdOf(channel)}`)}
             />
@@ -290,7 +296,7 @@ export default function OfficialChannels() {
   );
 }
 
-function OfficialChannelCard({ channel, onOpen, hideProviderInfo = false }) {
+function OfficialChannelCard({ channel, onOpen, canViewProviders = false, hideProviderInfo = false }) {
   const { t } = useTranslation();
   return (
     <article className="glass rounded-2xl p-5 shadow-sm">
@@ -324,7 +330,7 @@ function OfficialChannelCard({ channel, onOpen, hideProviderInfo = false }) {
 
         <div className="grid gap-2 sm:grid-cols-3">
           <Metric label={t('officialChannels.models')} value={formatCount(channel.usable_model_count)} />
-          {!hideProviderInfo && <Metric label={t('officialChannels.providers')} value={formatCount(channel.available_provider_count)} />}
+          {canViewProviders && !hideProviderInfo && <Metric label={t('officialChannels.providers')} value={formatCount(channel.available_provider_count)} />}
           <Metric label={t('officialChannels.keyType')} value={t('officialChannels.groupKeyOnly')} />
         </div>
 
@@ -349,6 +355,7 @@ function OfficialChannelCard({ channel, onOpen, hideProviderInfo = false }) {
 function OfficialChannelDetail({
   channel,
   user,
+  canViewProviders = false,
   hideProviderInfo = false,
   currencySymbol = '$',
   detailsLoading = false,
@@ -531,15 +538,17 @@ function OfficialChannelDetail({
                 loading={modelAvailabilityLoading}
                 compact
               />
-              <ModelKeySupplySection
-                data={modelAvailability}
-                loading={modelAvailabilityLoading}
-                hideProviderInfo={hideProviderInfo}
-                view={modelSupplyView}
-                onViewChange={setModelSupplyView}
-                period={modelAvailabilityPeriod}
-                onPeriodChange={setModelAvailabilityPeriod}
-              />
+              {canViewProviders && (
+                <ModelKeySupplySection
+                  data={modelAvailability}
+                  loading={modelAvailabilityLoading}
+                  hideProviderInfo={hideProviderInfo}
+                  view={modelSupplyView}
+                  onViewChange={setModelSupplyView}
+                  period={modelAvailabilityPeriod}
+                  onPeriodChange={setModelAvailabilityPeriod}
+                />
+              )}
               <div className="mt-4 rounded-xl border border-page-divider bg-page-inset px-4 py-3 text-xs text-page-secondary">
                 {t('officialChannels.priceUnitHint', { currency: selectedModel.price_currency || currencySymbol })}
               </div>
@@ -564,10 +573,10 @@ function OfficialChannelDetail({
 
       <section className="mt-5 grid gap-3 sm:grid-cols-2">
         <Metric label={t('officialChannels.models')} value={formatCount(channel.usable_model_count)} />
-        {!hideProviderInfo && <Metric label={t('officialChannels.providers')} value={formatCount(channel.available_provider_count)} />}
+        {canViewProviders && !hideProviderInfo && <Metric label={t('officialChannels.providers')} value={formatCount(channel.available_provider_count)} />}
       </section>
 
-      {!hideProviderInfo && (
+      {canViewProviders && !hideProviderInfo && (
         <ProviderSupplySection providers={channel.providers} />
       )}
 

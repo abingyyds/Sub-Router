@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronRight, ExternalLink } from 'lucide-react';
 import { getSiteModels } from '../api';
-import { useCurrency } from '../context/SiteContext';
+import { useCurrency, useSite } from '../context/SiteContext';
 import { getOfficialPrice } from '../utils/officialEquiv';
 import { formatPricingDetailRows, hasVideoPricingDetails } from '../utils/pricingDetails';
 
@@ -177,6 +177,7 @@ function isPriceUnavailable(item) {
 
 export default function Pricing() {
   const { t } = useTranslation();
+  const { site } = useSite();
   const { symbol, rate, code, usdRate } = useCurrency();
   const [models, setModels] = useState([]);
   const [vendors, setVendors] = useState([]);
@@ -187,6 +188,10 @@ export default function Pricing() {
   const [expandedModels, setExpandedModels] = useState(() => new Set());
   const [restriction, setRestriction] = useState(null);
   const [unrestrictedTotal, setUnrestrictedTotal] = useState(0);
+  const canViewProviders =
+    site?.can_view_providers === true ||
+    site?.full_mode === true ||
+    site?.display_mode === 'full';
 
   useEffect(() => {
     getSiteModels()
@@ -230,7 +235,7 @@ export default function Pricing() {
       list = list.filter((m) =>
         (m.display_name || m.model_name || '').toLowerCase().includes(q) ||
         normalizeModelType(m).includes(q) ||
-        (Array.isArray(m.channels) && m.channels.some((ch) =>
+        (canViewProviders && Array.isArray(m.channels) && m.channels.some((ch) =>
           (ch.provider_name || ch.provider_slug || '').toLowerCase().includes(q)
         ))
       );
@@ -248,7 +253,7 @@ export default function Pricing() {
       return (Number(a.input_price) || 0) - (Number(b.input_price) || 0);
     });
     return list;
-  }, [enabledModels, vendor, modelType, search]);
+  }, [canViewProviders, enabledModels, vendor, modelType, search]);
   const hasActiveFilter = Boolean(search.trim() || vendor || modelType);
   const restrictedEmpty =
     restriction?.region_restricted && hasActiveFilter && filtered.length === 0;
@@ -475,7 +480,7 @@ export default function Pricing() {
                 const channels = Array.isArray(m.channels) ? m.channels : [];
                 const modelKey = `${m.model_name || 'model'}-${m.id || i}`;
                 const expanded = expandedModels.has(modelKey);
-                const canExpand = channels.length > 0;
+                const canExpand = canViewProviders && channels.length > 0;
 
                 return (
                   <React.Fragment key={modelKey}>

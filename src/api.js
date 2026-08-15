@@ -268,6 +268,7 @@ export const getSiteInfo = () => {
       show_official_channels: true,
       has_official_channels: true,
       show_shared_subscriptions: true,
+      can_view_providers: true,
       currency: {
         code: "CNY",
         symbol: "¥",
