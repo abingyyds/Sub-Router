@@ -395,7 +395,7 @@ export default function SharedSubscriptions() {
               plans.map((entry) => (
                 <article
                   key={entry.plan.id}
-                  className="flex min-h-[390px] flex-col rounded-lg border border-page-divider bg-page-surface p-5"
+                  className="flex min-h-[440px] flex-col rounded-lg border border-page-divider bg-page-surface p-5"
                 >
                   <div className="flex items-start gap-3">
                     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-page-inset text-lg font-bold text-page-link">
@@ -422,7 +422,84 @@ export default function SharedSubscriptions() {
                       `平台官方运营的 ${entry.plan.title} 订阅共享池`}
                   </p>
 
-                  <div className="mt-4 grid grid-cols-3 gap-2 border-y border-page-divider py-3 text-center">
+                  {entry.pool_status?.total_accounts > 0 && (
+                    <div className="mt-3 border-y border-page-divider py-3">
+                      <div className="flex items-center justify-between gap-3 text-xs">
+                        <span className="font-medium text-page">
+                          号池实时状态
+                        </span>
+                        <span
+                          className={
+                            entry.pool_status.health === "healthy"
+                              ? "text-emerald-600 dark:text-emerald-400"
+                              : "text-amber-600 dark:text-amber-400"
+                          }
+                        >
+                          {entry.pool_status.available_accounts}/
+                          {entry.pool_status.total_accounts} 可用
+                        </span>
+                      </div>
+                      <div className="mt-2 grid grid-cols-3 gap-2 text-center">
+                        <div>
+                          <div className="font-semibold tabular-nums text-page">
+                            {entry.pool_status.available_concurrency}/
+                            {entry.pool_status.total_concurrency}
+                          </div>
+                          <div className="text-[11px] text-page-muted">
+                            并发容量
+                          </div>
+                        </div>
+                        <div>
+                          <div className="font-semibold tabular-nums text-amber-600 dark:text-amber-400">
+                            {entry.pool_status.rate_limited_accounts || 0}
+                          </div>
+                          <div className="text-[11px] text-page-muted">
+                            限流账号
+                          </div>
+                        </div>
+                        <div>
+                          <div className="font-semibold tabular-nums text-page">
+                            {Math.max(
+                              0,
+                              Number(
+                                entry.pool_status.unavailable_accounts || 0,
+                              ) -
+                                Number(
+                                  entry.pool_status.rate_limited_accounts || 0,
+                                ),
+                            )}
+                          </div>
+                          <div className="text-[11px] text-page-muted">
+                            其他不可用
+                          </div>
+                        </div>
+                      </div>
+                      {(entry.pool_status.next_recovery_at ||
+                        entry.pool_status.last_synced_at) && (
+                        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-page-muted">
+                          {entry.pool_status.next_recovery_at && (
+                            <span className="inline-flex items-center gap-1">
+                              <Clock3 size={11} />
+                              最近恢复{" "}
+                              {new Date(
+                                entry.pool_status.next_recovery_at,
+                              ).toLocaleString()}
+                            </span>
+                          )}
+                          {entry.pool_status.last_synced_at && (
+                            <span>
+                              同步于{" "}
+                              {new Date(
+                                entry.pool_status.last_synced_at,
+                              ).toLocaleString()}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="mt-4 grid grid-cols-3 gap-2 border-b border-page-divider pb-3 text-center">
                     <div>
                       <div className="text-sm font-semibold text-page">
                         {entry.models?.length || 0}
