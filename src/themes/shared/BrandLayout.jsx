@@ -23,7 +23,7 @@ const configs = {
     announcement: 'border-b border-slate-800 bg-slate-950 px-4 py-2.5 text-center text-sm font-medium text-slate-100',
     header: 'sticky top-0 z-50 border-b border-slate-200 bg-[#f6f8fb]/88 backdrop-blur-xl',
     logo: 'bg-slate-950 text-white shadow-lg shadow-slate-900/10',
-    navWrap: 'hidden items-center gap-1 rounded-lg border border-slate-200 bg-white/80 p-1 shadow-sm lg:flex',
+    navWrap: 'hidden items-center gap-1 rounded-lg border border-slate-200 bg-white/80 p-1 shadow-sm xl:flex',
     navActive: 'bg-slate-950 text-white shadow-sm',
     navIdle: 'text-slate-600 hover:bg-white hover:text-slate-950',
     language: 'text-slate-500 hover:bg-white/80 hover:text-slate-950',
@@ -40,7 +40,7 @@ const configs = {
     announcement: 'border-b border-emerald-400/20 bg-emerald-400/10 px-4 py-2.5 text-center font-mono text-sm text-emerald-200',
     header: 'sticky top-0 z-50 border-b border-emerald-400/15 bg-[#050807]/88 backdrop-blur-xl',
     logo: 'bg-emerald-400 text-black shadow-lg shadow-emerald-400/20',
-    navWrap: 'hidden items-center gap-1 rounded-lg border border-emerald-400/15 bg-emerald-400/[0.04] p-1 lg:flex',
+    navWrap: 'hidden items-center gap-1 rounded-lg border border-emerald-400/15 bg-emerald-400/[0.04] p-1 xl:flex',
     navActive: 'bg-emerald-400 text-black shadow-sm',
     navIdle: 'text-emerald-200/70 hover:bg-emerald-400/10 hover:text-emerald-100',
     language: 'text-emerald-200/70 hover:bg-emerald-400/10 hover:text-emerald-100',
@@ -57,7 +57,7 @@ const configs = {
     announcement: 'border-b border-stone-800 bg-stone-950 px-4 py-2.5 text-center text-sm font-semibold text-stone-100',
     header: 'sticky top-0 z-50 border-b border-stone-200 bg-[#fbfaf7]/90 backdrop-blur-xl',
     logo: 'bg-stone-950 text-white shadow-lg shadow-stone-900/10',
-    navWrap: 'hidden items-center gap-1 rounded-lg border border-stone-200 bg-white/80 p-1 shadow-sm lg:flex',
+    navWrap: 'hidden items-center gap-1 rounded-lg border border-stone-200 bg-white/80 p-1 shadow-sm xl:flex',
     navActive: 'bg-stone-950 text-white shadow-sm',
     navIdle: 'text-stone-600 hover:bg-white hover:text-stone-950',
     language: 'text-stone-500 hover:bg-white hover:text-stone-950',
@@ -74,7 +74,7 @@ const configs = {
     announcement: 'border-b border-[#1b2a5b]/10 bg-[#f7f9ff] px-4 py-2.5 text-center text-sm font-semibold text-[#1b2a5b]',
     header: 'sticky top-0 z-50 border-b border-slate-200/80 bg-white/88 backdrop-blur-xl',
     logo: 'bg-gradient-to-br from-[#0788ff] via-[#2248ff] to-[#ec4bff] text-white shadow-lg shadow-blue-500/20',
-    navWrap: 'hidden items-center gap-1 rounded-lg border border-slate-200 bg-white/82 p-1 shadow-sm lg:flex',
+    navWrap: 'hidden items-center gap-1 rounded-lg border border-slate-200 bg-white/82 p-1 shadow-sm xl:flex',
     navActive: 'bg-gradient-to-r from-[#0788ff] to-[#b93dff] text-white shadow-sm',
     navIdle: 'text-slate-600 hover:bg-[#f4f7ff] hover:text-[#071337]',
     language: 'text-slate-500 hover:bg-[#f4f7ff] hover:text-[#071337]',
@@ -120,7 +120,7 @@ export default function BrandLayout({ variant }) {
               <img
                 src={site.logo}
                 alt={siteName}
-                className="h-8 w-auto max-w-[150px] object-contain"
+                className="h-8 w-auto max-w-[110px] object-contain sm:max-w-[150px]"
                 onError={(event) => {
                   if (!cfg.logoImage || event.currentTarget.src === cfg.logoImage) return;
                   event.currentTarget.src = cfg.logoImage;
@@ -135,7 +135,9 @@ export default function BrandLayout({ variant }) {
                 {siteName.charAt(0)}
               </div>
             )}
-            <span className="truncate text-base font-black tracking-tight sm:text-lg">{siteName}</span>
+            {!site?.logo && (
+              <span className="truncate text-base font-black tracking-tight sm:text-lg">{siteName}</span>
+            )}
           </Link>
 
           <nav className={cfg.navWrap}>
@@ -152,7 +154,7 @@ export default function BrandLayout({ variant }) {
             ))}
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <LanguageSwitch className={cfg.language} />
             {user ? (
               <UserMenu
@@ -176,7 +178,7 @@ export default function BrandLayout({ variant }) {
               </div>
             )}
             <button
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-current/10 lg:hidden"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-current/10 xl:hidden"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label={t('common.toggleMenu')}
             >
@@ -186,7 +188,7 @@ export default function BrandLayout({ variant }) {
         </div>
 
         {mobileMenuOpen && (
-          <div className="border-t border-current/10 bg-inherit lg:hidden">
+          <div className="border-t border-current/10 bg-inherit xl:hidden">
             <nav className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-3 sm:px-6">
               {mobileNavItems.map((n) => (
                 <Link

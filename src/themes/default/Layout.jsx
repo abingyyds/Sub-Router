@@ -48,18 +48,20 @@ export default function DefaultLayout() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
           <Link to="/" className="flex min-w-0 items-center gap-3 group">
             {site?.logo ? (
-              <img src={site.logo} alt={siteName} className="h-8 w-auto max-w-[150px] object-contain" />
+              <img src={site.logo} alt={siteName} className="h-8 w-auto max-w-[110px] object-contain sm:max-w-[150px]" />
             ) : (
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-950 text-sm font-bold text-white shadow-sm">
                 {siteName.charAt(0)}
               </div>
             )}
-            <span className="truncate text-base font-bold tracking-tight text-slate-950 group-hover:text-indigo-700 sm:text-lg">
-              {siteName}
-            </span>
+            {!site?.logo && (
+              <span className="truncate text-base font-bold tracking-tight text-slate-950 group-hover:text-indigo-700 sm:text-lg">
+                {siteName}
+              </span>
+            )}
           </Link>
 
-          <nav className="hidden items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1 lg:flex">
+          <nav className="hidden items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1 xl:flex">
             {headerNavItems.map((n) => (
               <NavLink key={n.to} to={n.to} active={isNavActive(n.to)}>
                 {n.label}
@@ -67,7 +69,7 @@ export default function DefaultLayout() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <LanguageSwitch className="text-slate-500 hover:bg-slate-100 hover:text-slate-950" />
 
             {user ? (
@@ -96,7 +98,7 @@ export default function DefaultLayout() {
             )}
 
             <button
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 lg:hidden"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 xl:hidden"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label={t('common.toggleMenu')}
             >
@@ -106,7 +108,7 @@ export default function DefaultLayout() {
         </div>
 
         {mobileMenuOpen && (
-          <div className="border-t border-slate-200 bg-white lg:hidden">
+          <div className="border-t border-slate-200 bg-white xl:hidden">
             <nav className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-3 sm:px-6">
               {mobileNavItems.map((n) => (
                 <Link

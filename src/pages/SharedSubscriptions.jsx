@@ -1,30 +1,42 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
+  Clock3,
   CircleDollarSign,
+  ClipboardPaste,
+  Copy,
   Database,
   ExternalLink,
+  FileUp,
+  HandCoins,
   KeyRound,
   Loader2,
-  Plus,
-  Power,
   RefreshCw,
   ShieldCheck,
   Trash2,
+  Upload,
+  UserRoundPlus,
+  UsersRound,
   Wallet,
+  X,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import {
   Q,
   cancelSharedPayout,
   completeSharedOAuth,
+  createSharedPlanToken,
   createSharedPayout,
+  deleteToken,
   deleteSharedAccount,
   getSharedEarnings,
-  getSharedOAuthCapabilities,
   getSharedPaymentProfile,
   getSharedPayouts,
+  getSharedPlanCatalog,
   getSharedPlans,
+  getSharedPlanProbes,
   getSharedSupplies,
+  getTokens,
   importSharedAccounts,
   saveSharedPaymentProfile,
   startSharedOAuth,
@@ -33,53 +45,11 @@ import {
   unsubscribeSharedPlan,
   updateSharedAccountStatus,
 } from "../api";
-import { useCurrency } from "../context/SiteContext";
+import { useCurrency, useSite } from "../context/SiteContext";
+import { parseSharedAccountBackup } from "../utils/sharedAccountBatchImport";
+import { parseSharedProxyInput } from "../utils/sharedProxy";
 
 const dataOf = (response) => response?.data?.data || {};
-
-const oauthPlatforms = [
-  { value: "openai", label: "OpenAI / Codex" },
-  { value: "grok", label: "Grok" },
-  { value: "gemini", label: "Gemini" },
-  { value: "anthropic", label: "Anthropic" },
-  { value: "antigravity", label: "Antigravity" },
-];
-
-const initialOAuthForm = {
-  platform: "openai",
-  account_type: "oauth",
-  oauth_type: "code_assist",
-  project_id: "",
-  name: "",
-  concurrency: 1,
-  priority: 0,
-  proxy_enabled: false,
-  proxy_protocol: "socks5",
-  proxy_host: "",
-  proxy_port: "",
-  proxy_username: "",
-  proxy_password: "",
-};
-
-const advancedAccountExample = JSON.stringify(
-  [
-    {
-      name: "",
-      platform: "gemini",
-      type: "service_account",
-      credentials: { service_account_json: "" },
-      concurrency: 1,
-      priority: 0,
-      proxy: {
-        protocol: "socks5",
-        host: "8.8.8.8",
-        port: 1080,
-      },
-    },
-  ],
-  null,
-  2,
-);
 
 const openAuthorizationWindow = (url) => {
   if (!url) return;
@@ -97,44 +67,68 @@ const providerStateFromURL = (url) => {
 
 export default function SharedSubscriptions() {
   const { fmt } = useCurrency();
-  const [tab, setTab] = useState("plans");
+  const { site } = useSite();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const fullMode = site?.full_mode === true || site?.display_mode === "full";
+  const [tab, setTab] = useState(() => {
+    const requested = searchParams.get("tab");
+    return ["hosting", "earnings", "settlement", "rules", "market"].includes(
+      requested,
+    )
+      ? requested
+      : "hosting";
+  });
   const [plans, setPlans] = useState([]);
+  const [planCatalog, setPlanCatalog] = useState([]);
   const [supplies, setSupplies] = useState([]);
   const [earnings, setEarnings] = useState({ wallet: {}, items: [] });
   const [payouts, setPayouts] = useState([]);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [accountJson, setAccountJson] = useState(advancedAccountExample);
+  const [importOpen, setImportOpen] = useState(false);
+  const [batchOpen, setBatchOpen] = useState(false);
+  const [initialImportPlatform, setInitialImportPlatform] = useState("");
   const [paymentForm, setPaymentForm] = useState({
     method: "alipay",
     details: "",
   });
   const [amount, setAmount] = useState("");
-  const [oauthForm, setOAuthForm] = useState(initialOAuthForm);
-  const [oauthSession, setOAuthSession] = useState(null);
-  const [oauthCode, setOAuthCode] = useState("");
-  const [oauthStarting, setOAuthStarting] = useState(false);
-  const [oauthCompleting, setOAuthCompleting] = useState(false);
-  const [oauthCapabilities, setOAuthCapabilities] = useState(null);
+  const [tokens, setTokens] = useState([]);
+  const [generatedToken, setGeneratedToken] = useState(null);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [probePeriod, setProbePeriod] = useState("24h");
+  const [probeData, setProbeData] = useState(null);
+  const [probeLoading, setProbeLoading] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [plansRes, suppliesRes, earningsRes, profileRes, payoutsRes] =
-        await Promise.all([
-          getSharedPlans(),
-          getSharedSupplies(),
-          getSharedEarnings(),
-          getSharedPaymentProfile(),
-          getSharedPayouts(),
-        ]);
+      const [
+        plansRes,
+        catalogRes,
+        suppliesRes,
+        earningsRes,
+        profileRes,
+        payoutsRes,
+        tokensRes,
+      ] = await Promise.all([
+        getSharedPlans(),
+        getSharedPlanCatalog(),
+        getSharedSupplies(),
+        getSharedEarnings(),
+        getSharedPaymentProfile(),
+        getSharedPayouts(),
+        getTokens(),
+      ]);
       if (plansRes.data.success) setPlans(dataOf(plansRes));
+      if (catalogRes.data.success) setPlanCatalog(dataOf(catalogRes));
       if (suppliesRes.data.success) setSupplies(dataOf(suppliesRes));
       if (earningsRes.data.success) setEarnings(dataOf(earningsRes));
       if (profileRes.data.success) setProfile(dataOf(profileRes));
       if (payoutsRes.data.success) {
         setPayouts(dataOf(payoutsRes).items || []);
       }
+      if (tokensRes.data.success) setTokens(dataOf(tokensRes));
     } finally {
       setLoading(false);
     }
@@ -144,27 +138,12 @@ export default function SharedSubscriptions() {
     load();
   }, [load]);
 
-  useEffect(() => {
-    let active = true;
-    if (tab !== "supplies" || oauthForm.platform !== "grok") {
-      setOAuthCapabilities(null);
-      return () => {
-        active = false;
-      };
-    }
-    getSharedOAuthCapabilities("grok")
-      .then((response) => {
-        if (active && response.data.success) {
-          setOAuthCapabilities(dataOf(response));
-        }
-      })
-      .catch(() => {
-        if (active) setOAuthCapabilities(null);
-      });
-    return () => {
-      active = false;
-    };
-  }, [oauthForm.platform, tab]);
+  const changeTab = (value) => {
+    setTab(value);
+    const next = new URLSearchParams(searchParams);
+    next.set("tab", value);
+    setSearchParams(next, { replace: true });
+  };
 
   const togglePlan = async (entry) => {
     const response = entry.subscribed
@@ -173,104 +152,48 @@ export default function SharedSubscriptions() {
     if (response.data.success) await load();
   };
 
-  const importAccounts = async () => {
-    let accounts;
+  const createPlanKey = async (entry, smart = false) => {
+    if (!entry?.plan?.id) return;
+    if (fullMode && !entry.subscribed) {
+      toast.error("请先订阅该共享套餐");
+      return;
+    }
     try {
-      accounts = JSON.parse(accountJson);
-    } catch {
-      toast.error("账号数据不是有效 JSON");
-      return;
-    }
-    if (!Array.isArray(accounts) || accounts.length === 0) {
-      toast.error("请至少填写一个账号");
-      return;
-    }
-    const response = await importSharedAccounts(accounts);
-    if (response.data.success) {
-      toast.success("共享账号已导入");
+      const suffix = smart ? "智能路由" : "固定";
+      const response = await createSharedPlanToken(
+        entry.plan.id,
+        `${entry.plan.title} ${suffix} Key`,
+        smart,
+      );
+      if (!response.data.success) {
+        throw new Error(response.data.message || "生成 Key 失败");
+      }
+      setGeneratedToken(response.data.data);
+      toast.success("Key 已生成");
       await load();
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || error.message || "生成 Key 失败",
+      );
     }
   };
 
-  const changeOAuthPlatform = (platform) => {
-    setOAuthForm((previous) => ({
-      ...previous,
-      platform,
-      account_type: "oauth",
-    }));
-    setOAuthSession(null);
-    setOAuthCode("");
-  };
-
-  const beginOAuth = async () => {
-    setOAuthStarting(true);
+  const loadPlanProbes = async (entry, period = probePeriod) => {
+    if (!entry?.plan?.id) return;
+    setSelectedPlan(entry);
+    setProbePeriod(period);
+    setProbeLoading(true);
     try {
-      const response = await startSharedOAuth({
-        platform: oauthForm.platform,
-        account_type: oauthForm.account_type,
-        oauth_type: oauthForm.platform === "gemini" ? oauthForm.oauth_type : "",
-        project_id:
-          oauthForm.platform === "gemini" ? oauthForm.project_id.trim() : "",
-      });
-      if (!response.data.success) return;
-      const session = dataOf(response);
-      const nextSession = {
-        ...session,
-        provider_state: providerStateFromURL(session.auth_url),
-      };
-      setOAuthSession(nextSession);
-      setOAuthCode("");
-      openAuthorizationWindow(nextSession.auth_url);
-      toast.success("授权链接已生成");
+      const response = await getSharedPlanProbes(entry.plan.id, period);
+      if (!response.data.success) throw new Error(response.data.message);
+      setProbeData(dataOf(response));
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || error.message || "可用度加载失败",
+      );
+      setProbeData(null);
     } finally {
-      setOAuthStarting(false);
-    }
-  };
-
-  const finishOAuth = async () => {
-    if (!oauthSession?.state) {
-      toast.error("请先生成授权链接");
-      return;
-    }
-    if (!oauthCode.trim()) {
-      toast.error("请输入回调链接或 Code");
-      return;
-    }
-    setOAuthCompleting(true);
-    try {
-      const proxy = oauthForm.proxy_enabled
-        ? {
-            protocol: oauthForm.proxy_protocol,
-            host: oauthForm.proxy_host.trim(),
-            port: Number(oauthForm.proxy_port || 0),
-            username: oauthForm.proxy_username.trim(),
-            password: oauthForm.proxy_password,
-          }
-        : undefined;
-      if (
-        oauthForm.proxy_enabled &&
-        (!proxy.host || proxy.port <= 0 || proxy.port > 65535)
-      ) {
-        toast.error("请输入有效的公网代理 IP 和端口");
-        return;
-      }
-      const response = await completeSharedOAuth({
-        state: oauthSession.state,
-        provider_state: oauthSession.provider_state || "",
-        code: oauthCode.trim(),
-        name: oauthForm.name.trim(),
-        concurrency: Math.max(1, Number(oauthForm.concurrency || 1)),
-        priority: Number(oauthForm.priority || 0),
-        proxy,
-      });
-      if (response.data.success) {
-        toast.success("共享账号授权并导入成功");
-        setOAuthSession(null);
-        setOAuthCode("");
-        await load();
-      }
-    } finally {
-      setOAuthCompleting(false);
+      setProbeLoading(false);
     }
   };
 
@@ -318,6 +241,49 @@ export default function SharedSubscriptions() {
     }
   };
 
+  const hostedAccounts = supplies.flatMap((entry) =>
+    (entry.accounts || []).map((account) => ({
+      account,
+      supply: entry.supply,
+      plan: entry.plan,
+    })),
+  );
+  const onlineAccounts = hostedAccounts.filter(
+    ({ account }) => account.schedulable && account.status === "active",
+  ).length;
+  const earningRows = (earnings.items || []).filter(
+    (item) => item.entry_type === "earning_pending",
+  );
+  const sharedTokens = tokens.filter(
+    (token) => token.type === "shared" || token.include_shared_subscriptions,
+  );
+  const metrics = [
+    {
+      label: "可用收益",
+      value: fmt(Number(earnings.wallet?.available_quota || 0) / Q, 2),
+      note: "可转入平台余额或申请提现",
+      icon: Wallet,
+    },
+    {
+      label: "待释放收益",
+      value: fmt(Number(earnings.wallet?.pending_quota || 0) / Q, 2),
+      note: "调用后 7 天自动释放",
+      icon: Clock3,
+    },
+    {
+      label: "累计收益",
+      value: fmt(Number(earnings.wallet?.lifetime_quota || 0) / Q, 2),
+      note: `近 30 天 ${fmt(Number(earnings.last_30_days_quota || 0) / Q, 2)}`,
+      icon: HandCoins,
+    },
+    {
+      label: "在线容量",
+      value: `${onlineAccounts} / ${hostedAccounts.length}`,
+      note: "已启用账号 / 全部账号",
+      icon: UsersRound,
+    },
+  ];
+
   if (loading) {
     return (
       <div className="flex min-h-[420px] items-center justify-center">
@@ -328,38 +294,87 @@ export default function SharedSubscriptions() {
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
-      <div className="flex items-end justify-between border-b border-page-divider pb-5">
+      <div className="flex flex-col gap-4 border-b border-page-divider pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-page sm:text-3xl">订阅共享</h1>
           <p className="mt-1 text-sm text-page-secondary">
-            共享计划消费与账号贡献独立结算。
+            贡献订阅账号、查看收益并管理结算
           </p>
         </div>
-        <button
-          type="button"
-          className="btn-secondary"
-          onClick={load}
-          title="刷新"
-          aria-label="刷新"
-        >
-          <RefreshCw size={16} />
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => {
+              changeTab("hosting");
+              setBatchOpen(true);
+            }}
+          >
+            <FileUp size={16} className="mr-2" />
+            批量导入
+          </button>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => {
+              changeTab("hosting");
+              setInitialImportPlatform("");
+              setImportOpen(true);
+            }}
+          >
+            <UserRoundPlus size={16} className="mr-2" />
+            添加托管账号
+          </button>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={load}
+            title="刷新"
+            aria-label="刷新"
+          >
+            <RefreshCw size={16} />
+          </button>
+        </div>
       </div>
 
-      <div className="mt-5 inline-flex max-w-full overflow-x-auto rounded-lg border border-page-divider bg-page-surface p-1">
+      <section className="mt-5 grid overflow-hidden rounded-lg border border-page-divider bg-page-surface sm:grid-cols-2 xl:grid-cols-4">
+        {metrics.map(({ label, value, note, icon: Icon }, index) => (
+          <div
+            key={label}
+            className={`flex min-h-28 gap-3 px-4 py-5 ${index ? "border-t border-page-divider sm:border-l sm:border-t-0" : ""} ${index === 2 ? "sm:border-l-0 sm:border-t xl:border-l xl:border-t-0" : ""}`}
+          >
+            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-page-inset text-page-link">
+              <Icon size={18} />
+            </span>
+            <div className="min-w-0">
+              <div className="text-sm text-page-muted">{label}</div>
+              <div className="mt-1 text-xl font-semibold tabular-nums text-page">
+                {value}
+              </div>
+              <div className="mt-1 text-xs leading-5 text-page-muted">
+                {note}
+              </div>
+            </div>
+          </div>
+        ))}
+      </section>
+
+      <div className="mt-5 flex max-w-full overflow-x-auto border-b border-page-divider">
         {[
-          ["plans", "共享计划"],
-          ["supplies", "账号贡献"],
-          ["earnings", "收益与提现"],
+          ["hosting", "托管账号"],
+          ["earnings", "收益明细"],
+          ["settlement", "结算"],
+          ["rules", "规则与费率"],
+          ["market", "共享市场"],
         ].map(([value, label]) => (
           <button
             key={value}
             type="button"
-            onClick={() => setTab(value)}
-            className={`whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium ${
+            onClick={() => changeTab(value)}
+            className={`whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium ${
               tab === value
-                ? "bg-page text-page-inverse"
-                : "text-page-secondary"
+                ? "border-page-link text-page"
+                : "border-transparent text-page-secondary"
             }`}
           >
             {label}
@@ -367,483 +382,332 @@ export default function SharedSubscriptions() {
         ))}
       </div>
 
-      {tab === "plans" && (
-        <div className="mt-6 grid gap-4 lg:grid-cols-2">
-          {plans.map((entry) => (
-            <div
-              key={entry.plan.id}
-              className="rounded-lg border border-page-divider bg-page-surface p-5"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h2 className="font-semibold text-page">
-                    {entry.plan.title}
-                  </h2>
-                  <p className="mt-1 text-sm text-page-secondary">
-                    {entry.plan.description}
-                  </p>
-                </div>
-                <Database className="text-page-link" />
+      {tab === "market" && (
+        <div className="mt-6 space-y-6">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {plans.length === 0 ? (
+              <div className="col-span-full rounded-lg border border-dashed border-page-divider px-5 py-12 text-center text-sm text-page-muted">
+                {fullMode
+                  ? "当前没有健康、可调度的共享套餐"
+                  : "站长已订阅的共享套餐当前没有健康、可调度供应"}
               </div>
-              <div className="mt-4 max-h-52 overflow-y-auto rounded-lg border border-page-divider">
-                {(entry.models || []).map((model) => (
-                  <div
-                    key={model.id}
-                    className="flex items-center justify-between gap-3 border-b border-page-divider px-3 py-2 text-xs last:border-0"
-                  >
-                    <span className="truncate font-mono text-page">
-                      {model.model_name}
-                    </span>
-                    <span className="shrink-0 text-page-secondary">
-                      {Number(model.fixed_price || 0) > 0
-                        ? `${fmt(model.fixed_price, 6)}/call`
-                        : `${fmt(model.input_price || 0, 6)} / ${fmt(model.output_price || 0, 6)}`}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4 flex items-center justify-between gap-3">
-                <span className="text-xs text-page-muted">
-                  {entry.supply_count || 0} 个可用账号
-                </span>
-                <button
-                  type="button"
-                  onClick={() => togglePlan(entry)}
-                  className={entry.subscribed ? "btn-secondary" : "btn-primary"}
+            ) : (
+              plans.map((entry) => (
+                <article
+                  key={entry.plan.id}
+                  className="flex min-h-[390px] flex-col rounded-lg border border-page-divider bg-page-surface p-5"
                 >
-                  {entry.subscribed ? "取消订阅" : "订阅计划"}
-                </button>
-              </div>
-            </div>
-          ))}
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-page-inset text-lg font-bold text-page-link">
+                      {(entry.plan.title || "S").charAt(0).toUpperCase()}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="truncate font-semibold text-page">
+                          {entry.plan.title}
+                        </h2>
+                        <span className="rounded border border-page-divider px-1.5 py-0.5 text-[10px] font-medium text-page-link">
+                          平台官方
+                        </span>
+                      </div>
+                      <p className="mt-0.5 truncate text-xs text-page-muted">
+                        @{entry.plan.slug}
+                      </p>
+                    </div>
+                    <Database size={18} className="shrink-0 text-page-link" />
+                  </div>
+
+                  <p className="mt-3 min-h-10 text-sm leading-5 text-page-secondary">
+                    {entry.plan.description ||
+                      `平台官方运营的 ${entry.plan.title} 订阅共享池`}
+                  </p>
+
+                  <div className="mt-4 grid grid-cols-3 gap-2 border-y border-page-divider py-3 text-center">
+                    <div>
+                      <div className="text-sm font-semibold text-page">
+                        {entry.models?.length || 0}
+                      </div>
+                      <div className="text-[11px] text-page-muted">模型</div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-page">
+                        {entry.subscription_count || 0}
+                      </div>
+                      <div className="text-[11px] text-page-muted">订阅</div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-page">
+                        {Number(entry.availability) >= 0
+                          ? `${Number(entry.availability).toFixed(1)}%`
+                          : "--"}
+                      </div>
+                      <div className="text-[11px] text-page-muted">可用度</div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex-1 space-y-2">
+                    {(entry.models || []).slice(0, 4).map((model) => (
+                      <div
+                        key={model.id}
+                        className="flex items-center gap-2 text-xs"
+                      >
+                        <span className="min-w-0 flex-1 truncate font-mono text-page">
+                          {model.model_name}
+                        </span>
+                        <AvailabilityStrip
+                          windows={model.availability_windows}
+                        />
+                      </div>
+                    ))}
+                    {(entry.models || []).length > 4 && (
+                      <p className="text-xs text-page-muted">
+                        另有 {(entry.models || []).length - 4} 个模型
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      onClick={() => createPlanKey(entry, false)}
+                    >
+                      <KeyRound size={15} className="mr-1.5" />
+                      生成固定 Key
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      onClick={() => loadPlanProbes(entry)}
+                    >
+                      <ShieldCheck size={15} className="mr-1.5" />
+                      查看可用度
+                    </button>
+                    {fullMode && (
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        onClick={() => createPlanKey(entry, true)}
+                      >
+                        <KeyRound size={15} className="mr-1.5" />
+                        智能路由 Key
+                      </button>
+                    )}
+                    {fullMode && (
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        onClick={() => togglePlan(entry)}
+                      >
+                        {entry.subscribed ? "取消订阅" : "订阅"}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="btn-secondary col-span-2"
+                      onClick={() => {
+                        changeTab("hosting");
+                        setInitialImportPlatform(entry.plan.vendor || "");
+                        setImportOpen(true);
+                      }}
+                    >
+                      <Upload size={15} className="mr-1.5" />
+                      接入账号
+                    </button>
+                  </div>
+                </article>
+              ))
+            )}
+          </div>
+
+          <SharedKeyManager
+            tokens={sharedTokens}
+            onDelete={async (token) => {
+              if (!window.confirm(`确认删除 Key「${token.name}」？`)) return;
+              await deleteToken(token.id);
+              await load();
+            }}
+          />
+
+          {selectedPlan && (
+            <PlanAvailabilityPanel
+              entry={selectedPlan}
+              period={probePeriod}
+              data={probeData}
+              loading={probeLoading}
+              onPeriodChange={(period) => loadPlanProbes(selectedPlan, period)}
+              onClose={() => {
+                setSelectedPlan(null);
+                setProbeData(null);
+              }}
+            />
+          )}
         </div>
       )}
 
-      {tab === "supplies" && (
-        <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.75fr)]">
-          <section>
-            <h2 className="text-lg font-semibold text-page">我的共享账号</h2>
-            <div className="mt-3 space-y-3">
-              {supplies.length === 0 ? (
-                <p className="text-sm text-page-muted">暂无贡献账号</p>
-              ) : (
-                supplies.map((entry) => (
-                  <div
-                    key={entry.supply.id}
-                    className="rounded-lg border border-page-divider bg-page-surface p-4"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="font-medium text-page">
-                          {entry.plan?.title || `Plan #${entry.supply.plan_id}`}
-                        </p>
-                        <p className="mt-1 text-xs text-page-muted">
-                          {entry.supply.status} · {entry.supply.health_status}
-                        </p>
-                      </div>
-                      <span className="text-xs text-page-secondary">
-                        {(entry.accounts || []).length} 个账号
-                      </span>
-                    </div>
-                    <div className="mt-3 space-y-2">
-                      {(entry.accounts || []).map((account) => (
-                        <div
-                          key={account.id}
-                          className="flex items-center gap-2 rounded-lg bg-page-inset px-3 py-2 text-sm"
-                        >
-                          <span className="min-w-0 flex-1 truncate text-page">
-                            {account.name || `Account #${account.id}`}
-                          </span>
-                          {account.proxy_bound && (
-                            <span className="shrink-0 rounded border border-page-divider px-1.5 py-0.5 text-[10px] text-page-muted">
-                              专属代理
-                            </span>
-                          )}
-                          <button
-                            type="button"
-                            className="rounded p-1.5 text-page-link hover:bg-page-surface-hover"
-                            title={
-                              account.status === "active" ? "停用" : "启用"
-                            }
-                            aria-label={
-                              account.status === "active" ? "停用" : "启用"
-                            }
-                            onClick={async () => {
-                              await updateSharedAccountStatus(
-                                account.id,
-                                account.status !== "active",
-                              );
-                              await load();
-                            }}
-                          >
-                            <Power size={15} />
-                          </button>
-                          <button
-                            type="button"
-                            className="rounded p-1.5 text-page-danger hover:bg-page-surface-hover"
-                            title="删除"
-                            aria-label="删除"
-                            onClick={async () => {
-                              await deleteSharedAccount(account.id);
-                              await load();
-                            }}
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </section>
-
-          <div className="space-y-5">
-            <section className="rounded-lg border border-page-divider bg-page-surface p-5">
-              <div className="flex items-center gap-2">
-                <ShieldCheck size={18} className="text-page-link" />
-                <h2 className="font-semibold text-page">安全授权导入</h2>
-              </div>
-              <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
-                <label>
-                  <span className="mb-1.5 block text-sm font-medium text-page-label">
-                    平台
-                  </span>
-                  <select
-                    className="input"
-                    value={oauthForm.platform}
-                    onChange={(event) =>
-                      changeOAuthPlatform(event.target.value)
-                    }
-                  >
-                    {oauthPlatforms.map((platform) => (
-                      <option key={platform.value} value={platform.value}>
-                        {platform.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                {oauthForm.platform === "anthropic" && (
-                  <label>
-                    <span className="mb-1.5 block text-sm font-medium text-page-label">
-                      授权类型
-                    </span>
-                    <select
-                      className="input"
-                      value={oauthForm.account_type}
-                      onChange={(event) => {
-                        setOAuthForm((previous) => ({
-                          ...previous,
-                          account_type: event.target.value,
-                        }));
-                        setOAuthSession(null);
-                        setOAuthCode("");
-                      }}
-                    >
-                      <option value="oauth">OAuth</option>
-                      <option value="setup-token">Setup Token</option>
-                    </select>
-                  </label>
-                )}
-                {oauthForm.platform === "gemini" && (
-                  <>
-                    <label>
-                      <span className="mb-1.5 block text-sm font-medium text-page-label">
-                        OAuth 类型
-                      </span>
-                      <select
-                        className="input"
-                        value={oauthForm.oauth_type}
-                        onChange={(event) =>
-                          setOAuthForm((previous) => ({
-                            ...previous,
-                            oauth_type: event.target.value,
-                          }))
-                        }
-                      >
-                        <option value="code_assist">Code Assist</option>
-                      </select>
-                    </label>
-                    <label>
-                      <span className="mb-1.5 block text-sm font-medium text-page-label">
-                        Project ID
-                      </span>
-                      <input
-                        className="input"
-                        value={oauthForm.project_id}
-                        onChange={(event) =>
-                          setOAuthForm((previous) => ({
-                            ...previous,
-                            project_id: event.target.value,
-                          }))
-                        }
-                        placeholder="可选"
-                      />
-                    </label>
-                  </>
-                )}
-                <label>
-                  <span className="mb-1.5 block text-sm font-medium text-page-label">
-                    账号名称
-                  </span>
-                  <input
-                    className="input"
-                    value={oauthForm.name}
-                    onChange={(event) =>
-                      setOAuthForm((previous) => ({
-                        ...previous,
-                        name: event.target.value,
-                      }))
-                    }
-                    placeholder="可选"
-                  />
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <label>
-                    <span className="mb-1.5 block text-sm font-medium text-page-label">
-                      并发
-                    </span>
-                    <input
-                      type="number"
-                      min="1"
-                      className="input"
-                      value={oauthForm.concurrency}
-                      onChange={(event) =>
-                        setOAuthForm((previous) => ({
-                          ...previous,
-                          concurrency: event.target.value,
-                        }))
-                      }
-                    />
-                  </label>
-                  <label>
-                    <span className="mb-1.5 block text-sm font-medium text-page-label">
-                      优先级
-                    </span>
-                    <input
-                      type="number"
-                      className="input"
-                      value={oauthForm.priority}
-                      onChange={(event) =>
-                        setOAuthForm((previous) => ({
-                          ...previous,
-                          priority: event.target.value,
-                        }))
-                      }
-                    />
-                  </label>
-                </div>
-                <div className="rounded-lg border border-page-divider p-3">
-                  <label className="flex items-start justify-between gap-3">
-                    <span>
-                      <span className="block text-sm font-medium text-page-label">
-                        绑定专属代理 IP
-                      </span>
-                      <span className="mt-1 block text-xs leading-5 text-page-muted">
-                        仅绑定当前账号，提交前测试连通性；只允许公网 IP。
-                      </span>
-                    </span>
-                    <input
-                      type="checkbox"
-                      checked={oauthForm.proxy_enabled}
-                      onChange={(event) =>
-                        setOAuthForm((previous) => ({
-                          ...previous,
-                          proxy_enabled: event.target.checked,
-                        }))
-                      }
-                      className="mt-1 h-4 w-4"
-                    />
-                  </label>
-                  {oauthForm.proxy_enabled && (
-                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                      <label>
-                        <span className="mb-1.5 block text-sm font-medium text-page-label">
-                          协议
-                        </span>
-                        <select
-                          className="input"
-                          value={oauthForm.proxy_protocol}
-                          onChange={(event) =>
-                            setOAuthForm((previous) => ({
-                              ...previous,
-                              proxy_protocol: event.target.value,
-                            }))
-                          }
-                        >
-                          <option value="http">HTTP</option>
-                          <option value="https">HTTPS</option>
-                          <option value="socks5">SOCKS5</option>
-                          <option value="socks5h">SOCKS5H</option>
-                        </select>
-                      </label>
-                      <label>
-                        <span className="mb-1.5 block text-sm font-medium text-page-label">
-                          公网 IP
-                        </span>
-                        <input
-                          className="input font-mono"
-                          value={oauthForm.proxy_host}
-                          onChange={(event) =>
-                            setOAuthForm((previous) => ({
-                              ...previous,
-                              proxy_host: event.target.value,
-                            }))
-                          }
-                          placeholder="8.8.8.8"
-                        />
-                      </label>
-                      <label>
-                        <span className="mb-1.5 block text-sm font-medium text-page-label">
-                          端口
-                        </span>
-                        <input
-                          type="number"
-                          min="1"
-                          max="65535"
-                          className="input"
-                          value={oauthForm.proxy_port}
-                          onChange={(event) =>
-                            setOAuthForm((previous) => ({
-                              ...previous,
-                              proxy_port: event.target.value,
-                            }))
-                          }
-                          placeholder="1080"
-                        />
-                      </label>
-                      <label>
-                        <span className="mb-1.5 block text-sm font-medium text-page-label">
-                          用户名（可选）
-                        </span>
-                        <input
-                          className="input"
-                          value={oauthForm.proxy_username}
-                          onChange={(event) =>
-                            setOAuthForm((previous) => ({
-                              ...previous,
-                              proxy_username: event.target.value,
-                            }))
-                          }
-                          autoComplete="off"
-                        />
-                      </label>
-                      <label className="sm:col-span-2">
-                        <span className="mb-1.5 block text-sm font-medium text-page-label">
-                          密码（可选）
-                        </span>
-                        <input
-                          type="password"
-                          className="input"
-                          value={oauthForm.proxy_password}
-                          onChange={(event) =>
-                            setOAuthForm((previous) => ({
-                              ...previous,
-                              proxy_password: event.target.value,
-                            }))
-                          }
-                          autoComplete="new-password"
-                        />
-                      </label>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {oauthForm.platform === "grok" &&
-                oauthCapabilities?.password_auth_enabled && (
-                  <p className="mt-3 text-xs leading-5 text-page-muted">
-                    上游支持密码授权；本站贡献入口固定使用 OAuth。
-                  </p>
-                )}
-
-              <button
-                type="button"
-                className="btn-primary mt-4 w-full"
-                onClick={beginOAuth}
-                disabled={oauthStarting}
-              >
-                {oauthStarting ? (
-                  <Loader2 size={16} className="mr-2 animate-spin" />
-                ) : (
-                  <ExternalLink size={16} className="mr-2" />
-                )}
-                生成并打开授权链接
-              </button>
-
-              {oauthSession && (
-                <div className="mt-5 border-t border-page-divider pt-5">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex min-w-0 items-center gap-2 text-sm font-medium text-page">
-                      <KeyRound size={16} className="shrink-0 text-page-link" />
-                      <span className="truncate">等待授权回调</span>
-                    </div>
-                    <button
-                      type="button"
-                      className="text-xs text-page-link hover:underline"
-                      onClick={() =>
-                        openAuthorizationWindow(oauthSession.auth_url)
-                      }
-                    >
-                      重新打开
-                    </button>
-                  </div>
-                  {oauthSession.expires_at && (
-                    <p className="mt-2 text-xs text-page-muted">
-                      有效期至{" "}
-                      {new Date(oauthSession.expires_at).toLocaleString()}
-                    </p>
-                  )}
-                  <textarea
-                    className="input mt-3 min-h-24 resize-y font-mono text-xs"
-                    value={oauthCode}
-                    onChange={(event) => setOAuthCode(event.target.value)}
-                    placeholder="粘贴回调链接或 Code"
-                    spellCheck={false}
-                  />
-                  <button
-                    type="button"
-                    className="btn-primary mt-3 w-full"
-                    onClick={finishOAuth}
-                    disabled={oauthCompleting}
-                  >
-                    {oauthCompleting && (
-                      <Loader2 size={16} className="mr-2 animate-spin" />
-                    )}
-                    完成授权并导入
-                  </button>
-                </div>
-              )}
-            </section>
-
-            <details className="rounded-lg border border-page-divider bg-page-surface p-5">
-              <summary className="cursor-pointer text-sm font-medium text-page">
-                高级 JSON 导入
-              </summary>
-              <p className="mt-3 text-xs leading-5 text-page-muted">
-                用于服务账号或 Bedrock。OAuth 账号请使用安全授权入口。
-              </p>
-              <textarea
-                value={accountJson}
-                onChange={(event) => setAccountJson(event.target.value)}
-                className="input mt-3 min-h-64 resize-y font-mono text-xs"
-                spellCheck={false}
-              />
-              <button
-                type="button"
-                className="btn-secondary mt-3 w-full"
-                onClick={importAccounts}
-              >
-                <Plus size={16} className="mr-2" />
-                导入账号
-              </button>
-            </details>
-          </div>
-        </div>
+      {tab === "hosting" && (
+        <HostedAccounts
+          rows={hostedAccounts}
+          onAdd={() => {
+            setInitialImportPlatform("");
+            setImportOpen(true);
+          }}
+          onToggle={async (account, enabled) => {
+            await updateSharedAccountStatus(account.id, enabled);
+            await load();
+          }}
+          onDelete={async (account) => {
+            if (!window.confirm("确认删除这个共享账号？")) return;
+            await deleteSharedAccount(account.id);
+            toast.success("已删除");
+            await load();
+          }}
+        />
       )}
 
       {tab === "earnings" && (
+        <section className="mt-6">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-page">收益明细</h2>
+            <p className="mt-1 text-sm text-page-muted">
+              每笔收益对应真实用量，并按调用发生时保存的分成比例计算。
+            </p>
+          </div>
+          <div className="overflow-x-auto rounded-lg border border-page-divider">
+            <table className="w-full min-w-[840px] text-sm">
+              <thead className="bg-page-inset text-left text-page-muted">
+                <tr>
+                  <th className="px-4 py-3">调用时间</th>
+                  <th className="px-4 py-3">托管账号</th>
+                  <th className="px-4 py-3">模型</th>
+                  <th className="px-4 py-3 text-right">计费金额</th>
+                  <th className="px-4 py-3 text-right">分成比例</th>
+                  <th className="px-4 py-3 text-right">收益</th>
+                  <th className="px-4 py-3">释放状态</th>
+                </tr>
+              </thead>
+              <tbody>
+                {earningRows.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="px-4 py-12 text-center text-page-muted"
+                    >
+                      暂无收益记录
+                    </td>
+                  </tr>
+                ) : (
+                  earningRows.map((item) => (
+                    <tr
+                      key={item.id}
+                      className="border-t border-page-divider text-page"
+                    >
+                      <td className="px-4 py-3">
+                        {item.created_at
+                          ? new Date(item.created_at).toLocaleString()
+                          : "-"}
+                      </td>
+                      <td className="px-4 py-3">
+                        {item.account_name ||
+                          item.plan_title ||
+                          `Supply #${item.supply_id}`}
+                      </td>
+                      <td className="px-4 py-3 font-mono text-xs">
+                        {item.model_name || "-"}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        {fmt(Number(item.charged_quota || 0) / Q, 6)}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        {(Number(item.revenue_bps || 0) / 100).toFixed(1)}%
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        {fmt(Number(item.amount_quota || 0) / Q, 6)}
+                      </td>
+                      <td className="px-4 py-3">
+                        {item.released_at ? "已释放" : "待释放"}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {tab === "rules" && (
+        <section className="mt-6 space-y-5">
+          <div>
+            <h2 className="text-lg font-semibold text-page">托管规则与分成</h2>
+            <p className="mt-1 text-sm text-page-muted">
+              贡献者分成遵循平台套餐配置；分站订单剩余抽成由站长与主平台各获得
+              50%。
+            </p>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+            {planCatalog.map((plan) => (
+              <div
+                key={plan.id}
+                className="rounded-lg border border-page-divider bg-page-surface p-4"
+              >
+                <p className="font-medium text-page">{plan.title}</p>
+                <p className="mt-3 text-xs text-page-muted">贡献者分成</p>
+                <p className="mt-1 text-xl font-semibold text-page">
+                  {(Number(plan.contributor_revenue_bps || 0) / 100).toFixed(1)}
+                  %
+                </p>
+              </div>
+            ))}
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            {[
+              [
+                "01",
+                "即时上线与套餐检测",
+                "OAuth 账号导入并通过测试后立即进入调度，套餐和模型自动识别。",
+              ],
+              [
+                "02",
+                "按真实用量计费",
+                "只有账号实际承担且成功计费的请求才会生成收益记录。",
+              ],
+              [
+                "03",
+                "7 天收益成熟期",
+                "新收益先进入待释放状态，成熟后转为可用收益。",
+              ],
+              [
+                "04",
+                "账号自主控制",
+                "可随时暂停、恢复或移除账号，暂停后不再承接新请求。",
+              ],
+              [
+                "05",
+                "分站抽成结算",
+                "贡献者分成后的抽成，50% 进入站长收益，50% 留给主平台。",
+              ],
+            ].map(([index, title, description]) => (
+              <article
+                key={index}
+                className="border-t-2 border-page-divider pt-3"
+              >
+                <span className="text-xs font-semibold text-page-link">
+                  {index}
+                </span>
+                <h3 className="mt-2 text-sm font-semibold text-page">
+                  {title}
+                </h3>
+                <p className="mt-2 text-xs leading-5 text-page-muted">
+                  {description}
+                </p>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {tab === "settlement" && (
         <div className="mt-6 space-y-6">
           <div className="grid gap-3 sm:grid-cols-3">
             <Metric
@@ -932,40 +796,6 @@ export default function SharedSubscriptions() {
             </section>
           </div>
           <section>
-            <h2 className="text-lg font-semibold text-page">收益明细</h2>
-            <div className="mt-3 overflow-x-auto rounded-lg border border-page-divider">
-              <table className="w-full min-w-[720px] text-sm">
-                <thead className="bg-page-inset text-left text-page-muted">
-                  <tr>
-                    <th className="px-4 py-3">时间</th>
-                    <th className="px-4 py-3">计划</th>
-                    <th className="px-4 py-3">类型</th>
-                    <th className="px-4 py-3 text-right">金额</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(earnings.items || []).map((item) => (
-                    <tr
-                      key={item.id}
-                      className="border-t border-page-divider text-page"
-                    >
-                      <td className="px-4 py-3">
-                        {item.created_at
-                          ? new Date(item.created_at).toLocaleString()
-                          : "-"}
-                      </td>
-                      <td className="px-4 py-3">{item.plan_title || "-"}</td>
-                      <td className="px-4 py-3">{item.entry_type}</td>
-                      <td className="px-4 py-3 text-right">
-                        {fmt(Number(item.amount_quota || 0) / Q, 6)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-          <section>
             <h2 className="text-lg font-semibold text-page">提现记录</h2>
             <div className="mt-3 space-y-2">
               {payouts.map((item) => (
@@ -997,7 +827,930 @@ export default function SharedSubscriptions() {
           </section>
         </div>
       )}
+
+      <SharedAccountImportDialog
+        open={importOpen}
+        initialPlatform={initialImportPlatform}
+        onClose={() => setImportOpen(false)}
+        onDone={async () => {
+          setImportOpen(false);
+          await load();
+        }}
+      />
+      <BatchImportDialog
+        open={batchOpen}
+        onClose={() => setBatchOpen(false)}
+        onDone={async () => {
+          setBatchOpen(false);
+          await load();
+        }}
+      />
+
+      {generatedToken && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div
+            className="w-full max-w-lg rounded-lg border border-page-divider p-5 shadow-xl"
+            style={{ background: "var(--page-bg)" }}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-semibold text-page">
+                  共享订阅 Key 已生成
+                </h2>
+                <p className="mt-1 text-sm text-page-muted">
+                  Key 只显示在当前窗口，请妥善保管。
+                </p>
+              </div>
+              <button
+                type="button"
+                className="text-page-muted"
+                onClick={() => setGeneratedToken(null)}
+              >
+                关闭
+              </button>
+            </div>
+            <div className="mt-4 flex items-center gap-2 rounded-lg border border-page-divider bg-page-inset p-3">
+              <code className="min-w-0 flex-1 break-all text-xs text-page">
+                sk-{generatedToken.key}
+              </code>
+              <button
+                type="button"
+                className="btn-secondary shrink-0"
+                onClick={async () => {
+                  await navigator.clipboard.writeText(
+                    `sk-${generatedToken.key}`,
+                  );
+                  toast.success("已复制");
+                }}
+              >
+                <Copy size={15} className="mr-1.5" />
+                复制
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+const sharedAccountTypes = {
+  anthropic: [
+    ["oauth", "Claude Code OAuth"],
+    ["setup-token", "Claude Code Setup Token"],
+    ["bedrock", "AWS Bedrock (SigV4)"],
+    ["service_account", "Vertex Service Account"],
+  ],
+  openai: [["oauth", "ChatGPT OAuth"]],
+  gemini: [
+    ["oauth:code_assist", "Gemini OAuth (Code Assist)"],
+    ["oauth:google_one", "Gemini OAuth (Google One)"],
+    ["service_account", "Vertex Service Account"],
+  ],
+  antigravity: [["oauth", "OAuth"]],
+  grok: [["oauth", "OAuth"]],
+};
+
+const platformLabels = {
+  anthropic: "Anthropic",
+  openai: "OpenAI",
+  gemini: "Gemini",
+  antigravity: "Antigravity",
+  grok: "Grok",
+};
+
+function ModalShell({ open, title, description, onClose, children, footer }) {
+  if (!open) return null;
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4"
+      role="presentation"
+    >
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        className="flex max-h-[calc(100vh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-lg border border-page-divider shadow-2xl"
+        style={{ background: "var(--page-bg)" }}
+      >
+        <header className="flex items-start justify-between gap-4 border-b border-page-divider px-5 py-4">
+          <div>
+            <h2 className="text-lg font-semibold text-page">{title}</h2>
+            {description && (
+              <p className="mt-1 text-sm text-page-muted">{description}</p>
+            )}
+          </div>
+          <button
+            type="button"
+            className="rounded p-1.5 text-page-muted hover:bg-page-inset hover:text-page"
+            onClick={onClose}
+            title="关闭"
+            aria-label="关闭"
+          >
+            <X size={18} />
+          </button>
+        </header>
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+          {children}
+        </div>
+        {footer && (
+          <footer className="flex justify-end gap-2 border-t border-page-divider px-5 py-4">
+            {footer}
+          </footer>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
+  const [platform, setPlatform] = useState("openai");
+  const [accountType, setAccountType] = useState("oauth");
+  const [authInput, setAuthInput] = useState("");
+  const [authURL, setAuthURL] = useState("");
+  const [authState, setAuthState] = useState("");
+  const [providerState, setProviderState] = useState("");
+  const [serviceAccountJSON, setServiceAccountJSON] = useState("");
+  const [awsAccessKeyID, setAWSAccessKeyID] = useState("");
+  const [awsSecretAccessKey, setAWSSecretAccessKey] = useState("");
+  const [awsSessionToken, setAWSSessionToken] = useState("");
+  const [awsRegion, setAWSRegion] = useState("us-east-1");
+  const [proxyEnabled, setProxyEnabled] = useState(false);
+  const [proxyProtocol, setProxyProtocol] = useState("socks5");
+  const [proxyHost, setProxyHost] = useState("");
+  const [proxyPort, setProxyPort] = useState("");
+  const [proxyUsername, setProxyUsername] = useState("");
+  const [proxyPassword, setProxyPassword] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const normalizedAccountType = accountType.startsWith("oauth:")
+    ? "oauth"
+    : accountType;
+  const oauthType = accountType.startsWith("oauth:")
+    ? accountType.split(":")[1]
+    : "";
+  const oauthAccount =
+    normalizedAccountType === "oauth" ||
+    normalizedAccountType === "setup-token";
+
+  useEffect(() => {
+    if (!open) return;
+    const nextPlatform = sharedAccountTypes[initialPlatform]
+      ? initialPlatform
+      : "openai";
+    setPlatform(nextPlatform);
+    setAccountType(sharedAccountTypes[nextPlatform][0][0]);
+    setAuthInput("");
+    setAuthURL("");
+    setAuthState("");
+    setProviderState("");
+    setServiceAccountJSON("");
+    setAWSAccessKeyID("");
+    setAWSSecretAccessKey("");
+    setAWSSessionToken("");
+    setAWSRegion("us-east-1");
+    setProxyEnabled(false);
+    setProxyProtocol("socks5");
+    setProxyHost("");
+    setProxyPort("");
+    setProxyUsername("");
+    setProxyPassword("");
+  }, [initialPlatform, open]);
+
+  const resetAuthorization = () => {
+    setAuthURL("");
+    setAuthState("");
+    setProviderState("");
+    setAuthInput("");
+  };
+
+  const selectPlatform = (value) => {
+    setPlatform(value);
+    setAccountType(sharedAccountTypes[value][0][0]);
+    resetAuthorization();
+  };
+
+  const proxyPayload = () => {
+    if (!proxyEnabled) return undefined;
+    const proxy = {
+      protocol: proxyProtocol,
+      host: proxyHost.trim(),
+      port: Number(proxyPort || 0),
+      username: proxyUsername.trim(),
+      password: proxyPassword,
+    };
+    if (!proxy.host || proxy.port <= 0 || proxy.port > 65535) {
+      throw new Error("请输入有效的公网代理主机和端口");
+    }
+    return proxy;
+  };
+
+  const applyProxyString = (value) => {
+    const parsed = parseSharedProxyInput(value, proxyProtocol);
+    if (!parsed) {
+      toast.error("无法识别代理格式，请检查主机、端口和认证信息");
+      return false;
+    }
+    setProxyProtocol(parsed.protocol);
+    setProxyHost(parsed.host);
+    setProxyPort(parsed.port);
+    setProxyUsername(parsed.username);
+    setProxyPassword(parsed.password);
+    toast.success("已自动识别代理信息");
+    return true;
+  };
+
+  const pasteProxyString = async () => {
+    try {
+      const value = await navigator.clipboard.readText();
+      applyProxyString(value);
+    } catch {
+      toast.error("无法读取剪贴板，请直接粘贴到主机输入框");
+    }
+  };
+
+  const handleProxyFieldPaste = (event) => {
+    const value = event.clipboardData?.getData("text") || "";
+    if (!parseSharedProxyInput(value, proxyProtocol)) return;
+    event.preventDefault();
+    applyProxyString(value);
+  };
+
+  const startOAuth = async () => {
+    setGenerating(true);
+    try {
+      const response = await startSharedOAuth({
+        platform,
+        account_type: normalizedAccountType,
+        oauth_type: oauthType,
+      });
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || "OAuth 启动失败");
+      }
+      const session = dataOf(response);
+      setAuthURL(session.auth_url || "");
+      setAuthState(session.state || "");
+      setProviderState(providerStateFromURL(session.auth_url || ""));
+      setAuthInput("");
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || error.message || "OAuth 启动失败",
+      );
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const completeOAuth = async () => {
+    if (!authState) {
+      toast.error("请先生成授权链接");
+      return;
+    }
+    if (!authInput.trim()) {
+      toast.error("请输入授权链接或 Code");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const response = await completeSharedOAuth({
+        state: authState,
+        provider_state: providerState,
+        code: authInput.trim(),
+        concurrency: 1,
+        priority: 0,
+        proxy: proxyPayload(),
+      });
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || "接入失败");
+      }
+      toast.success("账号已接入，套餐已自动识别");
+      await onDone();
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message || "接入失败");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const submitDirectAccount = async () => {
+    let credentials;
+    if (accountType === "bedrock") {
+      if (!awsAccessKeyID.trim() || !awsSecretAccessKey.trim()) {
+        toast.error("请输入 AWS SigV4 凭证");
+        return;
+      }
+      credentials = {
+        auth_mode: "sigv4",
+        aws_access_key_id: awsAccessKeyID.trim(),
+        aws_secret_access_key: awsSecretAccessKey.trim(),
+        aws_region: awsRegion.trim() || "us-east-1",
+      };
+      if (awsSessionToken.trim()) {
+        credentials.aws_session_token = awsSessionToken.trim();
+      }
+    } else {
+      if (!serviceAccountJSON.trim()) {
+        toast.error("请输入 Service Account JSON");
+        return;
+      }
+      try {
+        JSON.parse(serviceAccountJSON);
+      } catch {
+        toast.error("Service Account JSON 格式无效");
+        return;
+      }
+      credentials = {
+        service_account_json: serviceAccountJSON.trim(),
+        tier_id: "vertex",
+      };
+    }
+    setSubmitting(true);
+    try {
+      const response = await importSharedAccounts([
+        {
+          name: "",
+          platform,
+          type: normalizedAccountType,
+          credentials,
+          concurrency: 1,
+          priority: 0,
+          proxy: proxyPayload(),
+        },
+      ]);
+      if (!response.data?.success || !response.data?.data?.succeeded) {
+        throw new Error(
+          response.data?.message ||
+            response.data?.data?.items?.[0]?.message ||
+            "接入失败",
+        );
+      }
+      toast.success("账号已接入，套餐已自动识别");
+      await onDone();
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message || "接入失败");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const callbackExample =
+    platform === "grok"
+      ? "http://127.0.0.1:56121/callback?code=...&state=..."
+      : "http://localhost:xxxx/callback?code=...";
+
+  return (
+    <ModalShell
+      open={open}
+      title="添加共享账号"
+      description="选择平台和账号类型后授权，系统会自动识别套餐并归入对应共享池。"
+      onClose={onClose}
+      footer={
+        <>
+          <button type="button" className="btn-secondary" onClick={onClose}>
+            取消
+          </button>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={oauthAccount ? completeOAuth : submitDirectAccount}
+            disabled={submitting || generating}
+          >
+            {submitting && <Loader2 size={15} className="mr-2 animate-spin" />}
+            {submitting ? "正在验证账号" : "提交"}
+          </button>
+        </>
+      }
+    >
+      <div className="space-y-5">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="text-sm font-medium text-page-label">
+            平台
+            <select
+              className="input mt-2"
+              value={platform}
+              onChange={(event) => selectPlatform(event.target.value)}
+            >
+              {Object.entries(platformLabels).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-sm font-medium text-page-label">
+            账号类型
+            <select
+              className="input mt-2"
+              value={accountType}
+              onChange={(event) => {
+                setAccountType(event.target.value);
+                resetAuthorization();
+              }}
+            >
+              {sharedAccountTypes[platform].map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <section className="border-t border-page-divider pt-4">
+          <label className="flex items-start justify-between gap-4">
+            <span>
+              <span className="block text-sm font-medium text-page-label">
+                绑定专属代理
+              </span>
+              <span className="mt-1 block text-xs leading-5 text-page-muted">
+                可选。代理仅绑定当前托管账号，提交前会测试连通性；支持公网 IP
+                或域名。
+              </span>
+            </span>
+            <input
+              type="checkbox"
+              checked={proxyEnabled}
+              onChange={(event) => setProxyEnabled(event.target.checked)}
+              className="mt-1 h-4 w-4 shrink-0"
+            />
+          </label>
+          {proxyEnabled && (
+            <div className="mt-4 grid gap-4 sm:grid-cols-3">
+              <div className="flex flex-wrap items-center gap-3 sm:col-span-3">
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={pasteProxyString}
+                >
+                  <ClipboardPaste size={14} className="mr-2" />
+                  粘贴并自动识别
+                </button>
+                <span className="text-xs text-page-muted">
+                  支持 URL、主机:端口:用户名:密码等常见格式
+                </span>
+              </div>
+              <label className="text-sm font-medium text-page-label">
+                协议
+                <select
+                  className="input mt-2"
+                  value={proxyProtocol}
+                  onChange={(event) => setProxyProtocol(event.target.value)}
+                >
+                  <option value="http">HTTP</option>
+                  <option value="https">HTTPS</option>
+                  <option value="socks5">SOCKS5</option>
+                  <option value="socks5h">SOCKS5H</option>
+                </select>
+              </label>
+              <label className="text-sm font-medium text-page-label sm:col-span-2">
+                公网 IP / 域名
+                <input
+                  className="input mt-2 font-mono"
+                  value={proxyHost}
+                  onChange={(event) => setProxyHost(event.target.value)}
+                  onPaste={handleProxyFieldPaste}
+                  placeholder="48.45.22.14 或 proxy.example.com"
+                />
+              </label>
+              <label className="text-sm font-medium text-page-label">
+                端口
+                <input
+                  className="input mt-2"
+                  type="number"
+                  min="1"
+                  max="65535"
+                  value={proxyPort}
+                  onChange={(event) => setProxyPort(event.target.value)}
+                  placeholder="1080"
+                />
+              </label>
+              <label className="text-sm font-medium text-page-label">
+                用户名（可选）
+                <input
+                  className="input mt-2"
+                  value={proxyUsername}
+                  onChange={(event) => setProxyUsername(event.target.value)}
+                  autoComplete="off"
+                />
+              </label>
+              <label className="text-sm font-medium text-page-label">
+                密码（可选）
+                <input
+                  className="input mt-2"
+                  type="password"
+                  value={proxyPassword}
+                  onChange={(event) => setProxyPassword(event.target.value)}
+                  autoComplete="new-password"
+                />
+              </label>
+            </div>
+          )}
+        </section>
+
+        {oauthAccount ? (
+          <section className="space-y-5 border-t border-page-divider pt-4">
+            <Step number="1" title="生成授权链接">
+              <button
+                type="button"
+                className="btn-primary mt-3"
+                onClick={startOAuth}
+                disabled={generating || submitting}
+              >
+                {generating && (
+                  <Loader2 size={14} className="mr-2 animate-spin" />
+                )}
+                {authURL ? "重新生成" : "生成授权链接"}
+              </button>
+            </Step>
+            {authURL && (
+              <div className="flex min-w-0 items-center gap-2">
+                <input
+                  readOnly
+                  value={authURL}
+                  className="input min-w-0 font-mono text-xs"
+                />
+                <button
+                  type="button"
+                  className="btn-secondary shrink-0"
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(authURL);
+                    toast.success("已复制");
+                  }}
+                  title="复制授权链接"
+                  aria-label="复制授权链接"
+                >
+                  <Copy size={15} />
+                </button>
+              </div>
+            )}
+            <Step number="2" title="在浏览器中完成授权">
+              <p className="mt-1 text-sm text-page-muted">
+                登录您的 {platformLabels[platform]} 账户并完成授权。
+              </p>
+              {authURL && (
+                <button
+                  type="button"
+                  className="btn-secondary mt-3"
+                  onClick={() => openAuthorizationWindow(authURL)}
+                >
+                  <ExternalLink size={14} className="mr-2" />
+                  打开授权链接
+                </button>
+              )}
+            </Step>
+            <Step number="3" title="输入授权链接或 Code">
+              <textarea
+                value={authInput}
+                onChange={(event) => setAuthInput(event.target.value)}
+                rows={4}
+                spellCheck={false}
+                className="input mt-3 min-h-24 resize-y font-mono text-xs"
+                placeholder={`完整回调链接，例如\n${callbackExample}\n\n或仅输入 code 参数值`}
+              />
+              <p className="mt-2 text-xs text-page-muted">
+                支持完整 callback URL、查询字符串或裸 code。
+              </p>
+            </Step>
+          </section>
+        ) : accountType === "bedrock" ? (
+          <section className="grid gap-4 border-t border-page-divider pt-4 sm:grid-cols-2">
+            <CredentialInput
+              label="AWS Access Key ID"
+              value={awsAccessKeyID}
+              onChange={setAWSAccessKeyID}
+            />
+            <CredentialInput
+              label="AWS Secret Access Key"
+              value={awsSecretAccessKey}
+              onChange={setAWSSecretAccessKey}
+              secret
+            />
+            <CredentialInput
+              label="AWS Region"
+              value={awsRegion}
+              onChange={setAWSRegion}
+            />
+            <CredentialInput
+              label="AWS Session Token（可选）"
+              value={awsSessionToken}
+              onChange={setAWSSessionToken}
+              secret
+            />
+          </section>
+        ) : (
+          <label className="block border-t border-page-divider pt-4 text-sm font-medium text-page-label">
+            Service Account JSON
+            <textarea
+              value={serviceAccountJSON}
+              onChange={(event) => setServiceAccountJSON(event.target.value)}
+              rows={8}
+              spellCheck={false}
+              className="input mt-2 min-h-40 resize-y font-mono text-xs"
+              placeholder='{ "type": "service_account", ... }'
+            />
+          </label>
+        )}
+      </div>
+    </ModalShell>
+  );
+}
+
+function Step({ number, title, children }) {
+  return (
+    <div className="flex gap-3">
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-page-link text-xs font-semibold text-white">
+        {number}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="text-sm font-semibold text-page">{title}</div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function CredentialInput({ label, value, onChange, secret = false }) {
+  return (
+    <label className="text-sm font-medium text-page-label">
+      {label}
+      <input
+        className="input mt-2"
+        type={secret ? "password" : "text"}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        autoComplete="off"
+      />
+    </label>
+  );
+}
+
+function BatchImportDialog({ open, onClose, onDone }) {
+  const fileInputRef = useRef(null);
+  const [backup, setBackup] = useState(null);
+  const [fileName, setFileName] = useState("");
+  const [result, setResult] = useState(null);
+  const [importing, setImporting] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setBackup(null);
+    setFileName("");
+    setResult(null);
+  }, [open]);
+
+  const selectFile = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setFileName(file.name);
+    setBackup(null);
+    setResult(null);
+    try {
+      if (!file.name.toLowerCase().endsWith(".json")) {
+        throw new Error("请选择 JSON (.json) 文件");
+      }
+      const parsed = parseSharedAccountBackup(await file.text());
+      setBackup(parsed);
+      if (!parsed.oauthAccounts.length) {
+        toast.error("文件中没有可导入的 OAuth 账号");
+      }
+    } catch (error) {
+      toast.error(error.message || "账号备份文件解析失败");
+    }
+  };
+
+  const importAccounts = async () => {
+    if (!backup?.oauthAccounts?.length) {
+      toast.error("请先选择包含 OAuth 账号的 JSON 备份文件");
+      return;
+    }
+    setImporting(true);
+    try {
+      const response = await importSharedAccounts(backup.oauthAccounts, true);
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || "批量导入失败");
+      }
+      const data = response.data?.data || {};
+      const nextResult = {
+        succeeded: Number(data.succeeded || 0),
+        failed: Number(data.failed || 0),
+        skipped: Number(data.skipped || 0) + Number(backup.skipped || 0),
+      };
+      setResult(nextResult);
+      const message = `已导入 ${nextResult.succeeded} 个，跳过 ${nextResult.skipped} 个，失败 ${nextResult.failed} 个`;
+      if (nextResult.failed > 0 || nextResult.succeeded === 0) {
+        toast.error(message);
+      } else {
+        toast.success(message);
+      }
+      if (nextResult.succeeded > 0) await onDone();
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || error.message || "批量导入失败",
+      );
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  return (
+    <ModalShell
+      open={open}
+      title="批量导入托管账号"
+      description="上传账号管理页面导出的 JSON 文件，一次最多导入 200 个 OAuth 账号。"
+      onClose={onClose}
+      footer={
+        <>
+          <button type="button" className="btn-secondary" onClick={onClose}>
+            取消
+          </button>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={importAccounts}
+            disabled={importing || !backup?.oauthAccounts?.length}
+          >
+            {importing && <Loader2 size={15} className="mr-2 animate-spin" />}
+            开始导入
+          </button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <button
+          type="button"
+          className="flex w-full items-center gap-3 rounded-lg border border-dashed border-page-divider bg-page-inset px-4 py-5 text-left"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <FileUp size={20} className="shrink-0 text-page-link" />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-medium text-page">
+              {fileName || "选择 JSON 文件"}
+            </span>
+            <span className="mt-1 block text-xs text-page-muted">
+              仅导入 OAuth 账号，代理和其他认证类型会跳过
+            </span>
+          </span>
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="application/json,.json"
+          className="hidden"
+          onChange={selectFile}
+        />
+        {backup && (
+          <div className="grid grid-cols-3 gap-3 text-sm">
+            <ImportCount label="文件账号" value={backup.total} />
+            <ImportCount label="可导入" value={backup.oauthAccounts.length} />
+            <ImportCount label="跳过" value={backup.skipped} />
+          </div>
+        )}
+        {result && (
+          <p className="text-sm text-page-muted">
+            成功 {result.succeeded} 个，跳过 {result.skipped} 个，失败{" "}
+            {result.failed} 个。
+          </p>
+        )}
+      </div>
+    </ModalShell>
+  );
+}
+
+function ImportCount({ label, value }) {
+  return (
+    <div className="rounded border border-page-divider px-3 py-3 text-page-muted">
+      <span className="text-xs">{label}</span>
+      <strong className="mt-1 block text-lg text-page">{value}</strong>
+    </div>
+  );
+}
+
+function HostedAccounts({ rows, onAdd, onToggle, onDelete }) {
+  return (
+    <section className="mt-6 overflow-hidden rounded-lg border border-page-divider bg-page-surface">
+      <div className="flex flex-col gap-3 border-b border-page-divider px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="font-semibold text-page">我的托管账号</h2>
+          <p className="mt-1 text-sm text-page-muted">
+            账号导入并通过测试后立即进入调度，模型和销售价格会自动同步。
+          </p>
+        </div>
+        <button type="button" className="btn-primary shrink-0" onClick={onAdd}>
+          <UserRoundPlus size={15} className="mr-2" />
+          添加托管账号
+        </button>
+      </div>
+      {rows.length === 0 ? (
+        <div className="px-5 py-14 text-center">
+          <UsersRound size={28} className="mx-auto text-page-muted" />
+          <h3 className="mt-3 font-medium text-page">还没有托管账号</h3>
+          <p className="mt-1 text-sm text-page-muted">
+            添加 Anthropic、OpenAI、Gemini、Antigravity 或 Grok
+            账号，完成后立即贡献容量。
+          </p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[780px] text-left text-sm">
+            <thead className="bg-page-inset text-xs text-page-muted">
+              <tr>
+                <th className="px-5 py-3 font-medium">托管账号</th>
+                <th className="px-5 py-3 font-medium">厂商与套餐</th>
+                <th className="px-5 py-3 font-medium">可用模型</th>
+                <th className="px-5 py-3 font-medium">健康状态</th>
+                <th className="px-5 py-3 text-right font-medium">进入调度</th>
+                <th className="w-14 px-5 py-3" />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-page-divider">
+              {rows.map(({ account, supply, plan }) => {
+                let modelCount = 0;
+                try {
+                  modelCount = JSON.parse(
+                    account.available_models || "[]",
+                  ).length;
+                } catch {}
+                const health = account.error_message
+                  ? "error"
+                  : supply.health_status || account.status;
+                const healthy = ["active", "healthy"].includes(health);
+                return (
+                  <tr key={account.id}>
+                    <td className="px-5 py-4">
+                      <div className="font-medium text-page">
+                        {account.name}
+                      </div>
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-page-muted">
+                        <span>{account.account_type || "oauth"}</span>
+                        {account.proxy_bound && (
+                          <span className="rounded border border-page-divider px-1.5 py-0.5 text-[10px]">
+                            专属代理
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="text-page">
+                        {plan?.title || account.platform}
+                      </div>
+                      <div className="mt-1 text-xs text-page-muted">
+                        {account.detected_tier || plan?.tier || "-"}
+                      </div>
+                    </td>
+                    <td className="px-5 py-4 tabular-nums text-page">
+                      {modelCount}
+                    </td>
+                    <td className="px-5 py-4">
+                      <span
+                        className={
+                          healthy ? "text-page-success" : "text-page-danger"
+                        }
+                      >
+                        {String(health || "-").replaceAll("_", " ")}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={Boolean(account.schedulable)}
+                        aria-label="进入调度"
+                        className={`relative h-6 w-11 rounded-full transition-colors ${
+                          account.schedulable
+                            ? "bg-page-link"
+                            : "bg-page-divider"
+                        }`}
+                        onClick={() => onToggle(account, !account.schedulable)}
+                      >
+                        <span
+                          className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                            account.schedulable
+                              ? "translate-x-5"
+                              : "translate-x-0"
+                          }`}
+                        />
+                      </button>
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      <button
+                        type="button"
+                        className="rounded p-2 text-page-danger hover:bg-page-inset"
+                        onClick={() => onDelete(account)}
+                        title="删除账号"
+                        aria-label="删除账号"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -1010,5 +1763,168 @@ function Metric({ icon: Icon, label, value }) {
       </div>
       <p className="mt-2 text-xl font-bold text-page">{value}</p>
     </div>
+  );
+}
+
+function AvailabilityStrip({ windows = [] }) {
+  const normalized = Array.isArray(windows) ? windows.slice(-3) : [];
+  while (normalized.length < 3) normalized.unshift({ availability: -1 });
+  return (
+    <span className="flex shrink-0 gap-1" title="最近 3 个可用度窗口">
+      {normalized.map((window, index) => {
+        const availability = Number(window?.availability ?? -1);
+        const tone =
+          availability < 0
+            ? "bg-page-divider"
+            : availability >= 95
+              ? "bg-emerald-500"
+              : availability >= 80
+                ? "bg-amber-500"
+                : "bg-red-500";
+        return (
+          <span
+            key={`${window?.bucket_time || index}-${index}`}
+            className={`h-2.5 w-5 rounded-sm ${tone}`}
+          />
+        );
+      })}
+    </span>
+  );
+}
+
+function SharedKeyManager({ tokens, onDelete }) {
+  return (
+    <section className="rounded-lg border border-page-divider bg-page-surface">
+      <div className="border-b border-page-divider px-5 py-4">
+        <h2 className="font-semibold text-page">共享订阅 Key</h2>
+        <p className="mt-1 text-xs text-page-muted">
+          在当前分站生成并管理可调用共享套餐的 API Key。
+        </p>
+      </div>
+      {tokens.length === 0 ? (
+        <p className="px-5 py-10 text-center text-sm text-page-muted">
+          尚未生成共享订阅 Key
+        </p>
+      ) : (
+        <div className="divide-y divide-page-divider">
+          {tokens.map((token) => (
+            <div
+              key={token.id}
+              className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-page">{token.name}</p>
+                <code className="mt-1 block truncate text-xs text-page-muted">
+                  sk-{token.key}
+                </code>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(`sk-${token.key}`);
+                    toast.success("已复制");
+                  }}
+                >
+                  <Copy size={15} className="mr-1.5" />
+                  复制
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary text-page-danger"
+                  onClick={() => onDelete(token)}
+                >
+                  <Trash2 size={15} className="mr-1.5" />
+                  删除
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function PlanAvailabilityPanel({
+  entry,
+  period,
+  data,
+  loading,
+  onPeriodChange,
+  onClose,
+}) {
+  const aggregate = new Map();
+  for (const bucket of data?.buckets || []) {
+    const key = Number(bucket.bucket_time || 0);
+    const current = aggregate.get(key) || { total: 0, successes: 0 };
+    current.total += Number(bucket.total || 0);
+    current.successes += Number(bucket.successes || 0);
+    aggregate.set(key, current);
+  }
+  const buckets = [...aggregate.entries()].sort((a, b) => a[0] - b[0]);
+  return (
+    <section className="rounded-lg border border-page-divider bg-page-surface p-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="font-semibold text-page">
+            {entry.plan.title} 服务状态
+          </h2>
+          <p className="mt-1 text-xs text-page-muted">
+            总可用度{" "}
+            {Number(data?.availability) >= 0
+              ? `${Number(data.availability).toFixed(1)}%`
+              : "暂无数据"}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {["24h", "7d"].map((value) => (
+            <button
+              key={value}
+              type="button"
+              className={period === value ? "btn-primary" : "btn-secondary"}
+              onClick={() => onPeriodChange(value)}
+            >
+              {value === "24h" ? "24 小时" : "7 天"}
+            </button>
+          ))}
+          <button type="button" className="btn-secondary" onClick={onClose}>
+            关闭
+          </button>
+        </div>
+      </div>
+      {loading ? (
+        <div className="flex min-h-28 items-center justify-center">
+          <Loader2 className="animate-spin text-page-link" />
+        </div>
+      ) : buckets.length === 0 ? (
+        <p className="py-10 text-center text-sm text-page-muted">
+          暂无监控数据
+        </p>
+      ) : (
+        <div className="mt-5 flex h-24 items-end gap-1 overflow-hidden">
+          {buckets.map(([time, bucket]) => {
+            const availability =
+              bucket.total > 0 ? (bucket.successes / bucket.total) * 100 : -1;
+            const height = availability < 0 ? 8 : Math.max(8, availability);
+            const tone =
+              availability >= 95
+                ? "bg-emerald-500"
+                : availability >= 80
+                  ? "bg-amber-500"
+                  : "bg-red-500";
+            return (
+              <span
+                key={time}
+                className={`min-w-1 flex-1 rounded-sm ${availability < 0 ? "bg-page-divider" : tone}`}
+                style={{ height: `${height}%` }}
+                title={`${new Date(time * 1000).toLocaleString()} · ${availability < 0 ? "无数据" : `${availability.toFixed(1)}%`}`}
+              />
+            );
+          })}
+        </div>
+      )}
+    </section>
   );
 }
