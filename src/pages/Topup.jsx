@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useSite } from '../context/SiteContext';
-import { ExternalLink, TicketPercent } from 'lucide-react';
+import { ExternalLink, TicketPercent, WalletCards } from 'lucide-react';
 import {
   getUserUsage, redeemCode, getTopupInfo,
   createEpayOrder, createStripeOrder, createCreemOrder,
@@ -12,6 +12,7 @@ import {
 import { useCurrency } from '../context/SiteContext';
 import CountUp from '../components/bits/CountUp';
 import toast from 'react-hot-toast';
+import CryptoTopupReconcileModal from '../components/CryptoTopupReconcileModal';
 
 function normalizeExternalUrl(value) {
   const trimmed = String(value || '').trim();
@@ -139,6 +140,7 @@ export default function Topup() {
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [reconcileRecord, setReconcileRecord] = useState(null);
 
   const enableTopup = site?.enable_topup && topupInfo;
   const topupConfig = site?.topup_config;
@@ -865,9 +867,13 @@ export default function Topup() {
             <p className="text-sm text-page-muted text-center py-8">{t('topup.noHistory')}</p>
           ) : (
             <div className="space-y-2">
-              {history.map((item, i) => (
-                <div key={i} className="flex items-center justify-between glass-sm rounded-xl px-4 py-3">
-                  <div>
+              {history.map((item, i) => {
+                const canReconcile = item.payment_method === 'crypto'
+                  && ['pending', 'expired'].includes(item.status)
+                  && (Number(item.amount) > 0 || Number(item.credited_quota) > 0);
+                return (
+                <div key={item.id || item.trade_no || i} className="flex flex-col gap-3 glass-sm rounded-xl px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
                     <p className="text-sm text-page">
                       {item.currency === 'USD' ? '$' : item.currency === 'CNY' ? '¥' : topupSymbol}
                       {Number(item.display_amount) > 0
@@ -884,22 +890,54 @@ export default function Topup() {
                     <p className="text-xs text-page-muted">
                       {new Date(item.create_time * 1000).toLocaleString()} · {item.payment_method === 'redemption' || !item.payment_method ? t('topup.redeemCode') : item.payment_method}
                     </p>
+                    {item.trade_no && (
+                      <p className="mt-1 truncate font-mono text-[11px] text-page-muted" title={item.trade_no}>
+                        {item.trade_no}
+                      </p>
+                    )}
                   </div>
-                  <span className={`text-xs px-2 py-1 rounded-full ${
-                    item.status === 'success'
-                      ? 'bg-green-500/10 text-page-success'
-                      : item.status === 'pending'
-                        ? 'bg-yellow-500/10 text-page-warning'
-                        : 'bg-red-500/10 text-page-danger'
-                  }`}>
-                    {item.status === 'success' ? t('topup.statusSuccess') : item.status === 'pending' ? t('topup.statusPending') : t('topup.statusFailed')}
-                  </span>
+                  <div className="flex shrink-0 items-center gap-2">
+                    {canReconcile && (
+                      <button
+                        type="button"
+                        onClick={() => setReconcileRecord(item)}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-page-warning/40 px-2.5 py-1.5 text-xs font-medium text-page-warning transition-colors hover:bg-yellow-500/10"
+                      >
+                        <WalletCards size={14} />
+                        {t('topup.reconcile')}
+                      </button>
+                    )}
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      item.status === 'success'
+                        ? 'bg-green-500/10 text-page-success'
+                        : item.status === 'pending'
+                          ? 'bg-yellow-500/10 text-page-warning'
+                          : 'bg-red-500/10 text-page-danger'
+                    }`}>
+                      {item.status === 'success'
+                        ? t('topup.statusSuccess')
+                        : item.status === 'pending'
+                          ? t('topup.statusPending')
+                          : item.status === 'expired'
+                            ? t('topup.statusExpired')
+                            : t('topup.statusFailed')}
+                    </span>
+                  </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
       )}
+
+      <CryptoTopupReconcileModal
+        record={reconcileRecord}
+        onClose={() => setReconcileRecord(null)}
+        onSuccess={async () => {
+          await Promise.all([loadData(), refreshUser(), loadHistory()]);
+        }}
+      />
 
       {/* Redeem Code */}
       <div className="glass rounded-2xl p-6">
