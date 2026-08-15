@@ -1052,7 +1052,6 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
   const [awsSecretAccessKey, setAWSSecretAccessKey] = useState("");
   const [awsSessionToken, setAWSSessionToken] = useState("");
   const [awsRegion, setAWSRegion] = useState("us-east-1");
-  const [proxyEnabled, setProxyEnabled] = useState(false);
   const [proxyProtocol, setProxyProtocol] = useState("socks5");
   const [proxyHost, setProxyHost] = useState("");
   const [proxyPort, setProxyPort] = useState("");
@@ -1087,7 +1086,6 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
     setAWSSecretAccessKey("");
     setAWSSessionToken("");
     setAWSRegion("us-east-1");
-    setProxyEnabled(false);
     setProxyProtocol("socks5");
     setProxyHost("");
     setProxyPort("");
@@ -1109,7 +1107,6 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
   };
 
   const proxyPayload = () => {
-    if (!proxyEnabled) return undefined;
     const proxy = {
       protocol: proxyProtocol,
       host: proxyHost.trim(),
@@ -1335,94 +1332,90 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
         </div>
 
         <section className="border-t border-page-divider pt-4">
-          <label className="flex items-start justify-between gap-4">
-            <span>
-              <span className="block text-sm font-medium text-page-label">
-                绑定专属代理
-              </span>
-              <span className="mt-1 block text-xs leading-5 text-page-muted">
-                可选。代理仅绑定当前托管账号，提交前会测试连通性；支持公网 IP
-                或域名。
-              </span>
-            </span>
-            <input
-              type="checkbox"
-              checked={proxyEnabled}
-              onChange={(event) => setProxyEnabled(event.target.checked)}
-              className="mt-1 h-4 w-4 shrink-0"
-            />
-          </label>
-          {proxyEnabled && (
-            <div className="mt-4 grid gap-4 sm:grid-cols-3">
-              <div className="flex flex-wrap items-center gap-3 sm:col-span-3">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={pasteProxyString}
-                >
-                  <ClipboardPaste size={14} className="mr-2" />
-                  粘贴并自动识别
-                </button>
-                <span className="text-xs text-page-muted">
-                  支持 URL、主机:端口:用户名:密码等常见格式
-                </span>
-              </div>
-              <label className="text-sm font-medium text-page-label">
-                协议
-                <select
-                  className="input mt-2"
-                  value={proxyProtocol}
-                  onChange={(event) => setProxyProtocol(event.target.value)}
-                >
-                  <option value="http">HTTP</option>
-                  <option value="https">HTTPS</option>
-                  <option value="socks5">SOCKS5</option>
-                  <option value="socks5h">SOCKS5H</option>
-                </select>
-              </label>
-              <label className="text-sm font-medium text-page-label sm:col-span-2">
-                公网 IP / 域名
-                <input
-                  className="input mt-2 font-mono"
-                  value={proxyHost}
-                  onChange={(event) => setProxyHost(event.target.value)}
-                  onPaste={handleProxyFieldPaste}
-                  placeholder="48.45.22.14 或 proxy.example.com"
-                />
-              </label>
-              <label className="text-sm font-medium text-page-label">
-                端口
-                <input
-                  className="input mt-2"
-                  type="number"
-                  min="1"
-                  max="65535"
-                  value={proxyPort}
-                  onChange={(event) => setProxyPort(event.target.value)}
-                  placeholder="1080"
-                />
-              </label>
-              <label className="text-sm font-medium text-page-label">
-                用户名（可选）
-                <input
-                  className="input mt-2"
-                  value={proxyUsername}
-                  onChange={(event) => setProxyUsername(event.target.value)}
-                  autoComplete="off"
-                />
-              </label>
-              <label className="text-sm font-medium text-page-label">
-                密码（可选）
-                <input
-                  className="input mt-2"
-                  type="password"
-                  value={proxyPassword}
-                  onChange={(event) => setProxyPassword(event.target.value)}
-                  autoComplete="new-password"
-                />
-              </label>
+          <div>
+            <div className="text-sm font-medium text-page-label">
+              绑定专属代理（必填）
             </div>
-          )}
+            <p className="mt-1 text-xs leading-5 text-page-muted">
+              代理仅绑定当前托管账号，提交前会测试连通性；支持公网 IP 或域名。
+            </p>
+            <p className="mt-1 text-xs font-medium leading-5 text-amber-600 dark:text-amber-400">
+              为提高账号存活率，建议购买并使用静态住宅 IP。
+            </p>
+          </div>
+          <div className="mt-4 grid gap-4 sm:grid-cols-3">
+            <div className="flex flex-wrap items-center gap-3 sm:col-span-3">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={pasteProxyString}
+              >
+                <ClipboardPaste size={14} className="mr-2" />
+                粘贴并自动识别
+              </button>
+              <span className="text-xs text-page-muted">
+                支持 URL、主机:端口:用户名:密码等常见格式
+              </span>
+            </div>
+            <label className="text-sm font-medium text-page-label">
+              协议
+              <select
+                className="input mt-2"
+                value={proxyProtocol}
+                onChange={(event) => setProxyProtocol(event.target.value)}
+              >
+                <option value="http">HTTP</option>
+                <option value="https">HTTPS</option>
+                <option value="socks5">SOCKS5</option>
+                <option value="socks5h">SOCKS5H</option>
+              </select>
+            </label>
+            <label className="text-sm font-medium text-page-label sm:col-span-2">
+              公网 IP / 域名
+              <input
+                className="input mt-2 font-mono"
+                value={proxyHost}
+                onChange={(event) => setProxyHost(event.target.value)}
+                onPaste={handleProxyFieldPaste}
+                placeholder="48.45.22.14 或 proxy.example.com"
+                required
+                aria-required="true"
+              />
+            </label>
+            <label className="text-sm font-medium text-page-label">
+              端口
+              <input
+                className="input mt-2"
+                type="number"
+                min="1"
+                max="65535"
+                value={proxyPort}
+                onChange={(event) => setProxyPort(event.target.value)}
+                placeholder="1080"
+                required
+                aria-required="true"
+              />
+            </label>
+            <label className="text-sm font-medium text-page-label">
+              用户名（可选）
+              <input
+                className="input mt-2"
+                value={proxyUsername}
+                onChange={(event) => setProxyUsername(event.target.value)}
+                autoComplete="off"
+              />
+            </label>
+            <label className="text-sm font-medium text-page-label">
+              密码（可选）
+              <input
+                className="input mt-2"
+                type="password"
+                value={proxyPassword}
+                onChange={(event) => setProxyPassword(event.target.value)}
+                autoComplete="new-password"
+              />
+            </label>
+          </div>
         </section>
 
         {oauthAccount ? (
