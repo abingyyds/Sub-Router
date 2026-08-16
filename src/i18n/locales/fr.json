@@ -365,6 +365,7 @@
     "officialChannels.discount": "Dernière réduction",
     "officialChannels.modelKeys": "Clés de modèle",
     "officialChannels.priceUnitHint": "Devise : {{currency}} ; les modèles de texte sont affichés par million de jetons.",
+    "officialChannels.videoPriceUnitHint": "Devise : {{currency}} ; les prix vidéo sont affichés par seconde de sortie et incluent déjà la majoration du site.",
     "officialChannels.selectModel": "Sélectionnez un modèle",
     "officialChannels.providerDetailsHidden": "Détails du prestataire",
     "officialChannels.hidden": "Caché",

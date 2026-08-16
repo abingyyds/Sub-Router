@@ -363,6 +363,7 @@
     "officialChannels.discount": "最終割引",
     "officialChannels.modelKeys": "モデルキー",
     "officialChannels.priceUnitHint": "通貨：{{currency}}。テキストモデルの価格は100万トークン単位です。",
+    "officialChannels.videoPriceUnitHint": "通貨：{{currency}}。動画価格は出力1秒あたりで、サイトの上乗せ分を含みます。",
     "officialChannels.selectModel": "モデルを選択する",
     "officialChannels.providerDetailsHidden": "プロバイダー詳細",
     "officialChannels.hidden": "非表示",

@@ -377,6 +377,7 @@
     "officialChannels.discount": "Финальная скидка",
     "officialChannels.modelKeys": "Ключи моделей",
     "officialChannels.priceUnitHint": "Валюта: {{currency}}; цены текстовых моделей указаны за миллион токенов.",
+    "officialChannels.videoPriceUnitHint": "Валюта: {{currency}}; цены видео указаны за секунду результата и уже включают наценку сайта.",
     "officialChannels.selectModel": "Выберите модель",
     "officialChannels.providerDetailsHidden": "Информация о провайдере",
     "officialChannels.hidden": "Скрыто",

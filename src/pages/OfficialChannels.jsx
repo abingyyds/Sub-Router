@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   Activity,
@@ -13,13 +13,21 @@ import {
   RefreshCw,
   ShieldCheck,
   SlidersHorizontal,
-} from 'lucide-react';
-import toast from 'react-hot-toast';
-import { getSiteOfficialChannelAvailability, getSiteOfficialChannels } from '../api';
-import OfficialChannelKeyCreateModal from '../components/OfficialChannelKeyCreateModal';
-import { useAuth } from '../context/AuthContext';
-import { useSite, useCurrency } from '../context/SiteContext';
-import { SHARED_API_ENDPOINTS } from '../constants/apiEndpoints';
+} from "lucide-react";
+import toast from "react-hot-toast";
+import {
+  getSiteOfficialChannelAvailability,
+  getSiteOfficialChannels,
+} from "../api";
+import OfficialChannelKeyCreateModal from "../components/OfficialChannelKeyCreateModal";
+import { useAuth } from "../context/AuthContext";
+import { useSite, useCurrency } from "../context/SiteContext";
+import { SHARED_API_ENDPOINTS } from "../constants/apiEndpoints";
+import {
+  formatOfficialVideoPriceRows,
+  formatOfficialVideoPriceSummary,
+  getOfficialVideoPriceRows,
+} from "../utils/officialVideoPricing";
 
 const API_BASE_URLS = SHARED_API_ENDPOINTS.map((endpoint) => ({
   labelKey: endpoint.nameKey,
@@ -33,25 +41,27 @@ const normalizeMultiplier = (value) => {
 
 const trimNumber = (value) => {
   const n = Number(value);
-  if (!Number.isFinite(n)) return '';
-  return n.toFixed(n >= 10 ? 1 : 2).replace(/\.?0+$/, '');
+  if (!Number.isFinite(n)) return "";
+  return n.toFixed(n >= 10 ? 1 : 2).replace(/\.?0+$/, "");
 };
 
 const formatPriceMultiplier = (value, t) => {
   const n = normalizeMultiplier(value);
-  if (n <= 0) return t('officialChannels.noLimit');
+  if (n <= 0) return t("officialChannels.noLimit");
   if (n < 1) {
-    return t('officialChannels.discountLabel', {
+    return t("officialChannels.discountLabel", {
       value: trimNumber(n * 10),
       multiplier: trimNumber(n),
       percent: trimNumber(n * 100),
     });
   }
-  return t('officialChannels.multiplierLabel', { value: trimNumber(n) });
+  return t("officialChannels.multiplierLabel", { value: trimNumber(n) });
 };
 
 const finalMinPriceOf = (channel) =>
-  normalizeMultiplier(channel?.min_allowed_final_discount || channel?.min_final_price_discount);
+  normalizeMultiplier(
+    channel?.min_allowed_final_discount || channel?.min_final_price_discount,
+  );
 
 const finalMaxPriceOf = (channel) =>
   normalizeMultiplier(channel?.max_final_discount);
@@ -59,19 +69,24 @@ const finalMaxPriceOf = (channel) =>
 const formatPriceRange = (channel, t) => {
   const min = finalMinPriceOf(channel);
   const max = finalMaxPriceOf(channel);
-  if (min <= 0 && max <= 0) return t('officialChannels.noLimit');
+  if (min <= 0 && max <= 0) return t("officialChannels.noLimit");
   if (min > 0 && max > 0) {
     return `${formatPriceMultiplier(min, t)} - ${formatPriceMultiplier(max, t)}`;
   }
-  if (min > 0) return t('officialChannels.rangeFrom', { value: formatPriceMultiplier(min, t) });
-  return t('officialChannels.rangeMax', { value: formatPriceMultiplier(max, t) });
+  if (min > 0)
+    return t("officialChannels.rangeFrom", {
+      value: formatPriceMultiplier(min, t),
+    });
+  return t("officialChannels.rangeMax", {
+    value: formatPriceMultiplier(max, t),
+  });
 };
 
 const formatCount = (value) => Number(value || 0).toLocaleString();
 
 const formatPercent = (value) => {
   const n = Number(value);
-  return Number.isFinite(n) && n >= 0 ? `${n.toFixed(1)}%` : '--';
+  return Number.isFinite(n) && n >= 0 ? `${n.toFixed(1)}%` : "--";
 };
 
 const availabilityNumber = (value) => {
@@ -81,26 +96,92 @@ const availabilityNumber = (value) => {
 
 const availabilityClass = (value) => {
   const n = availabilityNumber(value);
-  if (n < 0) return 'bg-page-inset';
-  if (n < 50) return 'bg-rose-500';
-  if (n < 80) return 'bg-amber-500';
-  return 'bg-emerald-500';
+  if (n < 0) return "bg-page-inset";
+  if (n < 50) return "bg-rose-500";
+  if (n < 80) return "bg-amber-500";
+  return "bg-emerald-500";
 };
 
-const formatModelPrice = (model, final = false, t) => {
-  const input = Number(model?.[final ? 'final_input_price' : 'official_input_price'] || 0);
-  const output = Number(model?.[final ? 'final_output_price' : 'official_output_price'] || 0);
-  const fixed = Number(model?.[final ? 'final_fixed_price' : 'official_fixed_price'] || 0);
-  const currency = model?.price_currency === 'CNY' ? '¥' : '$';
-  if (fixed > 0) return `${currency}${fixed.toFixed(fixed < 0.01 ? 6 : 4).replace(/\.?0+$/, '')}/${t('pricing.perCallUnit')}`;
-  if (input <= 0 && output <= 0) return '--';
-  const format = (value) => value > 0 ? `${currency}${value.toFixed(value < 0.01 ? 6 : 4).replace(/\.?0+$/, '')}` : '-';
+const modelVideoPriceRows = (model, final = false, currency) => {
+  const multiplier = final
+    ? normalizeMultiplier(model?.final_price_discount)
+    : 1;
+  if (final && multiplier <= 0) return [];
+  return formatOfficialVideoPriceRows(
+    model,
+    multiplier,
+    model?.price_currency || "USD",
+    currency,
+  );
+};
+
+const formatModelPrice = (model, final = false, t, displayCurrency) => {
+  const videoSummary = formatOfficialVideoPriceSummary(
+    model,
+    final ? normalizeMultiplier(model?.final_price_discount) : 1,
+    model?.price_currency || "USD",
+    displayCurrency,
+  );
+  if (
+    (!final || normalizeMultiplier(model?.final_price_discount) > 0) &&
+    videoSummary
+  )
+    return videoSummary;
+  const input = Number(
+    model?.[final ? "final_input_price" : "official_input_price"] || 0,
+  );
+  const output = Number(
+    model?.[final ? "final_output_price" : "official_output_price"] || 0,
+  );
+  const fixed = Number(
+    model?.[final ? "final_fixed_price" : "official_fixed_price"] || 0,
+  );
+  const sourceSymbol = model?.price_currency === "CNY" ? "¥" : "$";
+  if (fixed > 0)
+    return `${sourceSymbol}${fixed.toFixed(fixed < 0.01 ? 6 : 4).replace(/\.?0+$/, "")}/${t("pricing.perCallUnit")}`;
+  if (input <= 0 && output <= 0) return "--";
+  const format = (value) =>
+    value > 0
+      ? `${sourceSymbol}${value.toFixed(value < 0.01 ? 6 : 4).replace(/\.?0+$/, "")}`
+      : "-";
   return `${format(input)} / ${format(output)} / M`;
 };
 
-const channelIdOf = (channel) => Number(channel?.official_channel_id || channel?.id || 0);
+function ModelPriceValue({ model, final = false, currency }) {
+  const { t } = useTranslation();
+  const videoRows = modelVideoPriceRows(model, final, currency);
+  if (videoRows.length === 0)
+    return formatModelPrice(model, final, t, currency);
+  return (
+    <VideoPricePills rows={videoRows} tone={final ? "success" : "default"} />
+  );
+}
 
-const copyText = async (value, message, errorMessage = 'Copy failed') => {
+function VideoPricePills({ rows, tone = "default", className = "" }) {
+  if (!Array.isArray(rows) || rows.length === 0) return null;
+  const toneClass =
+    tone === "success"
+      ? "border-emerald-500/25 bg-emerald-500/10 text-page-success"
+      : "border-page-divider bg-page-surface text-page";
+  return (
+    <div className={`flex flex-wrap gap-1.5 ${className}`}>
+      {rows.map((row) => (
+        <span
+          key={`${row.label}-${row.price}`}
+          className={`inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 text-xs ${toneClass}`}
+        >
+          <span className="font-medium text-page-secondary">{row.label}</span>
+          <span className="font-mono font-semibold">{row.formatted}</span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+const channelIdOf = (channel) =>
+  Number(channel?.official_channel_id || channel?.id || 0);
+
+const copyText = async (value, message, errorMessage = "Copy failed") => {
   if (!value) return;
   try {
     await navigator.clipboard.writeText(value);
@@ -116,7 +197,11 @@ export default function OfficialChannels() {
   const { channelId } = useParams();
   const { user } = useAuth();
   const { site } = useSite();
-  const { symbol, rate } = useCurrency();
+  const { symbol, rate, code, usdRate } = useCurrency();
+  const currency = useMemo(
+    () => ({ symbol, rate, code, usdRate }),
+    [code, rate, symbol, usdRate],
+  );
   const [channels, setChannels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [detailChannel, setDetailChannel] = useState(null);
@@ -125,7 +210,7 @@ export default function OfficialChannels() {
   const canViewProviders =
     site?.can_view_providers === true ||
     site?.full_mode === true ||
-    site?.display_mode === 'full';
+    site?.display_mode === "full";
 
   const loadChannels = useCallback(() => {
     setLoading(true);
@@ -173,7 +258,9 @@ export default function OfficialChannels() {
     if (String(channelIdOf(detailChannel)) === String(channelId)) {
       return detailChannel;
     }
-    return channels.find((channel) => String(channelIdOf(channel)) === String(channelId));
+    return channels.find(
+      (channel) => String(channelIdOf(channel)) === String(channelId),
+    );
   }, [channelId, channels, detailChannel]);
 
   const summary = useMemo(() => {
@@ -192,7 +279,7 @@ export default function OfficialChannels() {
 
   const handleOpenTokens = (channel) => {
     if (!user) {
-      navigate('/login');
+      navigate("/login");
       return;
     }
     setCreateChannel(channel || null);
@@ -200,18 +287,26 @@ export default function OfficialChannels() {
 
   if (channelId) {
     if ((loading || detailLoading) && !selectedChannel) {
-      return <LoadingBlock label={t('common.loading')} />;
+      return <LoadingBlock label={t("common.loading")} />;
     }
     if (!selectedChannel) {
       return (
         <div className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 sm:py-12">
-          <button type="button" onClick={() => navigate('/official-channels')} className="btn-secondary mb-6">
+          <button
+            type="button"
+            onClick={() => navigate("/official-channels")}
+            className="btn-secondary mb-6"
+          >
             <ArrowLeft size={16} className="mr-2" />
-            {t('officialChannels.back')}
+            {t("officialChannels.back")}
           </button>
           <div className="rounded-2xl border border-dashed border-page-divider bg-page-surface px-5 py-12 text-center">
-            <div className="text-base font-semibold text-page">{t('officialChannels.notFoundTitle')}</div>
-            <p className="mt-2 text-sm text-page-secondary">{t('officialChannels.notFoundDesc')}</p>
+            <div className="text-base font-semibold text-page">
+              {t("officialChannels.notFoundTitle")}
+            </div>
+            <p className="mt-2 text-sm text-page-secondary">
+              {t("officialChannels.notFoundDesc")}
+            </p>
           </div>
         </div>
       );
@@ -224,8 +319,8 @@ export default function OfficialChannels() {
           canViewProviders={canViewProviders}
           hideProviderInfo={Boolean(site?.hide_provider_info)}
           detailsLoading={detailLoading}
-          currencySymbol={symbol}
-          onBack={() => navigate('/official-channels')}
+          currency={currency}
+          onBack={() => navigate("/official-channels")}
           onOpenTokens={() => handleOpenTokens(selectedChannel)}
         />
         <OfficialChannelKeyCreateModal
@@ -244,14 +339,14 @@ export default function OfficialChannels() {
         <div className="space-y-3">
           <div className="inline-flex w-fit items-center rounded-full border border-page-divider bg-page-surface px-3 py-1 text-sm font-semibold text-page">
             <ShieldCheck className="mr-1.5 h-3.5 w-3.5 text-page-link" />
-            {t('officialChannels.badge')}
+            {t("officialChannels.badge")}
           </div>
           <div className="space-y-2">
             <h1 className="text-3xl font-bold tracking-tight text-page sm:text-4xl">
-              {t('officialChannels.title')}
+              {t("officialChannels.title")}
             </h1>
             <p className="max-w-3xl text-sm leading-6 text-page-secondary sm:text-base">
-              {t('officialChannels.subtitle')}
+              {t("officialChannels.subtitle")}
             </p>
           </div>
         </div>
@@ -261,23 +356,39 @@ export default function OfficialChannels() {
           className="inline-flex h-10 items-center justify-center rounded-lg border border-page-divider bg-page-surface px-4 text-sm font-semibold text-page transition hover:border-page-link/60"
         >
           <RefreshCw size={16} className="mr-2" />
-          {t('common.refresh')}
+          {t("common.refresh")}
         </button>
       </section>
 
       <section className="mt-7 grid gap-3 sm:grid-cols-4">
-        <SummaryCard label={t('officialChannels.statChannels')} value={formatCount(channels.length)} />
-        <SummaryCard label={t('officialChannels.statModels')} value={formatCount(summary.models)} />
-        <SummaryCard label={t('officialChannels.statKeys')} value={formatCount(summary.keys)} />
-        <SummaryCard label={t('officialChannels.statMin')} value={formatPriceMultiplier(summary.min, t)} />
+        <SummaryCard
+          label={t("officialChannels.statChannels")}
+          value={formatCount(channels.length)}
+        />
+        <SummaryCard
+          label={t("officialChannels.statModels")}
+          value={formatCount(summary.models)}
+        />
+        <SummaryCard
+          label={t("officialChannels.statKeys")}
+          value={formatCount(summary.keys)}
+        />
+        <SummaryCard
+          label={t("officialChannels.statMin")}
+          value={formatPriceMultiplier(summary.min, t)}
+        />
       </section>
 
       {loading ? (
-        <LoadingBlock label={t('common.loading')} />
+        <LoadingBlock label={t("common.loading")} />
       ) : channels.length === 0 ? (
         <div className="mt-8 rounded-2xl border border-dashed border-page-divider bg-page-surface px-5 py-12 text-center">
-          <div className="text-base font-semibold text-page">{t('officialChannels.emptyTitle')}</div>
-          <p className="mt-2 text-sm text-page-secondary">{t('officialChannels.emptyDesc')}</p>
+          <div className="text-base font-semibold text-page">
+            {t("officialChannels.emptyTitle")}
+          </div>
+          <p className="mt-2 text-sm text-page-secondary">
+            {t("officialChannels.emptyDesc")}
+          </p>
         </div>
       ) : (
         <section className="mt-8 grid gap-4 lg:grid-cols-2">
@@ -287,7 +398,9 @@ export default function OfficialChannels() {
               channel={channel}
               canViewProviders={canViewProviders}
               hideProviderInfo={Boolean(site?.hide_provider_info)}
-              onOpen={() => navigate(`/official-channels/${channelIdOf(channel)}`)}
+              onOpen={() =>
+                navigate(`/official-channels/${channelIdOf(channel)}`)
+              }
             />
           ))}
         </section>
@@ -296,7 +409,12 @@ export default function OfficialChannels() {
   );
 }
 
-function OfficialChannelCard({ channel, onOpen, canViewProviders = false, hideProviderInfo = false }) {
+function OfficialChannelCard({
+  channel,
+  onOpen,
+  canViewProviders = false,
+  hideProviderInfo = false,
+}) {
   const { t } = useTranslation();
   return (
     <article className="glass rounded-2xl p-5 shadow-sm">
@@ -304,10 +422,12 @@ function OfficialChannelCard({ channel, onOpen, canViewProviders = false, hidePr
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="truncate text-xl font-semibold text-page">{channel.name}</h2>
+              <h2 className="truncate text-xl font-semibold text-page">
+                {channel.name}
+              </h2>
               <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-page-success">
                 <CheckCircle2 size={13} className="mr-1" />
-                {t('officialChannels.available')}
+                {t("officialChannels.available")}
               </span>
             </div>
             {channel.description && (
@@ -322,21 +442,50 @@ function OfficialChannelCard({ channel, onOpen, canViewProviders = false, hidePr
         </div>
 
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          <Metric label={t('officialChannels.lowestPrice')} value={formatPriceMultiplier(finalMinPriceOf(channel), t)} />
-          <Metric label={t('officialChannels.maxPrice')} value={formatPriceMultiplier(finalMaxPriceOf(channel), t)} />
-          <Metric label={t('officialChannels.keyAvailability')} value={formatPercent(channel.key_availability)} />
-          <Metric label={t('officialChannels.modelAvailability')} value={formatPercent(channel.model_availability)} />
+          <Metric
+            label={t("officialChannels.lowestPrice")}
+            value={formatPriceMultiplier(finalMinPriceOf(channel), t)}
+          />
+          <Metric
+            label={t("officialChannels.maxPrice")}
+            value={formatPriceMultiplier(finalMaxPriceOf(channel), t)}
+          />
+          <Metric
+            label={t("officialChannels.keyAvailability")}
+            value={formatPercent(channel.key_availability)}
+          />
+          <Metric
+            label={t("officialChannels.modelAvailability")}
+            value={formatPercent(channel.model_availability)}
+          />
         </div>
 
         <div className="grid gap-2 sm:grid-cols-3">
-          <Metric label={t('officialChannels.models')} value={formatCount(channel.usable_model_count)} />
-          {canViewProviders && !hideProviderInfo && <Metric label={t('officialChannels.providers')} value={formatCount(channel.available_provider_count)} />}
-          <Metric label={t('officialChannels.keyType')} value={t('officialChannels.groupKeyOnly')} />
+          <Metric
+            label={t("officialChannels.models")}
+            value={formatCount(channel.usable_model_count)}
+          />
+          {canViewProviders && !hideProviderInfo && (
+            <Metric
+              label={t("officialChannels.providers")}
+              value={formatCount(channel.available_provider_count)}
+            />
+          )}
+          <Metric
+            label={t("officialChannels.keyType")}
+            value={t("officialChannels.groupKeyOnly")}
+          />
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <AvailabilityMeter label={t('officialChannels.keyAvailability')} value={channel.key_availability} />
-          <AvailabilityMeter label={t('officialChannels.modelAvailability')} value={channel.model_availability} />
+          <AvailabilityMeter
+            label={t("officialChannels.keyAvailability")}
+            value={channel.key_availability}
+          />
+          <AvailabilityMeter
+            label={t("officialChannels.modelAvailability")}
+            value={channel.model_availability}
+          />
         </div>
 
         <button
@@ -345,7 +494,7 @@ function OfficialChannelCard({ channel, onOpen, canViewProviders = false, hidePr
           className="inline-flex h-10 items-center justify-center rounded-lg bg-page-link px-4 text-sm font-semibold text-white transition hover:opacity-90"
         >
           <KeyRound size={16} className="mr-2" />
-          {t('officialChannels.enterDetails')}
+          {t("officialChannels.enterDetails")}
         </button>
       </div>
     </article>
@@ -357,7 +506,7 @@ function OfficialChannelDetail({
   user,
   canViewProviders = false,
   hideProviderInfo = false,
-  currencySymbol = '$',
+  currency,
   detailsLoading = false,
   onBack,
   onOpenTokens,
@@ -369,13 +518,17 @@ function OfficialChannelDetail({
   );
   const officialChannelId = channelIdOf(channel);
   const [selectedModelId, setSelectedModelId] = useState(models[0]?.id || null);
-  const selectedModel = models.find((model) => String(model.id) === String(selectedModelId)) || models[0];
+  const selectedModel =
+    models.find((model) => String(model.id) === String(selectedModelId)) ||
+    models[0];
   const [channelAvailability, setChannelAvailability] = useState(null);
-  const [channelAvailabilityLoading, setChannelAvailabilityLoading] = useState(true);
+  const [channelAvailabilityLoading, setChannelAvailabilityLoading] =
+    useState(true);
   const [modelAvailability, setModelAvailability] = useState(null);
-  const [modelAvailabilityLoading, setModelAvailabilityLoading] = useState(false);
-  const [modelSupplyView, setModelSupplyView] = useState('keys');
-  const [modelAvailabilityPeriod, setModelAvailabilityPeriod] = useState('24h');
+  const [modelAvailabilityLoading, setModelAvailabilityLoading] =
+    useState(false);
+  const [modelSupplyView, setModelSupplyView] = useState("keys");
+  const [modelAvailabilityPeriod, setModelAvailabilityPeriod] = useState("24h");
 
   useEffect(() => {
     setSelectedModelId((current) => {
@@ -389,9 +542,10 @@ function OfficialChannelDetail({
   useEffect(() => {
     let active = true;
     setChannelAvailabilityLoading(true);
-    getSiteOfficialChannelAvailability(officialChannelId, 0, '24h')
+    getSiteOfficialChannelAvailability(officialChannelId, 0, "24h")
       .then((res) => {
-        if (active && res.data?.success) setChannelAvailability(res.data.data || null);
+        if (active && res.data?.success)
+          setChannelAvailability(res.data.data || null);
       })
       .catch(() => {
         if (active) setChannelAvailability(null);
@@ -411,9 +565,14 @@ function OfficialChannelDetail({
     }
     let active = true;
     setModelAvailabilityLoading(true);
-    getSiteOfficialChannelAvailability(officialChannelId, selectedModel.id, modelAvailabilityPeriod)
+    getSiteOfficialChannelAvailability(
+      officialChannelId,
+      selectedModel.id,
+      modelAvailabilityPeriod,
+    )
       .then((res) => {
-        if (active && res.data?.success) setModelAvailability(res.data.data || null);
+        if (active && res.data?.success)
+          setModelAvailability(res.data.data || null);
       })
       .catch(() => {
         if (active) setModelAvailability(null);
@@ -430,7 +589,7 @@ function OfficialChannelDetail({
     <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
       <button type="button" onClick={onBack} className="btn-secondary mb-6">
         <ArrowLeft size={16} className="mr-2" />
-        {t('officialChannels.back')}
+        {t("officialChannels.back")}
       </button>
 
       <section className="glass rounded-2xl p-6 shadow-sm">
@@ -438,9 +597,11 @@ function OfficialChannelDetail({
           <div className="min-w-0">
             <div className="inline-flex w-fit items-center rounded-full border border-page-divider bg-page-surface px-3 py-1 text-sm font-semibold text-page">
               <ShieldCheck className="mr-1.5 h-3.5 w-3.5 text-page-link" />
-              {t('officialChannels.badge')}
+              {t("officialChannels.badge")}
             </div>
-            <h1 className="mt-3 text-3xl font-bold tracking-tight text-page sm:text-4xl">{channel.name}</h1>
+            <h1 className="mt-3 text-3xl font-bold tracking-tight text-page sm:text-4xl">
+              {channel.name}
+            </h1>
             {channel.description && (
               <p className="mt-3 max-w-3xl text-sm leading-6 text-page-secondary sm:text-base">
                 {channel.description}
@@ -453,20 +614,34 @@ function OfficialChannelDetail({
             className="inline-flex h-10 items-center justify-center rounded-lg bg-page-link px-4 text-sm font-semibold text-white transition hover:opacity-90"
           >
             <KeyRound size={16} className="mr-2" />
-            {user ? t('officialChannels.createGroupKey') : t('officialChannels.loginCreateGroupKey')}
+            {user
+              ? t("officialChannels.createGroupKey")
+              : t("officialChannels.loginCreateGroupKey")}
           </button>
         </div>
 
         <div className="mt-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          <Metric label={t('officialChannels.lowestPrice')} value={formatPriceMultiplier(finalMinPriceOf(channel), t)} />
-          <Metric label={t('officialChannels.maxPrice')} value={formatPriceMultiplier(finalMaxPriceOf(channel), t)} />
-          <Metric label={t('officialChannels.keyAvailability')} value={formatPercent(channel.key_availability)} />
-          <Metric label={t('officialChannels.modelAvailability')} value={formatPercent(channel.model_availability)} />
+          <Metric
+            label={t("officialChannels.lowestPrice")}
+            value={formatPriceMultiplier(finalMinPriceOf(channel), t)}
+          />
+          <Metric
+            label={t("officialChannels.maxPrice")}
+            value={formatPriceMultiplier(finalMaxPriceOf(channel), t)}
+          />
+          <Metric
+            label={t("officialChannels.keyAvailability")}
+            value={formatPercent(channel.key_availability)}
+          />
+          <Metric
+            label={t("officialChannels.modelAvailability")}
+            value={formatPercent(channel.model_availability)}
+          />
         </div>
       </section>
 
       <AvailabilityGraph
-        title={t('officialChannels.channelAvailabilityGraph')}
+        title={t("officialChannels.channelAvailabilityGraph")}
         data={channelAvailability}
         loading={channelAvailabilityLoading}
       />
@@ -474,40 +649,68 @@ function OfficialChannelDetail({
       <section className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,360px)_1fr]">
         <div className="rounded-2xl border border-page-divider bg-page-surface p-4">
           <div className="mb-3 flex items-center justify-between gap-2">
-            <h2 className="text-base font-semibold text-page">{t('officialChannels.modelCatalog')}</h2>
-            <span className="text-xs text-page-secondary">{formatCount(models.length)}</span>
+            <h2 className="text-base font-semibold text-page">
+              {t("officialChannels.modelCatalog")}
+            </h2>
+            <span className="text-xs text-page-secondary">
+              {formatCount(models.length)}
+            </span>
           </div>
           <div className="max-h-[520px] space-y-2 overflow-y-auto pr-1">
             {detailsLoading ? (
               <div className="flex items-center justify-center px-3 py-8 text-sm text-page-secondary">
                 <Loader2 size={18} className="mr-2 animate-spin" />
-                {t('common.loading')}
+                {t("common.loading")}
               </div>
             ) : models.length === 0 ? (
               <div className="rounded-xl border border-dashed border-page-divider px-3 py-8 text-center text-sm text-page-secondary">
-                {t('officialChannels.noModels')}
+                {t("officialChannels.noModels")}
               </div>
-            ) : models.map((model) => (
-              <button
-                key={model.id}
-                type="button"
-                onClick={() => setSelectedModelId(model.id)}
-                className={`w-full rounded-xl border px-3 py-3 text-left transition ${String(model.id) === String(selectedModel?.id) ? 'border-page-link bg-page-link/10' : 'border-page-divider bg-page-inset hover:border-page-link/50'}`}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <span className="min-w-0 truncate text-sm font-semibold text-page">{model.model_name}</span>
-                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${model.available ? 'bg-emerald-500/10 text-page-success' : 'bg-page-inset text-page-muted'}`}>
-                    {model.available ? t('officialChannels.available') : t('officialChannels.unavailable')}
-                  </span>
-                </div>
-                <div className="mt-1 flex flex-wrap gap-2 text-xs text-page-secondary">
-                  <span>{model.category || 'chat'}</span>
-                  <span>{formatCount(model.available_key_count)} Key</span>
-                  <span>{formatModelPrice(model, true, t)}</span>
-                </div>
-                <AvailabilityMeter label={t('officialChannels.modelAvailability')} value={model.key_availability} compact />
-              </button>
-            ))}
+            ) : (
+              models.map((model) => {
+                const videoRows = modelVideoPriceRows(model, true, currency);
+                return (
+                  <button
+                    key={model.id}
+                    type="button"
+                    onClick={() => setSelectedModelId(model.id)}
+                    className={`w-full rounded-xl border px-3 py-3 text-left transition ${String(model.id) === String(selectedModel?.id) ? "border-page-link bg-page-link/10" : "border-page-divider bg-page-inset hover:border-page-link/50"}`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="min-w-0 truncate text-sm font-semibold text-page">
+                        {model.model_name}
+                      </span>
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${model.available ? "bg-emerald-500/10 text-page-success" : "bg-page-inset text-page-muted"}`}
+                      >
+                        {model.available
+                          ? t("officialChannels.available")
+                          : t("officialChannels.unavailable")}
+                      </span>
+                    </div>
+                    <div className="mt-1 flex flex-wrap gap-2 text-xs text-page-secondary">
+                      <span>{model.category || "chat"}</span>
+                      <span>{formatCount(model.available_key_count)} Key</span>
+                      {videoRows.length === 0 && (
+                        <span>
+                          {formatModelPrice(model, true, t, currency)}
+                        </span>
+                      )}
+                    </div>
+                    <VideoPricePills
+                      rows={videoRows}
+                      tone="success"
+                      className="mt-2"
+                    />
+                    <AvailabilityMeter
+                      label={t("officialChannels.modelAvailability")}
+                      value={model.key_availability}
+                      compact
+                    />
+                  </button>
+                );
+              })
+            )}
           </div>
         </div>
 
@@ -518,25 +721,61 @@ function OfficialChannelDetail({
                 <div>
                   <div className="flex items-center gap-2">
                     <Boxes size={17} className="text-page-link" />
-                    <h2 className="text-lg font-semibold text-page">{selectedModel.model_name}</h2>
+                    <h2 className="text-lg font-semibold text-page">
+                      {selectedModel.model_name}
+                    </h2>
                   </div>
-                  <p className="mt-2 text-sm text-page-secondary">{selectedModel.description || t('officialChannels.modelPriceHint')}</p>
+                  <p className="mt-2 text-sm text-page-secondary">
+                    {selectedModel.description ||
+                      t("officialChannels.modelPriceHint")}
+                  </p>
                 </div>
                 <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-page-success">
-                  {formatPercent(modelAvailability?.availability ?? selectedModel.key_availability)}
+                  {formatPercent(
+                    modelAvailability?.availability ??
+                      selectedModel.key_availability,
+                  )}
                 </span>
               </div>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <Metric label={t('officialChannels.originalPrice')} value={formatModelPrice(selectedModel, false, t)} />
-                <Metric label={t('officialChannels.finalPrice')} value={formatModelPrice(selectedModel, true, t)} />
-                <Metric label={t('officialChannels.discount')} value={formatPriceMultiplier(selectedModel.final_price_discount, t)} />
-                <Metric label={t('officialChannels.modelKeys')} value={formatCount(selectedModel.key_count)} />
+                <Metric
+                  label={t("officialChannels.originalPrice")}
+                  value={
+                    <ModelPriceValue
+                      model={selectedModel}
+                      currency={currency}
+                    />
+                  }
+                />
+                <Metric
+                  label={t("officialChannels.finalPrice")}
+                  value={
+                    <ModelPriceValue
+                      model={selectedModel}
+                      final
+                      currency={currency}
+                    />
+                  }
+                />
+                <Metric
+                  label={t("officialChannels.discount")}
+                  value={formatPriceMultiplier(
+                    selectedModel.final_price_discount,
+                    t,
+                  )}
+                />
+                <Metric
+                  label={t("officialChannels.modelKeys")}
+                  value={formatCount(selectedModel.key_count)}
+                />
               </div>
               <AvailabilityGraph
-                title={t('officialChannels.modelAvailabilityGraph')}
+                title={t("officialChannels.modelAvailabilityGraph")}
                 data={modelAvailability}
                 loading={modelAvailabilityLoading}
                 compact
+                officialModel={selectedModel}
+                currency={currency}
               />
               {canViewProviders && (
                 <ModelKeySupplySection
@@ -547,14 +786,28 @@ function OfficialChannelDetail({
                   onViewChange={setModelSupplyView}
                   period={modelAvailabilityPeriod}
                   onPeriodChange={setModelAvailabilityPeriod}
+                  officialModel={selectedModel}
+                  currency={currency}
                 />
               )}
               <div className="mt-4 rounded-xl border border-page-divider bg-page-inset px-4 py-3 text-xs text-page-secondary">
-                {t('officialChannels.priceUnitHint', { currency: selectedModel.price_currency || currencySymbol })}
+                {getOfficialVideoPriceRows(selectedModel).length > 0
+                  ? t("officialChannels.videoPriceUnitHint", {
+                      currency:
+                        currency?.code || selectedModel.price_currency || "USD",
+                    })
+                  : t("officialChannels.priceUnitHint", {
+                      currency:
+                        selectedModel.price_currency ||
+                        currency?.code ||
+                        currency?.symbol,
+                    })}
               </div>
             </>
           ) : (
-            <div className="flex h-full min-h-48 items-center justify-center text-sm text-page-secondary">{t('officialChannels.selectModel')}</div>
+            <div className="flex h-full min-h-48 items-center justify-center text-sm text-page-secondary">
+              {t("officialChannels.selectModel")}
+            </div>
           )}
         </div>
       </section>
@@ -562,18 +815,30 @@ function OfficialChannelDetail({
       <section className="mt-5 rounded-2xl border border-page-divider bg-page-surface p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-base font-semibold text-page">{t('officialChannels.groupKeyTitle')}</h2>
-            <p className="mt-1 text-sm leading-6 text-page-secondary">{t('officialChannels.groupKeyDesc')}</p>
+            <h2 className="text-base font-semibold text-page">
+              {t("officialChannels.groupKeyTitle")}
+            </h2>
+            <p className="mt-1 text-sm leading-6 text-page-secondary">
+              {t("officialChannels.groupKeyDesc")}
+            </p>
           </div>
           <span className="inline-flex w-fit rounded-full bg-page-link/10 px-2.5 py-1 text-xs font-semibold text-page-link">
-            {t('officialChannels.groupKeyOnly')}
+            {t("officialChannels.groupKeyOnly")}
           </span>
         </div>
       </section>
 
       <section className="mt-5 grid gap-3 sm:grid-cols-2">
-        <Metric label={t('officialChannels.models')} value={formatCount(channel.usable_model_count)} />
-        {canViewProviders && !hideProviderInfo && <Metric label={t('officialChannels.providers')} value={formatCount(channel.available_provider_count)} />}
+        <Metric
+          label={t("officialChannels.models")}
+          value={formatCount(channel.usable_model_count)}
+        />
+        {canViewProviders && !hideProviderInfo && (
+          <Metric
+            label={t("officialChannels.providers")}
+            value={formatCount(channel.available_provider_count)}
+          />
+        )}
       </section>
 
       {canViewProviders && !hideProviderInfo && (
@@ -583,26 +848,43 @@ function OfficialChannelDetail({
       <section className="mt-5 rounded-2xl border border-page-divider bg-page-surface p-5">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-base font-semibold text-page">{t('officialChannels.endpointTitle')}</h2>
-            <p className="text-sm text-page-secondary">{t('officialChannels.endpointDesc')}</p>
+            <h2 className="text-base font-semibold text-page">
+              {t("officialChannels.endpointTitle")}
+            </h2>
+            <p className="text-sm text-page-secondary">
+              {t("officialChannels.endpointDesc")}
+            </p>
           </div>
           <span className="mt-2 inline-flex w-fit rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-page-success sm:mt-0">
-            {t('officialChannels.online')}
+            {t("officialChannels.online")}
           </span>
         </div>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           {API_BASE_URLS.map((item) => (
-            <div key={item.value} className="rounded-xl border border-page-divider bg-page-inset px-4 py-3">
-              <div className="mb-2 text-xs font-semibold text-page-secondary">{t(item.labelKey)}</div>
+            <div
+              key={item.value}
+              className="rounded-xl border border-page-divider bg-page-inset px-4 py-3"
+            >
+              <div className="mb-2 text-xs font-semibold text-page-secondary">
+                {t(item.labelKey)}
+              </div>
               <div className="flex items-center gap-2">
-                <code className="min-w-0 flex-1 break-all text-sm text-page">{item.value}</code>
+                <code className="min-w-0 flex-1 break-all text-sm text-page">
+                  {item.value}
+                </code>
                 <button
                   type="button"
-                  onClick={() => copyText(item.value, t('officialChannels.endpointCopied'), t('officialChannels.copyFailed'))}
+                  onClick={() =>
+                    copyText(
+                      item.value,
+                      t("officialChannels.endpointCopied"),
+                      t("officialChannels.copyFailed"),
+                    )
+                  }
                   className="inline-flex h-8 items-center rounded-md border border-page-divider bg-page-surface px-2.5 text-xs font-semibold text-page-secondary transition hover:text-page"
                 >
                   <Copy size={13} className="mr-1" />
-                  {t('officialChannels.copy')}
+                  {t("officialChannels.copy")}
                 </button>
               </div>
             </div>
@@ -613,33 +895,47 @@ function OfficialChannelDetail({
   );
 }
 
-function ModelKeySupplySection({ data, loading, hideProviderInfo, view, onViewChange, period, onPeriodChange }) {
+function ModelKeySupplySection({
+  data,
+  loading,
+  hideProviderInfo,
+  view,
+  onViewChange,
+  period,
+  onPeriodChange,
+  officialModel,
+  currency,
+}) {
   const { t } = useTranslation();
   const keys = Array.isArray(data?.keys) ? data.keys : [];
   const providers = Array.isArray(data?.providers) ? data.providers : [];
-  const items = view === 'keys' ? keys : providers;
+  const items = view === "keys" ? keys : providers;
 
   return (
     <section className="mt-4 rounded-2xl border border-page-divider bg-page-surface p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-page">{t('officialChannels.modelSupplyDetails')}</h3>
-          <p className="mt-1 text-xs text-page-secondary">{t('officialChannels.modelSupplyDetailsDesc')}</p>
+          <h3 className="text-sm font-semibold text-page">
+            {t("officialChannels.modelSupplyDetails")}
+          </h3>
+          <p className="mt-1 text-xs text-page-secondary">
+            {t("officialChannels.modelSupplyDetailsDesc")}
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <SegmentedControl
             value={view}
             options={[
-              ['keys', t('officialChannels.keyDetails')],
-              ['providers', t('officialChannels.providerSummary')],
+              ["keys", t("officialChannels.keyDetails")],
+              ["providers", t("officialChannels.providerSummary")],
             ]}
             onChange={onViewChange}
           />
           <SegmentedControl
             value={period}
             options={[
-              ['24h', t('officialChannels.twentyFourHours')],
-              ['7d', t('officialChannels.sevenDays')],
+              ["24h", t("officialChannels.twentyFourHours")],
+              ["7d", t("officialChannels.sevenDays")],
             ]}
             onChange={onPeriodChange}
           />
@@ -647,43 +943,87 @@ function ModelKeySupplySection({ data, loading, hideProviderInfo, view, onViewCh
       </div>
 
       {loading ? (
-        <div className="mt-4 flex h-16 items-center justify-center text-xs text-page-secondary">{t('common.loading')}</div>
+        <div className="mt-4 flex h-16 items-center justify-center text-xs text-page-secondary">
+          {t("common.loading")}
+        </div>
       ) : items.length === 0 ? (
         <div className="mt-4 rounded-xl border border-dashed border-page-divider px-3 py-6 text-center text-xs text-page-secondary">
-          {t('officialChannels.noModelSupplyDetails')}
+          {t("officialChannels.noModelSupplyDetails")}
         </div>
       ) : (
         <div className="mt-4 space-y-2">
           {items.map((item, index) => {
-            const isKey = view === 'keys';
-            const providerName = item.provider_name || t('officialChannels.providerFallback', { number: item.provider_index || index + 1 });
-            const keyNumber = hideProviderInfo ? item.key_index : item.provider_key_index || item.key_index;
-            const keyName = t('officialChannels.keyNumber', { number: keyNumber || index + 1 });
+            const isKey = view === "keys";
+            const providerName =
+              item.provider_name ||
+              t("officialChannels.providerFallback", {
+                number: item.provider_index || index + 1,
+              });
+            const keyNumber = hideProviderInfo
+              ? item.key_index
+              : item.provider_key_index || item.key_index;
+            const keyName = t("officialChannels.keyNumber", {
+              number: keyNumber || index + 1,
+            });
+            const videoPriceRows = supplyVideoPriceRows(
+              item,
+              officialModel,
+              currency,
+            );
+            const supplyPrice =
+              videoPriceRows.length > 0
+                ? "--"
+                : formatSupplyPrice(item, t, officialModel, currency);
             return (
-              <div key={`${isKey ? 'key' : 'provider'}-${item.provider_id || item.provider_index || index}-${item.provider_key_index || ''}`} className="rounded-xl border border-page-divider bg-page-inset px-3 py-3">
+              <div
+                key={`${isKey ? "key" : "provider"}-${item.provider_id || item.provider_index || index}-${item.provider_key_index || ""}`}
+                className="rounded-xl border border-page-divider bg-page-inset px-3 py-3"
+              >
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
                     <div className="truncate text-sm font-semibold text-page">
-                      {isKey ? `${hideProviderInfo ? '' : `${providerName} · `}${keyName}` : providerName}
+                      {isKey
+                        ? `${hideProviderInfo ? "" : `${providerName} · `}${keyName}`
+                        : providerName}
                     </div>
                     <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-page-secondary">
                       {isKey ? (
                         <>
-                          <span>{formatPriceMultiplier(item.price_discount, t)}</span>
-                          <span>{formatSupplyPrice(item, t)}</span>
-                          <span>{formatCount(item.probe_successes)}/{formatCount(item.probe_total)} {t('officialChannels.requests')}</span>
+                          <span>
+                            {formatPriceMultiplier(item.price_discount, t)}
+                          </span>
+                          {supplyPrice !== "--" && <span>{supplyPrice}</span>}
+                          <span>
+                            {formatCount(item.probe_successes)}/
+                            {formatCount(item.probe_total)}{" "}
+                            {t("officialChannels.requests")}
+                          </span>
                         </>
                       ) : (
                         <>
                           <span>{formatCount(item.key_count)} Key</span>
-                          <span>{formatPriceMultiplier(item.price_discount, t)}</span>
+                          <span>
+                            {formatPriceMultiplier(item.price_discount, t)}
+                          </span>
+                          {supplyPrice !== "--" && <span>{supplyPrice}</span>}
                         </>
                       )}
                     </div>
+                    <VideoPricePills
+                      rows={videoPriceRows}
+                      tone="success"
+                      className="mt-2"
+                    />
                   </div>
-                  <span className="shrink-0 text-sm font-semibold text-page">{formatPercent(item.availability)}</span>
+                  <span className="shrink-0 text-sm font-semibold text-page">
+                    {formatPercent(item.availability)}
+                  </span>
                 </div>
-                <AvailabilityMeter label={t('officialChannels.keyAvailability')} value={item.availability} compact />
+                <AvailabilityMeter
+                  label={t("officialChannels.keyAvailability")}
+                  value={item.availability}
+                  compact
+                />
               </div>
             );
           })}
@@ -701,7 +1041,7 @@ function SegmentedControl({ value, options, onChange }) {
           key={option}
           type="button"
           onClick={() => onChange(option)}
-          className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${value === option ? 'bg-page-surface text-page shadow-sm' : 'text-page-secondary hover:text-page'}`}
+          className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${value === option ? "bg-page-surface text-page shadow-sm" : "text-page-secondary hover:text-page"}`}
         >
           {label}
         </button>
@@ -710,14 +1050,31 @@ function SegmentedControl({ value, options, onChange }) {
   );
 }
 
-function formatSupplyPrice(item, t) {
-  const currency = item?.price_currency === 'CNY' ? '¥' : '$';
+function supplyVideoPriceRows(item, officialModel, displayCurrency) {
+  const multiplier = normalizeMultiplier(item?.price_discount);
+  if (multiplier <= 0) return [];
+  return formatOfficialVideoPriceRows(
+    officialModel,
+    multiplier,
+    officialModel?.price_currency || item?.price_currency || "USD",
+    displayCurrency,
+  );
+}
+
+function formatSupplyPrice(item, t, officialModel, displayCurrency) {
+  const videoRows = supplyVideoPriceRows(item, officialModel, displayCurrency);
+  if (videoRows.length > 0)
+    return videoRows.map((row) => `${row.label} ${row.formatted}`).join(" · ");
+  const sourceSymbol = item?.price_currency === "CNY" ? "¥" : "$";
   const fixed = Number(item?.fixed_price || 0);
   const input = Number(item?.input_price || 0);
   const output = Number(item?.output_price || 0);
-  const format = (value) => value > 0 ? `${currency}${value.toFixed(value < 0.01 ? 6 : 4).replace(/\.?0+$/, '')}` : '-';
-  if (fixed > 0) return `${format(fixed)}/${t('pricing.perCallUnit')}`;
-  if (input <= 0 && output <= 0) return '--';
+  const format = (value) =>
+    value > 0
+      ? `${sourceSymbol}${value.toFixed(value < 0.01 ? 6 : 4).replace(/\.?0+$/, "")}`
+      : "-";
+  if (fixed > 0) return `${format(fixed)}/${t("pricing.perCallUnit")}`;
+  if (input <= 0 && output <= 0) return "--";
   return `${format(input)} / ${format(output)} / M`;
 }
 
@@ -731,9 +1088,13 @@ function ProviderSupplySection({ providers }) {
         <div>
           <div className="flex items-center gap-2">
             <Building2 size={17} className="text-page-link" />
-            <h2 className="text-base font-semibold text-page">{t('officialChannels.providerSupplyTitle')}</h2>
+            <h2 className="text-base font-semibold text-page">
+              {t("officialChannels.providerSupplyTitle")}
+            </h2>
           </div>
-          <p className="mt-1 text-sm leading-6 text-page-secondary">{t('officialChannels.providerSupplyDesc')}</p>
+          <p className="mt-1 text-sm leading-6 text-page-secondary">
+            {t("officialChannels.providerSupplyDesc")}
+          </p>
         </div>
         <span className="mt-2 inline-flex w-fit rounded-full bg-page-link/10 px-2.5 py-1 text-xs font-semibold text-page-link sm:mt-0">
           {formatCount(items.length)}
@@ -742,22 +1103,31 @@ function ProviderSupplySection({ providers }) {
 
       {items.length === 0 ? (
         <div className="mt-4 rounded-xl border border-dashed border-page-divider px-4 py-6 text-center text-sm text-page-secondary">
-          {t('officialChannels.noProviderSupply')}
+          {t("officialChannels.noProviderSupply")}
         </div>
       ) : (
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           {items.map((provider, index) => (
             <div
-              key={provider.provider_id || provider.provider_slug || provider.provider_name || index}
+              key={
+                provider.provider_id ||
+                provider.provider_slug ||
+                provider.provider_name ||
+                index
+              }
               className="rounded-xl border border-page-divider bg-page-inset p-4"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="truncate text-sm font-semibold text-page">
-                    {provider.provider_name || provider.provider_slug || t('officialChannels.unnamedProvider')}
+                    {provider.provider_name ||
+                      provider.provider_slug ||
+                      t("officialChannels.unnamedProvider")}
                   </div>
                   {provider.provider_slug && provider.provider_name && (
-                    <div className="mt-1 truncate text-xs text-page-secondary">{provider.provider_slug}</div>
+                    <div className="mt-1 truncate text-xs text-page-secondary">
+                      {provider.provider_slug}
+                    </div>
                   )}
                 </div>
                 <span className="shrink-0 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-page-success">
@@ -765,9 +1135,18 @@ function ProviderSupplySection({ providers }) {
                 </span>
               </div>
               <div className="mt-3 grid grid-cols-3 gap-2">
-                <Metric label={t('officialChannels.providerKeys')} value={formatCount(provider.key_count)} />
-                <Metric label={t('officialChannels.providerModels')} value={formatCount(provider.supported_model_count)} />
-                <Metric label={t('officialChannels.providerPrice')} value={formatPriceMultiplier(provider.price_discount, t)} />
+                <Metric
+                  label={t("officialChannels.providerKeys")}
+                  value={formatCount(provider.key_count)}
+                />
+                <Metric
+                  label={t("officialChannels.providerModels")}
+                  value={formatCount(provider.supported_model_count)}
+                />
+                <Metric
+                  label={t("officialChannels.providerPrice")}
+                  value={formatPriceMultiplier(provider.price_discount, t)}
+                />
               </div>
             </div>
           ))}
@@ -789,12 +1168,18 @@ function SummaryCard({ label, value }) {
 function AvailabilityMeter({ label, value, compact = false }) {
   const percent = availabilityNumber(value);
   return (
-    <div className={`rounded-xl border border-page-divider bg-page-surface ${compact ? 'mt-2 px-2 py-1.5' : 'px-3 py-3'}`}>
+    <div
+      className={`rounded-xl border border-page-divider bg-page-surface ${compact ? "mt-2 px-2 py-1.5" : "px-3 py-3"}`}
+    >
       <div className="flex items-center justify-between gap-2 text-xs text-page-secondary">
         <span>{label}</span>
-        <span className="font-semibold text-page">{formatPercent(percent)}</span>
+        <span className="font-semibold text-page">
+          {formatPercent(percent)}
+        </span>
       </div>
-      <div className={`mt-1.5 w-full overflow-hidden rounded-full bg-page-inset ${compact ? 'h-1.5' : 'h-2'}`}>
+      <div
+        className={`mt-1.5 w-full overflow-hidden rounded-full bg-page-inset ${compact ? "h-1.5" : "h-2"}`}
+      >
         <div
           className={`h-full rounded-full transition-all ${availabilityClass(percent)}`}
           style={{ width: `${percent < 0 ? 0 : percent}%` }}
@@ -804,70 +1189,125 @@ function AvailabilityMeter({ label, value, compact = false }) {
   );
 }
 
-function AvailabilityGraph({ title, data, loading = false, compact = false }) {
+function AvailabilityGraph({
+  title,
+  data,
+  loading = false,
+  compact = false,
+  officialModel,
+  currency,
+}) {
   const { t } = useTranslation();
   const buckets = Array.isArray(data?.buckets) ? data.buckets : [];
   const providers = Array.isArray(data?.providers) ? data.providers : [];
   const availability = availabilityNumber(data?.availability);
   return (
-    <section className={`rounded-2xl border border-page-divider bg-page-surface ${compact ? 'mt-4 p-4' : 'mt-5 p-5'}`}>
+    <section
+      className={`rounded-2xl border border-page-divider bg-page-surface ${compact ? "mt-4 p-4" : "mt-5 p-5"}`}
+    >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Activity size={17} className="text-page-link" />
           <h2 className="text-base font-semibold text-page">{title}</h2>
         </div>
-        <span className="text-sm font-semibold text-page">{formatPercent(availability)}</span>
+        <span className="text-sm font-semibold text-page">
+          {formatPercent(availability)}
+        </span>
       </div>
       {loading ? (
-        <div className="mt-4 flex h-12 items-center justify-center text-xs text-page-secondary">{t('common.loading')}</div>
+        <div className="mt-4 flex h-12 items-center justify-center text-xs text-page-secondary">
+          {t("common.loading")}
+        </div>
       ) : buckets.length === 0 ? (
         <div className="mt-4 rounded-xl border border-dashed border-page-divider px-3 py-5 text-center text-xs text-page-secondary">
-          {t('officialChannels.noAvailabilityHistory')}
+          {t("officialChannels.noAvailabilityHistory")}
         </div>
       ) : (
         <>
-          <div className={`mt-4 flex items-end gap-1 ${compact ? 'h-12' : 'h-16'}`}>
+          <div
+            className={`mt-4 flex items-end gap-1 ${compact ? "h-12" : "h-16"}`}
+          >
             {buckets.map((bucket, index) => (
               <div
                 key={`${bucket.bucket_time}-${index}`}
                 title={`${formatPercent(bucket.availability)} · ${formatCount(bucket.successes)}/${formatCount(bucket.total)}`}
                 className={`min-w-0 flex-1 rounded-t-sm transition-opacity hover:opacity-80 ${availabilityClass(bucket.availability)}`}
-                style={{ height: `${Math.max(8, availabilityNumber(bucket.availability) < 0 ? 8 : availabilityNumber(bucket.availability))}%` }}
+                style={{
+                  height: `${Math.max(8, availabilityNumber(bucket.availability) < 0 ? 8 : availabilityNumber(bucket.availability))}%`,
+                }}
               />
             ))}
           </div>
           <div className="mt-2 flex items-center justify-between text-[11px] text-page-secondary">
-            <span>{data?.period === '7d' ? t('officialChannels.sevenDaysAgo') : t('officialChannels.twentyFourHoursAgo')}</span>
-            <span>{t('officialChannels.now')}</span>
+            <span>
+              {data?.period === "7d"
+                ? t("officialChannels.sevenDaysAgo")
+                : t("officialChannels.twentyFourHoursAgo")}
+            </span>
+            <span>{t("officialChannels.now")}</span>
           </div>
         </>
       )}
       {providers.length > 0 && (
         <div className="mt-4 border-t border-page-divider pt-4">
           <div className="flex items-center justify-between gap-2 text-xs text-page-secondary">
-            <span>{t('officialChannels.modelProviders')}</span>
+            <span>{t("officialChannels.modelProviders")}</span>
             <span>{formatCount(providers.length)}</span>
           </div>
           <div className="mt-3 space-y-2">
             {providers.map((provider, index) => {
-              const providerAvailability = availabilityNumber(provider.availability);
-              const providerLabel = provider.provider_name || t('officialChannels.providerFallback', { number: provider.provider_index || index + 1 });
+              const providerAvailability = availabilityNumber(
+                provider.availability,
+              );
+              const providerLabel =
+                provider.provider_name ||
+                t("officialChannels.providerFallback", {
+                  number: provider.provider_index || index + 1,
+                });
+              const videoPriceRows = supplyVideoPriceRows(
+                provider,
+                officialModel,
+                currency,
+              );
+              const supplyPrice =
+                videoPriceRows.length > 0
+                  ? "--"
+                  : formatSupplyPrice(provider, t, officialModel, currency);
               return (
-                <div key={`${provider.provider_id || provider.provider_index || index}`} className="rounded-lg border border-page-divider bg-page-inset px-3 py-2">
+                <div
+                  key={`${provider.provider_id || provider.provider_index || index}`}
+                  className="rounded-lg border border-page-divider bg-page-inset px-3 py-2"
+                >
                   <div className="flex items-center justify-between gap-3 text-xs">
-                    <span className="truncate font-semibold text-page">{providerLabel}</span>
-                    <span className="shrink-0 font-semibold text-page">{formatPercent(providerAvailability)}</span>
+                    <span className="truncate font-semibold text-page">
+                      {providerLabel}
+                    </span>
+                    <span className="shrink-0 font-semibold text-page">
+                      {formatPercent(providerAvailability)}
+                    </span>
                   </div>
                   <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-page-surface">
                     <div
                       className={`h-full rounded-full ${availabilityClass(providerAvailability)}`}
-                      style={{ width: `${providerAvailability < 0 ? 0 : providerAvailability}%` }}
+                      style={{
+                        width: `${providerAvailability < 0 ? 0 : providerAvailability}%`,
+                      }}
                     />
                   </div>
                   <div className="mt-1 flex items-center justify-between gap-2 text-[11px] text-page-secondary">
                     <span>{formatCount(provider.key_count)} Key</span>
-                    <span>{formatPriceMultiplier(provider.price_discount, t)}</span>
+                    <span className="text-right">
+                      {formatPriceMultiplier(provider.price_discount, t)}
+                      {supplyPrice !== "--" && (
+                        <span className="ml-2">{supplyPrice}</span>
+                      )}
+                    </span>
                   </div>
+                  <VideoPricePills
+                    rows={videoPriceRows}
+                    tone="success"
+                    className="mt-2"
+                  />
                 </div>
               );
             })}
@@ -889,12 +1329,14 @@ function Metric({ label, value }) {
 
 function formatAvailability(value) {
   const n = Number(value);
-  return Number.isFinite(n) && n >= 0 ? `${n.toFixed(1)}%` : '--';
+  return Number.isFinite(n) && n >= 0 ? `${n.toFixed(1)}%` : "--";
 }
 
 function LoadingBlock({ label, compact = false }) {
   return (
-    <div className={`flex items-center justify-center text-page-secondary ${compact ? 'py-8' : 'py-20'}`}>
+    <div
+      className={`flex items-center justify-center text-page-secondary ${compact ? "py-8" : "py-20"}`}
+    >
       <Loader2 className="mr-2 h-5 w-5 animate-spin" />
       {label}
     </div>

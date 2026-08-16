@@ -77,6 +77,7 @@
     "officialChannels.discount": "最终折扣",
     "officialChannels.modelKeys": "模型可用 Key",
     "officialChannels.priceUnitHint": "价格单位：{{currency}}；文本模型按每百万 Token 展示。",
+    "officialChannels.videoPriceUnitHint": "价格单位：{{currency}}；视频价格按输出秒展示，且已包含分站加价。",
     "officialChannels.selectModel": "请选择一个模型",
     "officialChannels.providerDetailsHidden": "供应商详情",
     "officialChannels.hidden": "已隐藏",

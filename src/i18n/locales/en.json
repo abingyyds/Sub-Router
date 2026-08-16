@@ -77,6 +77,7 @@
     "officialChannels.discount": "Final discount",
     "officialChannels.modelKeys": "Model keys",
     "officialChannels.priceUnitHint": "Currency: {{currency}}; text models are shown per million tokens.",
+    "officialChannels.videoPriceUnitHint": "Currency: {{currency}}; video prices are shown per output second and already include the station markup.",
     "officialChannels.selectModel": "Select a model",
     "officialChannels.providerDetailsHidden": "Provider details",
     "officialChannels.hidden": "Hidden",

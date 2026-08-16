@@ -382,6 +382,7 @@
     "officialChannels.discount": "Giảm giá cuối cùng",
     "officialChannels.modelKeys": "Khóa mô hình",
     "officialChannels.priceUnitHint": "Tiền tệ: {{currency}}; giá mô hình văn bản được tính trên mỗi triệu token.",
+    "officialChannels.videoPriceUnitHint": "Tiền tệ: {{currency}}; giá video được tính theo mỗi giây đầu ra và đã bao gồm phần tăng giá của trang.",
     "officialChannels.selectModel": "Chọn mô hình",
     "officialChannels.providerDetailsHidden": "Chi tiết nhà cung cấp",
     "officialChannels.hidden": "Ẩn",
