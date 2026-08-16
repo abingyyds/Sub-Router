@@ -6,6 +6,7 @@ import {
   ClipboardPaste,
   Copy,
   Database,
+  Download,
   ExternalLink,
   FileUp,
   HandCoins,
@@ -46,10 +47,26 @@ import {
   updateSharedAccountStatus,
 } from "../api";
 import { useCurrency, useSite } from "../context/SiteContext";
-import { parseSharedAccountBackup } from "../utils/sharedAccountBatchImport";
+import {
+  SHARED_ACCOUNT_IMPORT_EXAMPLE,
+  parseSharedAccountBackup,
+} from "../utils/sharedAccountBatchImport";
 import { parseSharedProxyInput } from "../utils/sharedProxy";
 
 const dataOf = (response) => response?.data?.data || {};
+
+const downloadJSONExample = (filename, value) => {
+  const url = URL.createObjectURL(
+    new Blob([`${JSON.stringify(value, null, 2)}\n`], {
+      type: "application/json;charset=utf-8",
+    }),
+  );
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+};
 
 const openAuthorizationWindow = (url) => {
   if (!url) return;
@@ -1583,6 +1600,10 @@ function BatchImportDialog({ open, onClose, onDone }) {
       setBackup(parsed);
       if (!parsed.oauthAccounts.length) {
         toast.error("文件中没有可导入的 OAuth 账号");
+      } else if (parsed.missingProxy > 0) {
+        toast.error(
+          `有 ${parsed.missingProxy} 个 OAuth 账号未绑定代理，请补充 proxy、proxy_url 或 proxy_id`,
+        );
       }
     } catch (error) {
       toast.error(error.message || "账号备份文件解析失败");
@@ -1592,6 +1613,12 @@ function BatchImportDialog({ open, onClose, onDone }) {
   const importAccounts = async () => {
     if (!backup?.oauthAccounts?.length) {
       toast.error("请先选择包含 OAuth 账号的 JSON 备份文件");
+      return;
+    }
+    if (backup.missingProxy > 0) {
+      toast.error(
+        `有 ${backup.missingProxy} 个 OAuth 账号未绑定专属代理，暂不能导入`,
+      );
       return;
     }
     setImporting(true);
@@ -1627,7 +1654,7 @@ function BatchImportDialog({ open, onClose, onDone }) {
     <ModalShell
       open={open}
       title="批量导入托管账号"
-      description="上传账号管理页面导出的 JSON 文件，一次最多导入 200 个 OAuth 账号。"
+      description="支持 sub2api 账号备份格式，一次最多导入 200 个 OAuth 账号；每个账号必须绑定专属代理。"
       onClose={onClose}
       footer={
         <>
@@ -1638,7 +1665,11 @@ function BatchImportDialog({ open, onClose, onDone }) {
             type="button"
             className="btn-primary"
             onClick={importAccounts}
-            disabled={importing || !backup?.oauthAccounts?.length}
+            disabled={
+              importing ||
+              !backup?.oauthAccounts?.length ||
+              backup?.missingProxy > 0
+            }
           >
             {importing && <Loader2 size={15} className="mr-2 animate-spin" />}
             开始导入
@@ -1647,6 +1678,25 @@ function BatchImportDialog({ open, onClose, onDone }) {
       }
     >
       <div className="space-y-4">
+        <div className="flex items-start justify-between gap-3">
+          <p className="text-sm leading-6 text-page-muted">
+            支持内联 proxy、proxy_url，或顶层 proxies 配合账号
+            proxy_id。系统会逐个测试代理和账号。
+          </p>
+          <button
+            type="button"
+            className="btn-secondary shrink-0"
+            onClick={() =>
+              downloadJSONExample(
+                "shared-account-import-example.json",
+                SHARED_ACCOUNT_IMPORT_EXAMPLE,
+              )
+            }
+          >
+            <Download size={14} className="mr-2" />
+            格式示例
+          </button>
+        </div>
         <button
           type="button"
           className="flex w-full items-center gap-3 rounded-lg border border-dashed border-page-divider bg-page-inset px-4 py-5 text-left"
@@ -1658,7 +1708,7 @@ function BatchImportDialog({ open, onClose, onDone }) {
               {fileName || "选择 JSON 文件"}
             </span>
             <span className="mt-1 block text-xs text-page-muted">
-              仅导入 OAuth 账号，代理和其他认证类型会跳过
+              仅导入已绑定专属代理的 OAuth 账号，其他认证类型会跳过
             </span>
           </span>
         </button>
@@ -1670,11 +1720,23 @@ function BatchImportDialog({ open, onClose, onDone }) {
           onChange={selectFile}
         />
         {backup && (
-          <div className="grid grid-cols-3 gap-3 text-sm">
+          <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-5">
             <ImportCount label="文件账号" value={backup.total} />
-            <ImportCount label="可导入" value={backup.oauthAccounts.length} />
+            <ImportCount
+              label="OAuth 账号"
+              value={backup.oauthAccounts.length}
+            />
+            <ImportCount label="已绑定代理" value={backup.proxyBound} />
+            <ImportCount label="缺少代理" value={backup.missingProxy} />
             <ImportCount label="跳过" value={backup.skipped} />
           </div>
+        )}
+        {backup?.missingProxy > 0 && (
+          <p className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+            每个 OAuth
+            账号都必须配置可连通的公网代理。为提高账号存活率，建议使用静态住宅
+            IP。
+          </p>
         )}
         {result && (
           <p className="text-sm text-page-muted">
