@@ -14,6 +14,9 @@ import CountUp from '../components/bits/CountUp';
 import toast from 'react-hot-toast';
 import CryptoTopupReconcileModal from '../components/CryptoTopupReconcileModal';
 
+// Temporarily hide the crypto recovery entry while the on-chain flow is being repaired.
+const CRYPTO_RECONCILIATION_ENABLED = false;
+
 function normalizeExternalUrl(value) {
   const trimmed = String(value || '').trim();
   if (!trimmed) return '';
@@ -869,6 +872,7 @@ export default function Topup() {
             <div className="space-y-2">
               {history.map((item, i) => {
                 const canReconcile = item.payment_method === 'crypto'
+                  && CRYPTO_RECONCILIATION_ENABLED
                   && ['pending', 'expired'].includes(item.status)
                   && (Number(item.amount) > 0 || Number(item.credited_quota) > 0);
                 return (
