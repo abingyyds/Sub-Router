@@ -511,10 +511,6 @@ export const getSharedPlanProbes = (id, period = "24h") =>
   api.get(`/api/dist/shared-subscriptions/plans/${id}/probes`, {
     params: { period },
   });
-export const subscribeSharedPlan = (id) =>
-  api.post(`/api/dist/shared-subscriptions/plans/${id}/subscribe`);
-export const unsubscribeSharedPlan = (id) =>
-  api.delete(`/api/dist/shared-subscriptions/plans/${id}/subscribe`);
 export const getSharedSupplies = () =>
   api.get("/api/dist/shared-subscriptions/supplies");
 export const importSharedAccounts = (accounts, oauthOnly = false) =>

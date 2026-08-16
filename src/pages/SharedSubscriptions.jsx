@@ -41,9 +41,7 @@ import {
   importSharedAccounts,
   saveSharedPaymentProfile,
   startSharedOAuth,
-  subscribeSharedPlan,
   transferSharedEarnings,
-  unsubscribeSharedPlan,
   updateSharedAccountStatus,
 } from "../api";
 import { useCurrency, useSite } from "../context/SiteContext";
@@ -93,7 +91,7 @@ export default function SharedSubscriptions() {
       requested,
     )
       ? requested
-      : "hosting";
+      : "market";
   });
   const [plans, setPlans] = useState([]);
   const [planCatalog, setPlanCatalog] = useState([]);
@@ -162,19 +160,8 @@ export default function SharedSubscriptions() {
     setSearchParams(next, { replace: true });
   };
 
-  const togglePlan = async (entry) => {
-    const response = entry.subscribed
-      ? await unsubscribeSharedPlan(entry.plan.id)
-      : await subscribeSharedPlan(entry.plan.id);
-    if (response.data.success) await load();
-  };
-
   const createPlanKey = async (entry, smart = false) => {
     if (!entry?.plan?.id) return;
-    if (fullMode && !entry.subscribed) {
-      toast.error("请先订阅该共享套餐");
-      return;
-    }
     try {
       const suffix = smart ? "智能路由" : "固定";
       const response = await createSharedPlanToken(
@@ -315,7 +302,7 @@ export default function SharedSubscriptions() {
         <div>
           <h1 className="text-2xl font-bold text-page sm:text-3xl">订阅共享</h1>
           <p className="mt-1 text-sm text-page-secondary">
-            贡献订阅账号、查看收益并管理结算
+            使用站长已进货上架的共享套餐、贡献账号并管理收益
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -378,11 +365,11 @@ export default function SharedSubscriptions() {
 
       <div className="mt-5 flex max-w-full overflow-x-auto border-b border-page-divider">
         {[
+          ["market", "共享市场"],
           ["hosting", "托管账号"],
           ["earnings", "收益明细"],
           ["settlement", "结算"],
           ["rules", "规则与费率"],
-          ["market", "共享市场"],
         ].map(([value, label]) => (
           <button
             key={value}
@@ -404,9 +391,7 @@ export default function SharedSubscriptions() {
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {plans.length === 0 ? (
               <div className="col-span-full rounded-lg border border-dashed border-page-divider px-5 py-12 text-center text-sm text-page-muted">
-                {fullMode
-                  ? "当前没有健康、可调度的共享套餐"
-                  : "站长已订阅的共享套餐当前没有健康、可调度供应"}
+                "当前没有已上架且健康可调度的共享套餐"
               </div>
             ) : (
               plans.map((entry) => (
@@ -585,15 +570,6 @@ export default function SharedSubscriptions() {
                       >
                         <KeyRound size={15} className="mr-1.5" />
                         智能路由 Key
-                      </button>
-                    )}
-                    {fullMode && (
-                      <button
-                        type="button"
-                        className="btn-secondary"
-                        onClick={() => togglePlan(entry)}
-                      >
-                        {entry.subscribed ? "取消订阅" : "订阅"}
                       </button>
                     )}
                     <button
