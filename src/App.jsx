@@ -67,9 +67,9 @@ function OfficialChannelsRoute() {
 }
 
 function SharedSubscriptionsRoute() {
-  const { site, loading } = useSite();
+  const { site, loading, siteResolved } = useSite();
 
-  if (loading) {
+  if (loading || !siteResolved) {
     return <Loading />;
   }
 

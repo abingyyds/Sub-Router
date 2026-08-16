@@ -107,6 +107,7 @@ export function SiteProvider({ children }) {
   const [initialSite] = useState(readCachedSite);
   const [site, setSite] = useState(initialSite);
   const [loading, setLoading] = useState(!initialSite);
+  const [siteResolved, setSiteResolved] = useState(false);
 
   useEffect(() => {
     const previewTheme = getDevPreviewTheme();
@@ -137,6 +138,7 @@ export function SiteProvider({ children }) {
         name: `${previewSite.name} · ${previewTheme}`,
       });
       setLoading(false);
+      setSiteResolved(true);
       return;
     }
 
@@ -158,7 +160,10 @@ export function SiteProvider({ children }) {
           }
         })
         .catch(() => {})
-        .finally(() => setLoading(false));
+        .finally(() => {
+          setLoading(false);
+          setSiteResolved(true);
+        });
     };
 
     let idleId;
@@ -176,7 +181,7 @@ export function SiteProvider({ children }) {
   }, []);
 
   return (
-    <SiteContext.Provider value={{ site, loading }}>
+    <SiteContext.Provider value={{ site, loading, siteResolved }}>
       {children}
     </SiteContext.Provider>
   );
