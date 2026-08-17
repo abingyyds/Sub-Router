@@ -19,6 +19,9 @@ import { useCurrency, useSite } from '../context/SiteContext';
 import { formatPricingDetailRows } from '../utils/pricingDetails';
 import toast from 'react-hot-toast';
 
+const DEFAULT_SUBROUTER_ROUTE_PREFERENCE =
+  'first_token_first,stability_first,authenticity_first,price_first';
+
 const normalizeOfficialKeyMaxDiscount = (value) => {
   const n = Number(value);
   return Number.isFinite(n) && n > 0 ? Math.min(n, 1) : 0;
@@ -50,7 +53,7 @@ const emptyControlForm = () => ({
   model_limits: [],
   allow_ips: '',
 	subrouter_sort_mode: 'token_price_first',
-	subrouter_route_preference: 'first_token_first,authenticity_first,stability_first,price_first',
+	subrouter_route_preference: DEFAULT_SUBROUTER_ROUTE_PREFERENCE,
 	subrouter_providers: [],
 	subrouter_model_providers: '',
 	subrouter_model_price_limits: '',
@@ -145,7 +148,8 @@ const tokenToEditForm = (token, rate) => ({
   model_limits: parseModelLimits(token?.model_limits),
   allow_ips: token?.allow_ips || '',
 	subrouter_sort_mode: token?.subrouter_sort_mode || 'token_price_first',
-	subrouter_route_preference: token?.subrouter_route_preference || 'first_token_first,authenticity_first,stability_first,price_first',
+	subrouter_route_preference:
+	  token?.subrouter_route_preference || DEFAULT_SUBROUTER_ROUTE_PREFERENCE,
 	subrouter_providers: parseModelLimits(token?.subrouter_providers),
 	subrouter_model_providers: token?.subrouter_model_providers || '',
 	subrouter_model_price_limits: token?.subrouter_model_price_limits || '',
@@ -302,7 +306,7 @@ export default function Tokens() {
 	  setCreateControls({
 		...emptyControlForm(),
 		subrouter_route_preference:
-		  site?.subrouter_route_preference || 'first_token_first,authenticity_first,stability_first,price_first',
+		  site?.subrouter_route_preference || DEFAULT_SUBROUTER_ROUTE_PREFERENCE,
 		include_provider_self: fullMode ? true : site?.include_provider_self !== false,
 		subrouter_providers: fullMode ? providerOptions.map((provider) => provider.slug) : [],
 	  });
@@ -318,7 +322,7 @@ export default function Tokens() {
 	  setCreateControls({
 		...emptyControlForm(),
 		subrouter_route_preference:
-		  site?.subrouter_route_preference || 'first_token_first,authenticity_first,stability_first,price_first',
+		  site?.subrouter_route_preference || DEFAULT_SUBROUTER_ROUTE_PREFERENCE,
 		include_provider_self: fullMode ? true : site?.include_provider_self !== false,
 		subrouter_providers: fullMode ? providerOptions.map((provider) => provider.slug) : [],
 	  });
@@ -1357,11 +1361,11 @@ function TokenControlFields({
 			<div>
 			  <label className="block text-sm font-medium text-page-label mb-1.5">路由偏好</label>
 			  <select className="input" value={form.subrouter_route_preference} onChange={(event) => onChange('subrouter_route_preference', event.target.value)}>
-				<option value="first_token_first,authenticity_first,stability_first,price_first">综合路由</option>
-				<option value="price_first">价格优先</option>
-				<option value="stability_first">稳定性优先</option>
+				<option value={DEFAULT_SUBROUTER_ROUTE_PREFERENCE}>综合路由</option>
 				<option value="first_token_first">首 Token 延迟优先</option>
+				<option value="stability_first">稳定性优先</option>
 				<option value="authenticity_first">真实性优先</option>
+				<option value="price_first">价格优先</option>
 			  </select>
 			</div>
 		  )}
