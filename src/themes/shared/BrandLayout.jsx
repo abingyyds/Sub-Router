@@ -17,6 +17,108 @@ import {
 } from '../../utils/navigation';
 
 const configs = {
+  default: {
+    root: 'theme-light theme-starter min-h-screen flex flex-col bg-[#f7f8fb] text-slate-950',
+    main: 'theme-page-shell starter-page-shell flex-1',
+    announcement: 'border-b border-slate-200 bg-slate-950 px-4 py-2.5 text-center text-sm font-medium text-white',
+    header: 'sticky top-0 z-50 border-b border-slate-200/80 bg-white/88 backdrop-blur-xl',
+    logo: 'bg-slate-950 text-white shadow-lg shadow-slate-900/10',
+    navWrap: 'hidden items-center gap-1 rounded-xl border border-slate-200 bg-white/80 p-1 shadow-sm xl:flex',
+    navActive: 'bg-slate-950 text-white shadow-sm',
+    navIdle: 'text-slate-600 hover:bg-slate-100 hover:text-slate-950',
+    language: 'text-slate-500 hover:bg-slate-100 hover:text-slate-950',
+    menu: 'border-slate-200 bg-white/95 text-slate-700 shadow-slate-900/10',
+    menuItem: 'hover:bg-slate-100 hover:text-slate-950',
+    primary: 'bg-slate-950 text-white hover:bg-indigo-700',
+    mobileActive: 'bg-indigo-50 text-indigo-700',
+    mobileIdle: 'text-slate-600 hover:bg-slate-50 hover:text-slate-950',
+    footer: 'mt-auto border-t border-slate-200 bg-white',
+  },
+  clean: {
+    root: 'theme-light min-h-screen flex flex-col bg-white text-gray-900',
+    main: 'theme-page-shell clean-page-shell flex-1',
+    announcement: 'border-b border-blue-100 bg-blue-50 px-4 py-2.5 text-center text-sm font-medium text-blue-700',
+    header: 'sticky top-0 z-50 border-b border-gray-100 bg-white/88 backdrop-blur-xl',
+    logo: 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/15',
+    navWrap: 'hidden items-center gap-1 rounded-xl border border-gray-200 bg-gray-50/80 p-1 shadow-sm xl:flex',
+    navActive: 'bg-blue-600 text-white shadow-sm',
+    navIdle: 'text-gray-600 hover:bg-white hover:text-gray-950',
+    language: 'text-gray-400 hover:bg-gray-50 hover:text-gray-700',
+    menu: 'border-gray-200 bg-white/95 text-gray-700 shadow-slate-900/10',
+    menuItem: 'hover:bg-gray-50 hover:text-gray-950',
+    primary: 'bg-blue-600 text-white hover:bg-blue-700',
+    mobileActive: 'bg-blue-50 text-blue-700',
+    mobileIdle: 'text-gray-600 hover:bg-gray-50 hover:text-gray-950',
+    footer: 'mt-auto border-t border-gray-100 bg-gray-50/60',
+  },
+  corporate: {
+    root: 'theme-light min-h-screen flex flex-col bg-white text-slate-900',
+    main: 'theme-page-shell corporate-page-shell flex-1',
+    announcement: 'border-b border-slate-800 bg-slate-900 px-4 py-2.5 text-center text-sm font-medium text-slate-200',
+    header: 'sticky top-0 z-50 border-b border-slate-200 bg-white/92 backdrop-blur-xl',
+    logo: 'bg-slate-900 text-white shadow-lg shadow-slate-900/10',
+    navWrap: 'hidden items-center gap-0.5 rounded-xl border border-slate-200 bg-slate-50/80 p-1 xl:flex',
+    navActive: 'bg-slate-900 text-white shadow-sm',
+    navIdle: 'text-slate-600 hover:bg-white hover:text-slate-950',
+    language: 'text-slate-400 hover:bg-slate-50 hover:text-slate-700',
+    menu: 'border-slate-200 bg-white/95 text-slate-700 shadow-slate-900/10',
+    menuItem: 'hover:bg-slate-50 hover:text-slate-950',
+    primary: 'bg-slate-900 text-white hover:bg-slate-800',
+    mobileActive: 'bg-slate-100 text-slate-950',
+    mobileIdle: 'text-slate-600 hover:bg-slate-50 hover:text-slate-950',
+    footer: 'mt-auto border-t border-slate-200 bg-white',
+  },
+  claude: {
+    root: 'theme-light theme-claude min-h-screen flex flex-col bg-[#FAF6F1] text-[#3D3024]',
+    main: 'theme-page-shell claude-page-shell flex-1',
+    announcement: 'border-b border-[#C4613F] bg-[#D97757] px-4 py-2.5 text-center text-sm font-medium text-white',
+    header: 'sticky top-0 z-50 border-b border-[#E8DDD0] bg-[#FAF6F1]/88 backdrop-blur-xl',
+    logo: 'bg-gradient-to-br from-[#D97757] to-[#C4613F] text-white shadow-lg shadow-orange-900/10',
+    navWrap: 'hidden items-center gap-1 rounded-xl border border-[#E8DDD0] bg-white/55 p-1 xl:flex',
+    navActive: 'bg-[#D97757]/10 text-[#D97757] shadow-sm',
+    navIdle: 'text-[#6B5D4F] hover:bg-[#E8DDD0]/50 hover:text-[#3D3024]',
+    language: 'text-[#8B7D6E] hover:bg-[#E8DDD0]/50 hover:text-[#3D3024]',
+    menu: 'border-[#E8DDD0] bg-[#FAF6F1]/95 text-[#6B5D4F] shadow-[#6B5D4F]/10',
+    menuItem: 'hover:bg-[#E8DDD0]/50 hover:text-[#3D3024]',
+    primary: 'bg-[#D97757] text-white hover:bg-[#C4613F]',
+    mobileActive: 'bg-[#D97757]/10 text-[#D97757]',
+    mobileIdle: 'text-[#6B5D4F] hover:bg-[#E8DDD0]/50 hover:text-[#3D3024]',
+    footer: 'mt-auto border-t border-[#E8DDD0] bg-[#F5EEE6]',
+  },
+  dark: {
+    root: 'theme-dark min-h-screen flex flex-col bg-[#030712] text-white',
+    main: 'theme-page-shell dark-page-shell flex-1',
+    announcement: 'border-b border-emerald-500/10 bg-emerald-500/[0.06] px-4 py-2.5 text-center font-mono text-sm text-emerald-300/80',
+    header: 'sticky top-0 z-50 border-b border-emerald-500/[0.1] bg-[#030712]/88 backdrop-blur-xl',
+    logo: 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 shadow-lg shadow-emerald-950/20',
+    navWrap: 'hidden items-center gap-1 rounded-xl border border-emerald-500/[0.12] bg-emerald-500/[0.035] p-1 xl:flex',
+    navActive: 'bg-emerald-500/15 text-emerald-300 shadow-sm',
+    navIdle: 'text-neutral-500 hover:bg-emerald-500/[0.08] hover:text-emerald-300',
+    language: 'font-mono text-neutral-500 hover:bg-emerald-500/[0.08] hover:text-emerald-300',
+    menu: 'border-emerald-500/15 bg-[#030712]/95 text-neutral-300 shadow-black/40',
+    menuItem: 'hover:bg-emerald-500/[0.08] hover:text-emerald-300',
+    primary: 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20',
+    mobileActive: 'bg-emerald-500/10 text-emerald-300',
+    mobileIdle: 'text-neutral-500 hover:bg-emerald-500/[0.08] hover:text-emerald-300',
+    footer: 'mt-auto border-t border-emerald-500/[0.1] bg-[#030712]',
+  },
+  minimal: {
+    root: 'theme-minimal min-h-screen flex flex-col bg-neutral-950 text-white',
+    main: 'theme-page-shell minimal-page-shell flex-1',
+    announcement: 'border-b border-neutral-800/70 bg-neutral-950 px-4 py-2.5 text-center text-sm text-neutral-400',
+    header: 'sticky top-0 z-50 border-b border-neutral-800/60 bg-neutral-950/88 backdrop-blur-xl',
+    logo: 'bg-white text-neutral-950 shadow-lg shadow-white/10',
+    navWrap: 'hidden items-center gap-1 rounded-xl border border-neutral-800/70 bg-neutral-900/70 p-1 xl:flex',
+    navActive: 'bg-white text-neutral-950 shadow-sm',
+    navIdle: 'text-neutral-500 hover:bg-neutral-800 hover:text-white',
+    language: 'text-neutral-500 hover:bg-neutral-800 hover:text-white',
+    menu: 'border-neutral-800 bg-neutral-950/95 text-neutral-300 shadow-black/40',
+    menuItem: 'hover:bg-neutral-800 hover:text-white',
+    primary: 'bg-white text-neutral-950 hover:bg-neutral-200',
+    mobileActive: 'bg-neutral-800 text-white',
+    mobileIdle: 'text-neutral-500 hover:bg-neutral-800 hover:text-white',
+    footer: 'mt-auto border-t border-neutral-800/60 bg-neutral-950',
+  },
   aurora: {
     root: 'theme-light theme-aurora min-h-screen flex flex-col bg-[#f6f8fb] text-slate-950',
     main: 'theme-page-shell aurora-page-shell flex-1',
@@ -110,7 +212,7 @@ export default function BrandLayout({ variant }) {
   };
 
   return (
-    <div className={cfg.root}>
+    <div className={cfg.root} data-theme={variant}>
       {site?.announcement && <div className={cfg.announcement}>{site.announcement}</div>}
 
       <header className={cfg.header}>
@@ -140,11 +242,15 @@ export default function BrandLayout({ variant }) {
             )}
           </Link>
 
-          <nav className={cfg.navWrap}>
+          <nav
+            aria-label={t('nav.main', { defaultValue: 'Main navigation' })}
+            className={cfg.navWrap}
+          >
             {headerNavItems.map((n) => (
               <Link
                 key={n.to}
                 to={n.to}
+                aria-current={isNavActive(n.to) ? 'page' : undefined}
                 className={`whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-semibold transition-colors ${
                   isNavActive(n.to) ? cfg.navActive : cfg.navIdle
                 }`}
@@ -181,6 +287,7 @@ export default function BrandLayout({ variant }) {
               className="inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-current/10 xl:hidden"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label={t('common.toggleMenu')}
+              aria-expanded={mobileMenuOpen}
             >
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
@@ -189,12 +296,16 @@ export default function BrandLayout({ variant }) {
 
         {mobileMenuOpen && (
           <div className="border-t border-current/10 bg-inherit xl:hidden">
-            <nav className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-3 sm:px-6">
+            <nav
+              aria-label={t('nav.main', { defaultValue: 'Main navigation' })}
+              className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-3 sm:px-6"
+            >
               {mobileNavItems.map((n) => (
                 <Link
                   key={n.to}
                   to={n.to}
                   onClick={() => setMobileMenuOpen(false)}
+                  aria-current={isNavActive(n.to) ? 'page' : undefined}
                   className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
                     isNavActive(n.to) ? cfg.mobileActive : cfg.mobileIdle
                   }`}

@@ -1270,3 +1270,119 @@
 .hover\:bg-page-surface-hover:hover {
   background: var(--page-surface-hover);
 }
+
+/* ═══════════════════════════════════════════════
+   Shared distributor page finish
+   ═══════════════════════════════════════════════ */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  overflow-x: hidden;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid rgb(var(--page-link) / 0.72);
+  outline-offset: 2px;
+}
+
+.theme-page-shell {
+  min-height: calc(100vh - 4rem);
+  background-color: var(--page-bg);
+  background-image: linear-gradient(
+    180deg,
+    rgb(var(--page-text) / 0.018),
+    transparent 24rem
+  );
+}
+
+.theme-light .theme-page-shell {
+  background-image: linear-gradient(
+    180deg,
+    rgb(var(--page-link) / 0.035),
+    transparent 26rem
+  );
+}
+
+.theme-terminal .theme-page-shell,
+.theme-dark .theme-page-shell,
+.theme-minimal .theme-page-shell {
+  background-image: linear-gradient(
+    180deg,
+    rgb(var(--page-link) / 0.045),
+    transparent 28rem
+  );
+}
+
+.glass,
+.glass-sm {
+  box-shadow: 0 10px 30px rgb(15 23 42 / 0.055);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.glass:hover,
+.glass-sm:hover {
+  border-color: rgb(var(--page-link) / 0.22);
+}
+
+.theme-terminal .glass,
+.theme-terminal .glass-sm,
+.theme-dark .glass,
+.theme-dark .glass-sm,
+.theme-minimal .glass,
+.theme-minimal .glass-sm {
+  box-shadow: 0 16px 42px rgb(0 0 0 / 0.24);
+}
+
+.theme-claude .glass,
+.theme-claude .glass-sm {
+  box-shadow: 0 12px 32px rgb(107 93 79 / 0.08);
+}
+
+/* Give dense data surfaces a stable mobile scroll region. */
+.overflow-x-auto {
+  scrollbar-width: thin;
+}
+
+@media (max-width: 640px) {
+  .glass {
+    border-radius: 1rem;
+  }
+
+  .glass-sm {
+    border-radius: 0.75rem;
+  }
+
+  .theme-page-shell {
+    min-height: calc(100vh - 3.5rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .glass,
+  .glass-sm {
+    transition: none;
+  }
+}
