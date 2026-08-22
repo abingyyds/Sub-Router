@@ -1,6 +1,19 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Activity,
+  ArrowRight,
+  CheckCircle2,
+  Copy,
+  KeyRound,
+  Layers3,
+  MoreHorizontal,
+  Plus,
+  ShieldCheck,
+  Sparkles,
+  WalletCards,
+} from 'lucide-react';
+import {
   getTokens,
   createToken,
   updateToken,
@@ -184,6 +197,7 @@ export default function Tokens() {
   const [tokenModels, setTokenModels] = useState({});
 	const [modelOptions, setModelOptions] = useState([]);
 	const [providerOptions, setProviderOptions] = useState([]);
+	const [providerOptionsLoading, setProviderOptionsLoading] = useState(false);
   const [createModelSearch, setCreateModelSearch] = useState('');
   const [editModelSearch, setEditModelSearch] = useState('');
 
@@ -203,6 +217,7 @@ export default function Tokens() {
   const [createControls, setCreateControls] = useState(emptyControlForm);
   const [creating, setCreating] = useState(false);
 	const officialChannelsEnabled = site?.show_official_channels !== false && site?.has_official_channels;
+	const sharedSubscriptionsEnabled = site?.show_shared_subscriptions !== false;
 	const fullMode = site?.full_mode === true || site?.display_mode === 'full';
 
   const load = useCallback(async () => {
@@ -223,13 +238,16 @@ export default function Tokens() {
 	useEffect(() => {
 	  if (!fullMode) {
 		setProviderOptions([]);
+		setProviderOptionsLoading(false);
 		return;
 	  }
+	  setProviderOptionsLoading(true);
 	  getMarketplaceProviders({ page_size: 200 })
 		.then((res) => {
 		  if (res.data.success) setProviderOptions(res.data.data || []);
 		})
-		.catch(() => {});
+		.catch(() => {})
+		.finally(() => setProviderOptionsLoading(false));
 	}, [fullMode]);
 
   useEffect(() => {
@@ -308,7 +326,7 @@ export default function Tokens() {
 		subrouter_route_preference:
 		  site?.subrouter_route_preference || DEFAULT_SUBROUTER_ROUTE_PREFERENCE,
 		include_provider_self: fullMode ? true : site?.include_provider_self !== false,
-		subrouter_providers: fullMode ? providerOptions.map((provider) => provider.slug) : [],
+		subrouter_providers: [],
 	  });
     setCreateModelSearch('');
     setShowCreate(true);
@@ -324,7 +342,7 @@ export default function Tokens() {
 		subrouter_route_preference:
 		  site?.subrouter_route_preference || DEFAULT_SUBROUTER_ROUTE_PREFERENCE,
 		include_provider_self: fullMode ? true : site?.include_provider_self !== false,
-		subrouter_providers: fullMode ? providerOptions.map((provider) => provider.slug) : [],
+		subrouter_providers: [],
 	  });
     setCreateModelSearch('');
     setShowCreate(true);
@@ -336,6 +354,22 @@ export default function Tokens() {
     setCreateName(t('tokens.officialKeyDefaultName'));
     setCreateOfficialKeyMaxDiscount(0);
     setCreateControls(emptyControlForm());
+    setCreateModelSearch('');
+    setShowCreate(true);
+  };
+
+  const openCreateShared = () => {
+    setCreateType('shared');
+    setSelectedGroupId(0);
+    setCreateName(t('tokens.sharedKeyDefaultName'));
+    setCreateOfficialKeyMaxDiscount(0);
+    setCreateControls({
+      ...emptyControlForm(),
+      include_provider_self: false,
+      include_official_channels: false,
+      include_shared_subscriptions: true,
+      subrouter_providers: [],
+    });
     setCreateModelSearch('');
     setShowCreate(true);
   };
@@ -383,28 +417,42 @@ export default function Tokens() {
     try {
       const payload = { name: createName.trim(), type: createType };
       if (createType === 'normal' && selectedGroupId > 0) payload.key_group_id = selectedGroupId;
-	  const controlPayload = buildTokenControlPayload(createControls, rate, t, createType !== 'official', fullMode);
+	  const controlPayload = buildTokenControlPayload(
+		createControls,
+		rate,
+		t,
+		createType === 'normal',
+		fullMode && createType === 'normal',
+	  );
       if (!controlPayload) {
         setCreating(false);
         return;
       }
 		Object.assign(payload, controlPayload);
 		if (fullMode && createType === 'normal') {
-		  const selectedSlugs = new Set(parseModelLimits(createControls.subrouter_providers));
-		  if (selectedSlugs.size === 0) {
-			toast.error('请至少选择一个普通商家');
+		  if (normalTokens.length === 0 && providerOptionsLoading) {
+			toast.error(t('tokens.loadingProviders'));
 			setCreating(false);
 			return;
 		  }
+		  const selectedSlugs = new Set(parseModelLimits(createControls.subrouter_providers));
 		  if (normalTokens.length === 0) {
+			const selectedProviders = selectedSlugs.size > 0
+			  ? providerOptions.filter((provider) => selectedSlugs.has(provider.slug))
+			  : providerOptions;
 			await saveMarketplaceQuickStart({
-			  provider_ids: providerOptions.filter((provider) => selectedSlugs.has(provider.slug)).map((provider) => provider.id),
+			  provider_ids: selectedProviders.map((provider) => provider.id),
 			  auto_subscribe_new: Boolean(createControls.auto_subscribe_new),
 			});
 		  }
 		}
       if (createType === 'official') {
         payload.official_key_max_discount = normalizeOfficialKeyMaxDiscount(createOfficialKeyMaxDiscount);
+      } else if (createType === 'shared') {
+		payload.shared_plan_id = 0;
+		payload.include_provider_self = false;
+		payload.include_official_channels = false;
+		payload.include_shared_subscriptions = true;
       } else if (officialChannelsEnabled) {
         payload.include_official_channels = Boolean(createControls.include_official_channels);
         if (payload.include_official_channels) {
@@ -458,9 +506,6 @@ export default function Tokens() {
 	const openEditToken = (token) => {
 	  setEditingToken(token);
 	  const next = tokenToEditForm(token, rate);
-	  if (fullMode && token.group !== 'dist_official' && next.subrouter_providers.length === 0) {
-		next.subrouter_providers = providerOptions.map((provider) => provider.slug);
-	  }
 	  setEditForm(next);
     setEditModelSearch('');
   };
@@ -477,14 +522,21 @@ export default function Tokens() {
     if (!String(editForm.name || '').trim()) {
       toast.error(t('tokens.enterName'));
       return;
-    }
-    const isOfficialToken = editingToken.type === 'official' || editingToken.group === 'dist_official';
-	const payload = buildTokenControlPayload(editForm, rate, t, !isOfficialToken, fullMode);
+	}
+	const isOfficialToken = editingToken.type === 'official' || editingToken.group === 'dist_official';
+	const isSharedToken = editingToken.type === 'shared';
+	const payload = buildTokenControlPayload(
+	  editForm,
+	  rate,
+	  t,
+	  !isOfficialToken && !isSharedToken,
+	  fullMode && !isOfficialToken && !isSharedToken,
+	);
     if (!payload) return;
     payload.name = String(editForm.name || '').trim();
     if (isOfficialToken) {
       payload.official_key_max_discount = normalizeOfficialKeyMaxDiscount(editForm.official_key_max_discount);
-    } else if (officialChannelsEnabled) {
+	} else if (!isSharedToken && officialChannelsEnabled) {
       payload.include_official_channels = Boolean(editForm.include_official_channels);
       if (payload.include_official_channels) {
         if (!isValidOfficialRoutingMaxDiscount(editForm.official_key_max_discount)) {
@@ -569,7 +621,8 @@ export default function Tokens() {
   };
 
   const hasGroups = keyGroups.length > 0;
-  const normalTokens = tokens.filter((token) => token.type !== 'official' && token.group !== 'dist_official');
+  const sharedTokens = tokens.filter((token) => token.type === 'shared');
+  const normalTokens = tokens.filter((token) => token.type !== 'shared' && token.type !== 'official' && token.group !== 'dist_official');
   const officialTokens = tokens.filter((token) => token.type === 'official' || token.group === 'dist_official');
   const activeGroupPricing = activePricingGroup
     ? groupPricingCache[activePricingGroup.id] || null
@@ -597,6 +650,7 @@ export default function Tokens() {
       );
     });
   }, [activeGroupPricing, groupPricingSearch]);
+  const activeTokenCount = tokens.filter((token) => token.status === 1).length;
 
   if (loading) {
     return (
@@ -607,61 +661,118 @@ export default function Tokens() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-10">
+    <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
+      <section className="relative mb-8 overflow-hidden rounded-[28px] border border-page-divider bg-[var(--page-surface)] px-5 py-6 shadow-[0_18px_50px_rgba(15,23,42,0.07)] sm:px-8 sm:py-8">
+        <div className="relative grid gap-7 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.8fr)] lg:items-end">
+          <div className="min-w-0">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-brand-500/20 bg-brand-500/10 px-3 py-1.5 text-xs font-semibold text-brand-500">
+              <Sparkles className="h-3.5 w-3.5" />
+              {t('tokens.selectGroup')}
+            </div>
+            <h1 className="max-w-2xl text-3xl font-black tracking-tight text-page sm:text-4xl">
+              {t('tokens.title')}
+            </h1>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-page-secondary sm:text-base">
+              {t('tokens.subtitle')}
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-3">
+            <div className="rounded-2xl border border-page-divider bg-[var(--page-card-bg)] px-4 py-3">
+              <KeyRound className="mb-3 h-4 w-4 text-brand-500" />
+              <p className="text-2xl font-black tracking-tight text-page">{tokens.length}</p>
+              <p className="mt-1 text-[11px] font-semibold text-page-muted">{t('tokens.title')}</p>
+            </div>
+            <div className="rounded-2xl border border-page-divider bg-[var(--page-card-bg)] px-4 py-3">
+              <CheckCircle2 className="mb-3 h-4 w-4 text-emerald-500" />
+              <p className="text-2xl font-black tracking-tight text-page">{activeTokenCount}</p>
+              <p className="mt-1 text-[11px] font-semibold text-page-muted">{t('tokens.enabled')}</p>
+            </div>
+            <div className="col-span-2 rounded-2xl border border-page-divider bg-[var(--page-card-bg)] px-4 py-3 sm:col-span-1">
+              <WalletCards className="mb-3 h-4 w-4 text-page-muted" />
+              <p className="text-2xl font-black tracking-tight text-page">{keyGroups.length}</p>
+              <p className="mt-1 text-[11px] font-semibold text-page-muted">{t('tokens.groupCount')}</p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* ========== Section 1: Create Key with Groups ========== */}
       <div className="mb-10">
-        <h1 className="text-2xl font-heading font-bold text-page">
-          {hasGroups ? t('tokens.selectGroup') : t('tokens.title')}
-        </h1>
-        {hasGroups && (
-          <p className="text-sm text-page-secondary mt-1">{t('tokens.selectGroupSubtitle')}</p>
-        )}
-
-        {/* Default (All Providers) Card */}
-        <div className="mt-6">
-          <button
-            onClick={openCreateDefault}
-            className="w-full glass rounded-xl p-4 flex items-center gap-4 hover:border-brand-500/50 border border-page-divider transition-all group text-left"
-          >
-            <div className="w-10 h-10 rounded-lg bg-brand-500/10 flex items-center justify-center flex-shrink-0">
-              <svg className="w-5 h-5 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
-              </svg>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-page">{hasGroups ? t('tokens.defaultGroup') : t('tokens.newKey')}</p>
-              {hasGroups && (
-                <p className="text-xs text-page-secondary mt-0.5">{t('tokens.defaultGroupDesc')}</p>
-              )}
-            </div>
-            <span className="text-xs font-medium text-brand-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-              {t('tokens.create')} →
-            </span>
-          </button>
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="mb-1 text-xs font-bold uppercase tracking-[0.16em] text-brand-500">{t('tokens.quickStart')}</p>
+            <h2 className="text-xl font-bold tracking-tight text-page sm:text-2xl">{t('tokens.selectGroup')}</h2>
+            <p className="mt-1 text-sm text-page-secondary">{t('tokens.selectGroupSubtitle')}</p>
+          </div>
+          <div className="hidden items-center gap-2 text-xs font-semibold text-page-muted sm:flex">
+            <Activity className="h-4 w-4 text-emerald-500" />
+            {t('tokens.defaultGroupDesc')}
+          </div>
         </div>
 
-        {officialChannelsEnabled && (
-          <div className="mt-3">
-            <button
-              onClick={openCreateOfficial}
-              className="w-full glass rounded-xl p-4 flex items-center gap-4 hover:border-brand-500/50 border border-page-divider transition-all group text-left"
-            >
-              <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12.75L11.25 15 15 9.75M12 3.75l7.5 3.75v5.25c0 4.125-3.06 7.688-7.5 8.625-4.44-.937-7.5-4.5-7.5-8.625V7.5L12 3.75z" />
-                </svg>
+        {/* Default (All Providers) Card */}
+        <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
+          <button
+            type="button"
+            onClick={openCreateDefault}
+            className="group relative flex min-h-36 items-center gap-4 overflow-hidden rounded-2xl border border-brand-500/25 bg-brand-500/[0.07] p-5 text-left transition-all hover:-translate-y-0.5 hover:border-brand-500/50 hover:shadow-xl hover:shadow-brand-500/10"
+          >
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-500 text-white shadow-lg shadow-brand-500/20">
+              <Plus className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-sm font-bold text-page">{t('tokens.defaultGroup')}</p>
+                <span className="rounded-full bg-brand-500/10 px-2 py-0.5 text-[10px] font-bold text-brand-500">{t('tokens.recommended')}</span>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-page">{t('tokens.officialKeyGroup')}</p>
-                <p className="text-xs text-page-secondary mt-0.5">{t('tokens.officialKeyGroupDesc')}</p>
-              </div>
-              <span className="text-xs font-medium text-brand-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                {t('tokens.create')} →
+              <p className="mt-1 text-xs leading-5 text-page-secondary">{t('tokens.defaultGroupDesc')}</p>
+              <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-brand-500">
+                {t('tokens.create')} <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
               </span>
+            </div>
+          </button>
+
+        {officialChannelsEnabled && (
+            <button
+              type="button"
+              onClick={openCreateOfficial}
+              className="group relative flex min-h-36 items-center gap-4 overflow-hidden rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.07] p-5 text-left transition-all hover:-translate-y-0.5 hover:border-emerald-500/50 hover:shadow-xl hover:shadow-emerald-500/10"
+            >
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/20">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-sm font-bold text-page">{t('tokens.officialKeyGroup')}</p>
+                  <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">{t('tokens.officialKeyBadge')}</span>
+                </div>
+                <p className="mt-1 text-xs leading-5 text-page-secondary">{t('tokens.officialKeyGroupDesc')}</p>
+                <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                  {t('tokens.create')} <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+                </span>
+              </div>
             </button>
-          </div>
         )}
+
+        {sharedSubscriptionsEnabled && (
+            <button
+              type="button"
+              onClick={openCreateShared}
+              className="group relative flex min-h-36 items-center gap-4 overflow-hidden rounded-2xl border border-cyan-500/25 bg-cyan-500/[0.07] p-5 text-left transition-all hover:-translate-y-0.5 hover:border-cyan-500/50 hover:shadow-xl hover:shadow-cyan-500/10"
+            >
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-cyan-500 text-white shadow-lg shadow-cyan-500/20">
+                <Layers3 className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold text-page">{t('tokens.sharedKeyGroup')}</p>
+                <p className="mt-1 text-xs leading-5 text-page-secondary">{t('tokens.sharedKeyGroupDesc')}</p>
+                <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-cyan-600 dark:text-cyan-400">
+                  {t('tokens.create')} <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+                </span>
+              </div>
+            </button>
+        )}
+        </div>
 
         {/* Vendor Category Sections */}
         {hasGroups && Object.entries(groupedByVendor).map(([vendor, groups]) => (
@@ -690,83 +801,97 @@ export default function Tokens() {
 
       {/* ========== Create Modal ========== */}
       {showCreate && (
-        <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={closeCreateModal}>
-          <div className="glass rounded-2xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-semibold text-page mb-4">
-              {createType === 'official' ? t('tokens.createOfficialKey') : t('tokens.createApiKey')}
-            </h2>
-            {createType === 'normal' && selectedGroupId > 0 && (() => {
-              return selectedCreateGroup ? (
-                <div className="mb-4 p-3 rounded-lg bg-page-surface border border-page-divider">
-                  <p className="text-xs text-page-muted">{t('tokens.selectedGroup')}</p>
-                  <p className="text-sm font-medium text-page">{selectedCreateGroup.name}</p>
+        <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm" onClick={closeCreateModal}>
+          <div className="glass flex max-h-[calc(100dvh-2rem)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="shrink-0 border-b border-page-divider px-4 py-4 sm:px-6">
+              <h2 className="text-lg font-semibold text-page">
+                {createType === 'official'
+                  ? t('tokens.createOfficialKey')
+                  : createType === 'shared'
+                    ? t('tokens.createSharedKey')
+                    : t('tokens.createApiKey')}
+              </h2>
+            </div>
+            <form onSubmit={handleCreate} className="flex min-h-0 flex-1 flex-col">
+              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-6">
+                {createType === 'normal' && selectedGroupId > 0 && (() => {
+                  return selectedCreateGroup ? (
+                    <div className="rounded-lg border border-page-divider bg-page-surface p-3">
+                      <p className="text-xs text-page-muted">{t('tokens.selectedGroup')}</p>
+                      <p className="break-words text-sm font-medium text-page">{selectedCreateGroup.name}</p>
+                    </div>
+                  ) : null;
+                })()}
+                {createType === 'official' && (
+                  <div className="rounded-lg border border-page-divider bg-page-surface p-3">
+                    <p className="text-sm font-medium text-page">{t('tokens.officialKeyGroup')}</p>
+                    <p className="mt-1 break-words text-xs text-page-secondary">{t('tokens.officialKeyCreateDesc')}</p>
+                  </div>
+                )}
+                {createType === 'shared' && (
+                  <div className="rounded-lg border border-page-divider bg-page-surface p-3">
+                    <p className="text-sm font-medium text-page">{t('tokens.sharedKeyGroup')}</p>
+                    <p className="mt-1 break-words text-xs text-page-secondary">{t('tokens.sharedKeyCreateDesc')}</p>
+                  </div>
+                )}
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-page-label">{t('tokens.name')}</label>
+                  <input
+                    type="text"
+                    value={createName}
+                    onChange={(e) => setCreateName(e.target.value)}
+                    className="input"
+                    placeholder={t('tokens.namePlaceholder')}
+                    autoFocus
+                    required
+                  />
                 </div>
-              ) : null;
-            })()}
-            {createType === 'official' && (
-              <div className="mb-4 p-3 rounded-lg bg-page-surface border border-page-divider">
-                <p className="text-sm font-medium text-page">{t('tokens.officialKeyGroup')}</p>
-                <p className="text-xs text-page-secondary mt-1">{t('tokens.officialKeyCreateDesc')}</p>
-              </div>
-            )}
-            <form onSubmit={handleCreate} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-page-label mb-1.5">{t('tokens.name')}</label>
-                <input
-                  type="text"
-                  value={createName}
-                  onChange={(e) => setCreateName(e.target.value)}
-                  className="input"
-                  placeholder={t('tokens.namePlaceholder')}
-                  autoFocus
-                  required
-                />
-              </div>
-              {createType === 'official' && (
-              <div>
-                <label className="block text-sm font-medium text-page-label mb-1.5">{t('tokens.officialKeyMaxDiscount')}</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={createOfficialKeyMaxDiscount}
-                  onChange={(e) => setCreateOfficialKeyMaxDiscount(e.target.value)}
-                  className="input"
-                  placeholder={t('tokens.officialKeyMaxDiscountPlaceholder')}
-                />
-                <p className="text-xs text-page-muted mt-1.5">
-                  {createDiscountHint
-                    ? t('tokens.officialKeyMaxDiscountHint', { discount: createDiscountHint })
-                    : t('tokens.officialKeyMaxDiscountNoLimitHint')}
-                </p>
-              </div>
-              )}
-              {createType === 'normal' && officialChannelsEnabled && (
-                <OfficialRoutingFields
+                {createType === 'official' && (
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-page-label">{t('tokens.officialKeyMaxDiscount')}</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={createOfficialKeyMaxDiscount}
+                    onChange={(e) => setCreateOfficialKeyMaxDiscount(e.target.value)}
+                    className="input"
+                    placeholder={t('tokens.officialKeyMaxDiscountPlaceholder')}
+                  />
+                  <p className="mt-1.5 text-xs text-page-muted">
+                    {createDiscountHint
+                      ? t('tokens.officialKeyMaxDiscountHint', { discount: createDiscountHint })
+                      : t('tokens.officialKeyMaxDiscountNoLimitHint')}
+                  </p>
+                </div>
+                )}
+                {createType === 'normal' && officialChannelsEnabled && (
+                  <OfficialRoutingFields
+                    form={createControls}
+                    onChange={(field, value) => setCreateControls((prev) => ({ ...prev, [field]: value }))}
+                    t={t}
+                  />
+                )}
+                <TokenControlFields
                   form={createControls}
                   onChange={(field, value) => setCreateControls((prev) => ({ ...prev, [field]: value }))}
+                  modelOptions={modelOptions}
+                  modelSearch={createModelSearch}
+                  onModelSearchChange={setCreateModelSearch}
+                  canLimitModels={createType === 'normal'}
+                  showSortMode={createType === 'normal'}
+                  fullMode={fullMode && createType === 'normal'}
+                  providerOptions={providerOptions}
+                  firstToken={createType === 'normal' && normalTokens.length === 0}
+                  currency={{ symbol, rate }}
                   t={t}
                 />
-              )}
-              <TokenControlFields
-                form={createControls}
-                onChange={(field, value) => setCreateControls((prev) => ({ ...prev, [field]: value }))}
-                modelOptions={modelOptions}
-                modelSearch={createModelSearch}
-                onModelSearchChange={setCreateModelSearch}
-                canLimitModels={createType !== 'official'}
-				showSortMode={createType === 'normal'}
-				fullMode={fullMode && createType === 'normal'}
-				providerOptions={providerOptions}
-				firstToken={normalTokens.length === 0}
-                currency={{ symbol, rate }}
-                t={t}
-              />
-              <div className="flex justify-end gap-3">
+              </div>
+              <div className="flex shrink-0 flex-wrap justify-end gap-3 border-t border-page-divider bg-page-surface/40 px-4 py-4 sm:px-6">
                 <button type="button" onClick={closeCreateModal} className="btn-secondary">
                   {t('tokens.cancel')}
                 </button>
-                <button type="submit" disabled={creating} className="btn-primary">
+                <button type="submit" disabled={creating || (createType === 'normal' && fullMode && providerOptionsLoading)} className="btn-primary">
                   {creating ? t('tokens.creating') : t('tokens.create')}
                 </button>
               </div>
@@ -776,14 +901,14 @@ export default function Tokens() {
       )}
 
       {editingToken && editForm && (
-        <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={closeEditToken}>
-          <div className="glass rounded-2xl w-full max-w-2xl max-h-[88vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <div className="px-6 py-5 border-b border-page-divider">
+        <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm" onClick={closeEditToken}>
+          <div className="glass flex max-h-[calc(100dvh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="shrink-0 border-b border-page-divider px-4 py-4 sm:px-6">
               <h2 className="text-lg font-semibold text-page">{t('tokens.editKey')}</h2>
-              <p className="text-sm text-page-secondary mt-1">{editingToken.name}</p>
+              <p className="mt-1 break-words text-sm text-page-secondary">{editingToken.name}</p>
             </div>
-            <form onSubmit={handleEditSave}>
-              <div className="px-6 py-5 space-y-4 max-h-[62vh] overflow-y-auto">
+            <form onSubmit={handleEditSave} className="flex min-h-0 flex-1 flex-col">
+              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-6">
                 <div>
                   <label className="block text-sm font-medium text-page-label mb-1.5">{t('tokens.name')}</label>
                   <input
@@ -809,7 +934,7 @@ export default function Tokens() {
                     />
                   </div>
                 )}
-                {!(editingToken.type === 'official' || editingToken.group === 'dist_official') && officialChannelsEnabled && (
+                {editingToken.type !== 'shared' && !(editingToken.type === 'official' || editingToken.group === 'dist_official') && officialChannelsEnabled && (
                   <OfficialRoutingFields
                     form={editForm}
                     onChange={(field, value) => setEditForm((prev) => ({ ...prev, [field]: value }))}
@@ -822,15 +947,15 @@ export default function Tokens() {
                   modelOptions={modelOptions}
                   modelSearch={editModelSearch}
                   onModelSearchChange={setEditModelSearch}
-                  canLimitModels={!(editingToken.type === 'official' || editingToken.group === 'dist_official')}
-				  showSortMode={!(editingToken.type === 'official' || editingToken.group === 'dist_official')}
-				  fullMode={fullMode && !(editingToken.type === 'official' || editingToken.group === 'dist_official')}
+                  canLimitModels={editingToken.type !== 'shared' && !(editingToken.type === 'official' || editingToken.group === 'dist_official')}
+				  showSortMode={editingToken.type !== 'shared' && !(editingToken.type === 'official' || editingToken.group === 'dist_official')}
+				  fullMode={fullMode && editingToken.type !== 'shared' && !(editingToken.type === 'official' || editingToken.group === 'dist_official')}
 				  providerOptions={providerOptions}
                   currency={{ symbol, rate }}
                   t={t}
                 />
               </div>
-              <div className="flex justify-end gap-3 px-6 py-4 border-t border-page-divider bg-page-surface/40">
+              <div className="flex shrink-0 flex-wrap justify-end gap-3 border-t border-page-divider bg-page-surface/40 px-4 py-4 sm:px-6">
                 <button type="button" onClick={closeEditToken} className="btn-secondary">
                   {t('tokens.cancel')}
                 </button>
@@ -856,29 +981,27 @@ export default function Tokens() {
         t={t}
       />
 
-      {/* ========== New Key Reveal Modal ========== */}
       {newKey && (
-        <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="glass rounded-2xl p-6 w-full max-w-lg">
-            <h2 className="text-lg font-semibold text-page mb-2">{t('tokens.newApiKey')}</h2>
-            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3 mb-4">
-              <p className="text-sm text-page-warning">
-                {t('tokens.keyWarning')}
-              </p>
+        <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm">
+          <div className="glass max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl p-5 sm:p-6">
+            <h2 className="mb-2 text-lg font-semibold text-page">{t('tokens.newApiKey')}</h2>
+            <div className="mb-4 rounded-xl border border-yellow-500/20 bg-yellow-500/10 p-3">
+              <p className="text-sm text-page-warning">{t('tokens.keyWarning')}</p>
             </div>
-            <div className="bg-page-inset rounded-xl p-4 flex items-center gap-3">
-              <code className="text-sm font-mono text-page-success flex-1 break-all select-all">
+            <div className="flex min-w-0 items-center gap-3 rounded-xl bg-page-inset p-4">
+              <code className="min-w-0 flex-1 select-all break-all font-mono text-sm text-page-success">
                 {newKey}
               </code>
               <button
+                type="button"
                 onClick={() => handleCopy(newKey)}
                 className="btn-primary !px-4 !py-1.5 flex-shrink-0"
               >
                 {copiedId === newKey ? t('tokens.copied') : t('tokens.copy')}
               </button>
             </div>
-            <div className="flex justify-end mt-4">
-              <button onClick={() => setNewKey(null)} className="btn-secondary">
+            <div className="mt-4 flex justify-end">
+              <button type="button" onClick={() => setNewKey(null)} className="btn-secondary">
                 {t('tokens.savedKey')}
               </button>
             </div>
@@ -889,9 +1012,9 @@ export default function Tokens() {
       {/* ========== Delete Confirmation Modal ========== */}
       {deleteConfirm && (
         <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setDeleteConfirm(null)}>
-          <div className="glass rounded-2xl p-6 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+          <div className="glass max-h-[calc(100dvh-2rem)] w-full max-w-sm overflow-y-auto rounded-2xl p-5 sm:p-6" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-lg font-semibold text-page mb-3">{t('tokens.deleteToken')}</h2>
-            <p className="text-sm text-page-secondary mb-4">
+            <p className="mb-4 break-words text-sm text-page-secondary">
               {t('tokens.deleteConfirm', { name: deleteConfirm.name })}
             </p>
             <div className="flex justify-end gap-3">
@@ -940,6 +1063,25 @@ export default function Tokens() {
             official
           />
         )}
+        {sharedSubscriptionsEnabled && (
+          <TokenListSection
+            title={t('tokens.mySharedKeys')}
+            tokens={sharedTokens}
+            allTokensEmpty={tokens.length === 0}
+            copiedId={copiedId}
+            expandedTokens={expandedTokens}
+            tokenModels={tokenModels}
+            onCopy={handleCopy}
+            onDelete={setDeleteConfirm}
+            onEdit={openEditToken}
+            onToggle={handleToggle}
+            onToggleSupportedModels={handleToggleSupportedModels}
+            formatOfficialDiscount={formatOfficialDiscount}
+            currency={{ symbol, rate }}
+            t={t}
+            emptyText={t('tokens.noSharedKeys')}
+          />
+        )}
       </div>
 
       <div className="mt-8">
@@ -969,34 +1111,47 @@ function TokenListSection({
   currency,
   t,
   official = false,
+	emptyText = '',
 }) {
+  const SectionIcon = official ? ShieldCheck : KeyRound;
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-heading font-semibold text-page">{title}</h2>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${official ? 'bg-emerald-500/10 text-emerald-500' : 'bg-brand-500/10 text-brand-500'}`}>
+            <SectionIcon className="h-4 w-4" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold tracking-tight text-page">{title}</h2>
+            <p className="mt-0.5 text-xs text-page-muted">{tokens.length} {t('tokens.title')}</p>
+          </div>
+        </div>
+        {tokens.length > 0 && <span className="rounded-full border border-page-divider bg-page-surface px-2.5 py-1 text-[11px] font-semibold text-page-secondary">{tokens.length}</span>}
       </div>
 
       {tokens.length === 0 ? (
-        <div className="glass rounded-2xl p-8 text-center">
-          <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-page-surface flex items-center justify-center">
-            <svg className="w-6 h-6 text-page-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-            </svg>
+        <div className="rounded-2xl border border-dashed border-page-divider bg-[var(--page-surface)] px-6 py-10 text-center">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--page-surface)] text-page-muted">
+            <SectionIcon className="h-5 w-5" />
           </div>
-          <p className="text-sm text-page-secondary">
-            {allTokensEmpty ? t('tokens.noKeys') : official ? t('tokens.noOfficialKeys') : t('tokens.noNormalKeys')}
+          <p className="text-sm font-semibold text-page-secondary">
+            {allTokensEmpty ? t('tokens.noKeys') : emptyText || (official ? t('tokens.noOfficialKeys') : t('tokens.noNormalKeys'))}
           </p>
           <p className="text-xs text-page-muted mt-1">{t('tokens.noKeysHint')}</p>
         </div>
       ) : (
         <div className="space-y-3">
           {tokens.map((token) => (
-            <div key={token.id} className="glass-sm rounded-xl p-5">
-              <div className="flex items-center gap-4">
-                <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${token.status === 1 ? 'bg-green-500' : 'bg-page-muted'}`} />
-                <div className="flex-1 min-w-0">
+            <div key={token.id} className="group relative overflow-hidden rounded-2xl border border-page-divider bg-[var(--page-card-bg)] p-4 transition-all hover:border-brand-500/25 hover:shadow-lg hover:shadow-brand-500/5 sm:p-5">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+                <div className="flex min-w-0 flex-1 items-start gap-3">
+                  <div className={`mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${token.status === 1 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-[var(--page-surface)] text-page-muted'}`}>
+                    <Activity className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-sm font-medium text-page">{token.name}</p>
+                    <p className="truncate text-sm font-bold text-page">{token.name}</p>
                     {official && (
                       <span className="px-2 py-0.5 rounded-full text-[11px] bg-emerald-500/10 text-page-success">
                         {t('tokens.officialKeyBadge')}
@@ -1025,20 +1180,27 @@ function TokenListSection({
                     </div>
                   )}
                   <TokenControlSummary token={token} currency={currency} t={t} />
+                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-page-muted">
+                    <span className={`inline-flex items-center gap-1 font-semibold ${token.status === 1 ? 'text-emerald-500' : 'text-page-muted'}`}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${token.status === 1 ? 'bg-emerald-500' : 'bg-page-muted'}`} />
+                      {token.status === 1 ? t('tokens.enabled') : t('tokens.disabled')}
+                    </span>
+                    {token.created_time && <span>{new Date(token.created_time * 1000).toLocaleDateString()}</span>}
+                  </div>
+                  </div>
                 </div>
-                <span className="text-xs text-page-muted hidden md:block">
-                  {token.created_time ? new Date(token.created_time * 1000).toLocaleDateString() : ''}
-                </span>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 lg:max-w-[360px] lg:justify-end">
                   <button
+                    type="button"
                     onClick={() => onToggleSupportedModels(token.id)}
-                    className="px-3 py-1 text-xs rounded-lg border border-page-divider text-page-secondary hover:bg-page-surface-hover transition-colors"
+                    className="rounded-lg border border-page-divider px-3 py-1.5 text-xs font-semibold text-page-secondary transition-colors hover:bg-page-surface-hover"
                   >
                     {expandedTokens[token.id] ? t('tokens.hideSupportedModels') : t('tokens.viewSupportedModels')}
                   </button>
                   <button
+                    type="button"
                     onClick={() => onToggle(token)}
-                    className={`px-3 py-1 text-xs rounded-lg border transition-colors ${
+                    className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
                       token.status === 1
                         ? 'border-green-500/30 text-page-success hover:bg-green-500/10'
                         : 'border-page-divider text-page-secondary hover:bg-page-surface-hover'
@@ -1047,28 +1209,33 @@ function TokenListSection({
                     {token.status === 1 ? t('tokens.enabled') : t('tokens.disabled')}
                   </button>
                   <button
+                    type="button"
                     onClick={() => onEdit(token)}
-                    className="px-3 py-1 text-xs rounded-lg border border-page-divider text-page-secondary hover:bg-page-surface-hover transition-colors"
+                    className="rounded-lg border border-page-divider px-3 py-1.5 text-xs font-semibold text-page-secondary transition-colors hover:bg-page-surface-hover"
                   >
                     {t('tokens.edit')}
                   </button>
                   <button
+                    type="button"
                     onClick={() => onDelete(token)}
-                    className="px-3 py-1 text-xs rounded-lg border border-red-500/20 text-page-danger hover:bg-red-500/10 transition-colors"
+                    className="rounded-lg border border-red-500/20 px-3 py-1.5 text-xs font-semibold text-page-danger transition-colors hover:bg-red-500/10"
                   >
                     {t('tokens.delete')}
                   </button>
                 </div>
               </div>
               {token.key && (
-                <div className="mt-3 flex items-center gap-2 bg-page-inset rounded-lg px-3 py-2">
-                  <code className="text-xs font-mono text-page-muted flex-1 break-all select-all">
+                <div className="mt-4 flex items-center gap-2 rounded-xl border border-page-divider bg-page-inset px-3 py-2.5">
+                  <code className="min-w-0 flex-1 break-all font-mono text-xs text-page-muted select-all">
                     sk-{token.key}
                   </code>
                   <button
+                    type="button"
+                    title={copiedId === 'sk-' + token.key ? t('tokens.copied') : t('tokens.copy')}
                     onClick={() => onCopy('sk-' + token.key)}
-                    className="flex-shrink-0 px-2.5 py-1 text-xs rounded-md bg-page-surface text-page-secondary hover:bg-page-surface-hover hover:text-page transition-colors"
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-[var(--page-surface)] px-2.5 py-1.5 text-xs font-semibold text-page-secondary transition-colors hover:bg-page-surface-hover hover:text-page"
                   >
+                    <Copy className="h-3.5 w-3.5" />
                     {copiedId === 'sk-' + token.key ? t('tokens.copied') : t('tokens.copy')}
                   </button>
                 </div>
@@ -1139,7 +1306,7 @@ function OfficialRoutingFields({ form, onChange, t }) {
   return (
     <div className="space-y-3 rounded-xl border border-page-divider bg-page-surface px-4 py-3">
       <label className="flex items-start justify-between gap-4">
-        <span>
+        <span className="min-w-0">
           <span className="block text-sm font-medium text-page">
             {t('tokens.includeOfficialChannels')}
           </span>
@@ -1285,8 +1452,8 @@ function TokenControlFields({
 
   return (
     <div className="space-y-4 border-t border-page-divider pt-4">
-      <div className="grid gap-4 md:grid-cols-2">
-        <div>
+      <div className="grid min-w-0 gap-4 md:grid-cols-2">
+        <div className="min-w-0">
           <label className="block text-sm font-medium text-page-label mb-1.5">{t('tokens.quotaLimit')}</label>
           <input
             type="number"
@@ -1312,7 +1479,7 @@ function TokenControlFields({
             ))}
           </div>
         </div>
-        <div>
+        <div className="min-w-0">
           <label className="block text-sm font-medium text-page-label mb-1.5">{t('tokens.expireTime')}</label>
           <input
             type="datetime-local"
@@ -1345,8 +1512,8 @@ function TokenControlFields({
       </label>
 
 	  {showSortMode && (
-		<div className="grid gap-4 md:grid-cols-2">
-		  <div>
+		<div className="grid min-w-0 gap-4 md:grid-cols-2">
+		  <div className="min-w-0">
 		  <label className="block text-sm font-medium text-page-label mb-1.5">{t('tokens.routeSortMode')}</label>
           <select
             className="input"
@@ -1358,7 +1525,7 @@ function TokenControlFields({
 		  </select>
 		  </div>
 		  {fullMode && (
-			<div>
+			<div className="min-w-0">
 			  <label className="block text-sm font-medium text-page-label mb-1.5">路由偏好</label>
 			  <select className="input" value={form.subrouter_route_preference} onChange={(event) => onChange('subrouter_route_preference', event.target.value)}>
 				<option value={DEFAULT_SUBROUTER_ROUTE_PREFERENCE}>综合路由</option>
@@ -1374,23 +1541,23 @@ function TokenControlFields({
 
 	  {fullMode && (
 		<>
-		  <div className="rounded-xl border border-page-divider bg-page-surface p-4">
-			<div className="flex items-center justify-between gap-3"><div><p className="text-sm font-medium text-page">普通商家范围</p>{firstToken && <p className="mt-1 text-xs text-page-secondary">首次创建默认全选本站准入商家。</p>}</div><span className="text-xs text-page-muted">{selectedProviders.length}/{providerOptions.length}</span></div>
+		  <div className="min-w-0 rounded-xl border border-page-divider bg-page-surface p-4">
+			<div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="text-sm font-medium text-page">普通商家范围</p><p className="mt-1 break-words text-xs text-page-secondary">未单独选择时使用全部本站准入商家。</p></div><span className="shrink-0 text-xs text-page-muted">{selectedProviders.length > 0 ? `${selectedProviders.length}/${providerOptions.length}` : '全部'}</span></div>
 			<div className="mt-3 grid max-h-44 gap-2 overflow-y-auto sm:grid-cols-2">
 			  {providerOptions.map((provider) => <label key={provider.id} className="flex cursor-pointer items-center gap-2 rounded-lg border border-page-divider px-3 py-2 text-sm text-page"><input type="checkbox" checked={selectedProviders.includes(provider.slug)} onChange={() => toggleProvider(provider.slug)} /> <span className="truncate">{provider.company_name}</span></label>)}
 			</div>
 			{firstToken && <label className="mt-3 flex items-center gap-2 text-sm text-page"><input type="checkbox" checked={Boolean(form.auto_subscribe_new)} onChange={(event) => onChange('auto_subscribe_new', event.target.checked)} />以后自动订阅本站新准入商家</label>}
 		  </div>
-		  <div className="rounded-xl border border-page-divider bg-page-surface p-4">
-			<label className="flex items-center justify-between gap-4"><span><span className="block text-sm font-medium text-page">{t('tokens.includeProviderSelf')}</span><span className="mt-1 block text-xs text-page-secondary">{t('tokens.includeProviderSelfDesc')}</span></span><input type="checkbox" checked={Boolean(form.include_provider_self)} onChange={(event) => onChange('include_provider_self', event.target.checked)} /></label>
+		  <div className="min-w-0 rounded-xl border border-page-divider bg-page-surface p-4">
+			<label className="flex items-start justify-between gap-4"><span className="min-w-0"><span className="block text-sm font-medium text-page">{t('tokens.includeProviderSelf')}</span><span className="mt-1 block break-words text-xs text-page-secondary">{t('tokens.includeProviderSelfDesc')}</span></span><input type="checkbox" className="mt-0.5 h-4 w-4 shrink-0" checked={Boolean(form.include_provider_self)} onChange={(event) => onChange('include_provider_self', event.target.checked)} /></label>
 		  </div>
-		  <div className="rounded-xl border border-page-divider bg-page-surface p-4 space-y-3">
-			<label className="flex items-center justify-between gap-4"><span><span className="block text-sm font-medium text-page">启用订阅共享线路</span><span className="mt-1 block text-xs text-page-secondary">仅使用已订阅的共享计划。</span></span><input type="checkbox" checked={Boolean(form.include_shared_subscriptions)} onChange={(event) => onChange('include_shared_subscriptions', event.target.checked)} /></label>
+		  <div className="min-w-0 rounded-xl border border-page-divider bg-page-surface p-4 space-y-3">
+			<label className="flex items-start justify-between gap-4"><span className="min-w-0"><span className="block text-sm font-medium text-page">启用订阅共享线路</span><span className="mt-1 block break-words text-xs text-page-secondary">仅使用已订阅的共享计划。</span></span><input type="checkbox" className="mt-0.5 h-4 w-4 shrink-0" checked={Boolean(form.include_shared_subscriptions)} onChange={(event) => onChange('include_shared_subscriptions', event.target.checked)} /></label>
 			{form.include_shared_subscriptions && <div><label className="mb-1.5 block text-sm font-medium text-page-label">共享线路最高价格（基点）</label><input type="number" min="0" max="10000" step="100" className="input" value={form.shared_subscription_max_discount} onChange={(event) => onChange('shared_subscription_max_discount', event.target.value)} placeholder="0 表示不限制" /></div>}
 		  </div>
-		  <div className="grid gap-4 md:grid-cols-2">
-			<label><span className="mb-1.5 block text-sm font-medium text-page-label">模型商家来源过滤</span><textarea rows={4} className="input resize-y font-mono text-xs" value={form.subrouter_model_providers} onChange={(event) => onChange('subrouter_model_providers', event.target.value)} placeholder={'{"gpt-5":["provider-slug"]}'} /></label>
-			<label><span className="mb-1.5 block text-sm font-medium text-page-label">模型价格上限</span><textarea rows={4} className="input resize-y font-mono text-xs" value={form.subrouter_model_price_limits} onChange={(event) => onChange('subrouter_model_price_limits', event.target.value)} placeholder={'{"gpt-5":{"input":1,"output":5}}'} /></label>
+		  <div className="grid min-w-0 gap-4 md:grid-cols-2">
+			<label className="min-w-0"><span className="mb-1.5 block text-sm font-medium text-page-label">模型商家来源过滤</span><textarea rows={4} className="input max-w-full resize-y break-all font-mono text-xs" value={form.subrouter_model_providers} onChange={(event) => onChange('subrouter_model_providers', event.target.value)} placeholder={'{"gpt-5":["provider-slug"]}'} /></label>
+			<label className="min-w-0"><span className="mb-1.5 block text-sm font-medium text-page-label">模型价格上限</span><textarea rows={4} className="input max-w-full resize-y break-all font-mono text-xs" value={form.subrouter_model_price_limits} onChange={(event) => onChange('subrouter_model_price_limits', event.target.value)} placeholder={'{"gpt-5":{"input":1,"output":5}}'} /></label>
 		  </div>
 		</>
 	  )}
@@ -1442,13 +1609,13 @@ function TokenControlFields({
         </div>
       )}
 
-      <div>
+      <div className="min-w-0">
         <label className="block text-sm font-medium text-page-label mb-1.5">{t('tokens.ipWhitelist')}</label>
         <textarea
           rows={3}
           value={form.allow_ips}
           onChange={(e) => onChange('allow_ips', e.target.value)}
-          className="input resize-y"
+          className="input max-w-full resize-y break-words"
           placeholder={t('tokens.ipWhitelistPlaceholder')}
         />
       </div>
@@ -1464,82 +1631,58 @@ function KeyGroupCard({ group, parseTags, onSelect, onViewPricing, t }) {
 
   return (
     <div
-      className={`glass-sm rounded-xl p-4 border border-page-divider transition-all ${
+      className={`group glass-sm relative overflow-hidden rounded-2xl p-4 transition-all ${
         isUnavailable
-          ? 'opacity-75'
-          : 'hover:border-brand-500/40 cursor-pointer group'
+          ? 'opacity-65'
+          : 'cursor-pointer hover:-translate-y-0.5 hover:border-brand-500/40 hover:shadow-lg hover:shadow-brand-500/5'
       }`}
       onClick={() => !isUnavailable && onSelect(group)}
     >
-      <div className="flex items-center gap-4">
-        <div className="flex-1 min-w-0">
-          {/* Name + badges */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-sm text-page">{group.name}</span>
+      <div className="flex min-w-0 items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-500/10 text-brand-500">
+          <Layers3 className="h-4 w-4" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="truncate text-sm font-bold text-page">{group.name}</span>
             {group.is_recommended && (
-              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 text-amber-500">
+              <span className="inline-flex items-center rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-500">
                 {t('tokens.recommended')}
               </span>
             )}
             {isUnavailable && (
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-red-500/10 text-red-500">
+              <span className="inline-flex items-center rounded-full bg-red-500/10 px-2 py-0.5 text-[10px] font-semibold text-red-500">
                 {t('tokens.unavailable')}
               </span>
             )}
           </div>
-
-          {/* Price + discount + tags */}
-          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-            {group.rmb_per_usd > 0 && (
-              <span className="text-xs font-medium text-page">
-                {group.rmb_per_usd} {t('tokens.rmbPerUsd')}
-              </span>
-            )}
-            {group.discount_label && (
-              <span className="text-[11px] font-semibold text-page-success">
-                {group.discount_label}
-              </span>
-            )}
-            {priceDiscount > 0 && priceDiscount < 1 && (
-              <span className="text-[11px] font-semibold text-violet-500">
-                {t('tokens.groupSettlementDiscount', { discount: priceDiscount.toFixed(2) })}
-              </span>
-            )}
-            {tags.map((tag, i) => (
-              <span key={i} className="px-1.5 py-0.5 rounded text-[10px] bg-page-surface text-page-secondary">
-                {tag}
-              </span>
-            ))}
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            {group.rmb_per_usd > 0 && <span className="text-xs font-semibold text-page">{group.rmb_per_usd} {t('tokens.rmbPerUsd')}</span>}
+            {group.discount_label && <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">{group.discount_label}</span>}
+            {priceDiscount > 0 && priceDiscount < 1 && <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] font-bold text-violet-500">{t('tokens.groupSettlementDiscount', { discount: priceDiscount.toFixed(2) })}</span>}
+            {tags.map((tag, i) => <span key={i} className="rounded-full bg-page-surface px-2 py-0.5 text-[10px] font-medium text-page-secondary">{tag}</span>)}
           </div>
-
-          {/* Description */}
-          {group.description && (
-            <p className="text-xs text-page-muted mt-1">{group.description}</p>
-          )}
+          {group.description && <p className="mt-2 line-clamp-2 text-xs leading-5 text-page-muted">{group.description}</p>}
         </div>
-
-        <div className="flex flex-col items-end gap-2 flex-shrink-0">
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              onViewPricing(group);
-            }}
-            className="px-3 py-1.5 text-xs rounded-lg border border-page-divider text-page-secondary hover:bg-page-surface-hover hover:text-page transition-colors"
-          >
-            {t('tokens.viewGroupPricing')}
-          </button>
-
-          {!isUnavailable && (
-            <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-              <span className="text-xs font-medium text-brand-500">{t('tokens.create')}</span>
-              <svg className="w-4 h-4 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
-          )}
-        </div>
+        <button
+          type="button"
+          title={t('tokens.viewGroupPricing')}
+          aria-label={t('tokens.viewGroupPricing')}
+          onClick={(event) => {
+            event.stopPropagation();
+            onViewPricing(group);
+          }}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-page-muted transition-colors hover:bg-page-surface-hover hover:text-page"
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </button>
       </div>
+      {!isUnavailable && (
+        <div className="mt-4 flex items-center justify-between border-t border-page-divider pt-3 text-xs font-bold text-brand-500">
+          <span>{t('tokens.create')}</span>
+          <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+        </div>
+      )}
     </div>
   );
 }
@@ -1573,10 +1716,10 @@ function GroupPricingModal({
       onClick={onClose}
     >
       <div
-        className="glass rounded-2xl w-full max-w-6xl max-h-[88vh] overflow-hidden"
+        className="glass flex h-[calc(100dvh-2rem)] max-h-[88vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="px-6 py-5 border-b border-page-divider">
+        <div className="shrink-0 overflow-y-auto border-b border-page-divider px-4 py-4 sm:px-6 sm:py-5">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-xl font-heading font-semibold text-page">
@@ -1640,7 +1783,7 @@ function GroupPricingModal({
           )}
         </div>
 
-        <div className="px-6 py-4 border-b border-page-divider bg-page-surface/40">
+        <div className="shrink-0 border-b border-page-divider bg-page-surface/40 px-4 py-3 sm:px-6 sm:py-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <p className="text-sm text-page-secondary">
               {t('tokens.groupPricingNotice')}
@@ -1658,7 +1801,7 @@ function GroupPricingModal({
           </div>
         </div>
 
-        <div className="px-6 py-5 overflow-y-auto max-h-[58vh]">
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
           {loading ? (
             <div className="flex items-center gap-2 text-sm text-page-secondary">
               <div className="w-4 h-4 border-2 border-brand-500/30 border-t-brand-500 rounded-full animate-spin" />
