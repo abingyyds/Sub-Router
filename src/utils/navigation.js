@@ -36,7 +36,9 @@ export function getSiteNavItems({ t, site }) {
     ...(site?.allow_sub_dist
       ? [{ to: "/sub-site", label: t("subDist.nav"), auth: false }]
       : []),
-    { to: "/dashboard", label: t("nav.dashboard"), auth: true },
+    // Keep the console as the final primary-navigation action. AuthGuard
+    // redirects signed-out visitors to login while preserving their target.
+    { to: "/dashboard", label: t("nav.dashboard"), auth: false },
     { to: "/tokens", label: t("nav.apiKeys"), auth: true },
     ...(fullMode && site?.allow_provider_registration
       ? [
@@ -60,7 +62,6 @@ export function getVisibleNavItems(navItems, user) {
 }
 
 const userMenuNavItems = [
-  "/dashboard",
   "/tokens",
   "/logs",
   "/topup",

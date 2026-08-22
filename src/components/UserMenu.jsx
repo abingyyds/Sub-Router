@@ -5,7 +5,6 @@ import {
   ChevronDown,
   ClipboardList,
   KeyRound,
-  LayoutDashboard,
   LogOut,
   UserCircle,
   WalletCards,
@@ -17,7 +16,6 @@ function getUserInitial(user) {
 }
 
 function getMenuIcon(to) {
-  if (to === '/dashboard') return LayoutDashboard;
   if (to === '/tokens') return KeyRound;
   if (to === '/logs') return ClipboardList;
   if (to === '/topup') return WalletCards;
