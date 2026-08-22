@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { createToken, Q } from '../api';
+import CreatedKeyResultModal from './CreatedKeyResultModal';
 
 const padDatePart = (value) => String(value).padStart(2, '0');
 
@@ -48,7 +49,6 @@ export default function OfficialChannelKeyCreateModal({
   const [form, setForm] = useState(emptyForm);
   const [creating, setCreating] = useState(false);
   const [createdKey, setCreatedKey] = useState('');
-  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -59,10 +59,13 @@ export default function OfficialChannelKeyCreateModal({
       }),
     });
     setCreatedKey('');
-    setCopied(false);
   }, [open, channel?.official_channel_id, channel?.id, channel?.name, t]);
 
   if (!open || !channel) return null;
+
+  if (createdKey) {
+    return <CreatedKeyResultModal createdKey={createdKey} onClose={onClose} />;
+  }
 
   const updateField = (field, value) => {
     setForm((previous) => ({ ...previous, [field]: value }));
@@ -73,24 +76,6 @@ export default function OfficialChannelKeyCreateModal({
       'expired_time',
       seconds ? timestampToDateTimeLocal(Math.ceil(Date.now() / 1000) + seconds) : '',
     );
-  };
-
-  const handleCopy = async () => {
-    if (!createdKey) return;
-    try {
-      await navigator.clipboard.writeText(createdKey);
-    } catch (error) {
-      const textarea = document.createElement('textarea');
-      textarea.value = createdKey;
-      textarea.style.position = 'fixed';
-      textarea.style.opacity = '0';
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-    }
-    setCopied(true);
-    toast.success(t('tokens.copiedToClipboard'));
   };
 
   const handleSubmit = async (event) => {
@@ -132,43 +117,23 @@ export default function OfficialChannelKeyCreateModal({
       onClick={creating ? undefined : onClose}
     >
       <div
-        className="glass flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl"
+        className="glass flex h-[calc(100dvh-2rem)] max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="border-b border-page-divider px-6 py-5">
-          <h2 className="text-lg font-semibold text-page">
+          <h2 className="break-words text-lg font-semibold text-page">
             {t('officialChannels.createGroupKeyForChannel', { channel: channel.name })}
           </h2>
-          <p className="mt-1 text-sm text-page-secondary">
+          <p className="mt-1 break-words text-sm text-page-secondary">
             {t('officialChannels.createGroupKeyForChannelDesc')}
           </p>
         </div>
 
-        {createdKey ? (
-          <div className="overflow-y-auto px-6 py-6">
-            <h3 className="text-lg font-semibold text-page">{t('tokens.newApiKey')}</h3>
-            <div className="mt-3 rounded-xl border border-yellow-500/20 bg-yellow-500/10 p-3">
-              <p className="text-sm text-page-warning">{t('tokens.keyWarning')}</p>
-            </div>
-            <div className="mt-4 flex items-center gap-3 rounded-xl bg-page-inset p-4">
-              <code className="min-w-0 flex-1 break-all select-all font-mono text-sm text-page-success">
-                {createdKey}
-              </code>
-              <button type="button" onClick={handleCopy} className="btn-primary shrink-0 !px-4 !py-1.5">
-                {copied ? t('tokens.copied') : t('tokens.copy')}
-              </button>
-            </div>
-            <div className="mt-5 flex justify-end">
-              <button type="button" onClick={onClose} className="btn-secondary">
-                {t('tokens.savedKey')}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="overflow-y-auto px-6 py-5">
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6">
             <div className="rounded-xl border border-page-divider bg-page-surface px-4 py-3">
               <div className="text-xs text-page-muted">{t('officialChannels.selectedChannel')}</div>
-              <div className="mt-1 text-sm font-semibold text-page">{channel.name}</div>
+              <div className="mt-1 break-words text-sm font-semibold text-page">{channel.name}</div>
             </div>
 
             <div className="mt-4 space-y-4">
@@ -252,16 +217,16 @@ export default function OfficialChannelKeyCreateModal({
               </div>
             </div>
 
-            <div className="mt-5 flex justify-end gap-3 border-t border-page-divider pt-4">
+          </div>
+          <div className="flex shrink-0 flex-wrap justify-end gap-3 border-t border-page-divider bg-page-surface/40 px-4 py-4 sm:px-6">
               <button type="button" onClick={onClose} className="btn-secondary" disabled={creating}>
                 {t('tokens.cancel')}
               </button>
               <button type="submit" disabled={creating} className="btn-primary">
                 {creating ? t('tokens.creating') : t('tokens.create')}
               </button>
-            </div>
-          </form>
-        )}
+          </div>
+        </form>
       </div>
     </div>
   );

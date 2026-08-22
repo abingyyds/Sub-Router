@@ -27,6 +27,7 @@ import {
   Q,
 } from '../api';
 import ConfigExporter from '../components/ConfigExporter';
+import CreatedKeyResultModal from '../components/CreatedKeyResultModal';
 import DownloadCatalog from '../components/DownloadCatalog';
 import { useCurrency, useSite } from '../context/SiteContext';
 import { formatPricingDetailRows } from '../utils/pricingDetails';
@@ -802,7 +803,7 @@ export default function Tokens() {
       {/* ========== Create Modal ========== */}
       {showCreate && (
         <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm" onClick={closeCreateModal}>
-          <div className="glass flex max-h-[calc(100dvh-2rem)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="glass flex h-[calc(100dvh-2rem)] max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="shrink-0 border-b border-page-divider px-4 py-4 sm:px-6">
               <h2 className="text-lg font-semibold text-page">
                 {createType === 'official'
@@ -902,7 +903,7 @@ export default function Tokens() {
 
       {editingToken && editForm && (
         <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm" onClick={closeEditToken}>
-          <div className="glass flex max-h-[calc(100dvh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="glass flex h-[calc(100dvh-2rem)] max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="shrink-0 border-b border-page-divider px-4 py-4 sm:px-6">
               <h2 className="text-lg font-semibold text-page">{t('tokens.editKey')}</h2>
               <p className="mt-1 break-words text-sm text-page-secondary">{editingToken.name}</p>
@@ -981,33 +982,10 @@ export default function Tokens() {
         t={t}
       />
 
-      {newKey && (
-        <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm">
-          <div className="glass max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl p-5 sm:p-6">
-            <h2 className="mb-2 text-lg font-semibold text-page">{t('tokens.newApiKey')}</h2>
-            <div className="mb-4 rounded-xl border border-yellow-500/20 bg-yellow-500/10 p-3">
-              <p className="text-sm text-page-warning">{t('tokens.keyWarning')}</p>
-            </div>
-            <div className="flex min-w-0 items-center gap-3 rounded-xl bg-page-inset p-4">
-              <code className="min-w-0 flex-1 select-all break-all font-mono text-sm text-page-success">
-                {newKey}
-              </code>
-              <button
-                type="button"
-                onClick={() => handleCopy(newKey)}
-                className="btn-primary !px-4 !py-1.5 flex-shrink-0"
-              >
-                {copiedId === newKey ? t('tokens.copied') : t('tokens.copy')}
-              </button>
-            </div>
-            <div className="mt-4 flex justify-end">
-              <button type="button" onClick={() => setNewKey(null)} className="btn-secondary">
-                {t('tokens.savedKey')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CreatedKeyResultModal
+        createdKey={newKey}
+        onClose={() => setNewKey(null)}
+      />
 
       {/* ========== Delete Confirmation Modal ========== */}
       {deleteConfirm && (
@@ -1719,10 +1697,10 @@ function GroupPricingModal({
         className="glass flex h-[calc(100dvh-2rem)] max-h-[88vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="shrink-0 overflow-y-auto border-b border-page-divider px-4 py-4 sm:px-6 sm:py-5">
+        <div className="max-h-[45%] shrink-0 overflow-y-auto border-b border-page-divider px-4 py-4 sm:px-6 sm:py-5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-xl font-heading font-semibold text-page">
+              <h2 className="break-words text-xl font-heading font-semibold text-page">
                 {displayGroup.name} · {t('tokens.groupPricingTitle')}
               </h2>
               <p className="text-sm text-page-secondary mt-1 max-w-3xl">
