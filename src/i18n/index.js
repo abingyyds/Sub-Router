@@ -15,6 +15,7 @@ const localeLoaders = {
   ja: () => import('./locales/ja.json'),
   ru: () => import('./locales/ru.json'),
   vi: () => import('./locales/vi.json'),
+  tr: () => import('./locales/tr.json'),
 };
 
 const localeBackend = {

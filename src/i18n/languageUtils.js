@@ -8,6 +8,7 @@ export const DIST_SITE_LANGUAGES = [
   { code: 'ja', label: '日本語' },
   { code: 'ru', label: 'Русский' },
   { code: 'vi', label: 'Tiếng Việt' },
+  { code: 'tr', label: 'Türkçe' },
 ];
 
 export const APP_LANGUAGE_CODES = DIST_SITE_LANGUAGES.map(({ code }) => code);
