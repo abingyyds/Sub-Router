@@ -32,12 +32,12 @@ export default function TerminalHome() {
       <section className="relative mx-auto grid min-h-[calc(100vh-4rem)] max-w-7xl gap-12 px-4 pb-16 pt-16 sm:px-6 lg:grid-cols-[0.96fr_1.04fr] lg:items-center lg:pb-20 lg:pt-20">
         <FadeContent blur duration={700} delay={80}>
           <div className="max-w-2xl">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-md border border-emerald-400/25 bg-emerald-400/[0.06] px-3 py-1.5 font-mono text-xs font-bold uppercase tracking-[0.22em] text-emerald-200">
+            <div className="mb-5 inline-flex max-w-full items-center gap-2 rounded-md border border-emerald-400/25 bg-emerald-400/[0.06] px-3 py-1.5 font-mono text-xs font-bold uppercase tracking-[0.22em] text-emerald-200">
               <TerminalSquare className="h-4 w-4" />
-              <ShinyText text={homeContent.heroTagline} color="#a7f3d0" shineColor="#ffffff" speed={3} />
+              <ShinyText text={homeContent.heroTagline} color="#a7f3d0" shineColor="#ffffff" speed={3} className="min-w-0 max-w-full break-words" />
             </div>
 
-            <h1 className="font-mono text-4xl font-black tracking-tight text-emerald-50 sm:text-5xl lg:text-6xl">
+            <h1 className="break-words font-mono text-4xl font-black tracking-tight text-emerald-50 sm:text-5xl lg:text-6xl">
               <DecryptedText
                 text={site?.name || t('home.defaultHeroTitle')}
                 animateOn="view"
@@ -48,7 +48,7 @@ export default function TerminalHome() {
                 encryptedClassName="text-emerald-500"
               />
             </h1>
-            <p className="mt-6 max-w-xl text-base leading-8 text-emerald-100/70 sm:text-lg">
+            <p className="mt-6 max-w-xl break-words text-base leading-8 text-emerald-100/70 sm:text-lg">
               {homeContent.heroSubtitle}
             </p>
 
@@ -195,7 +195,7 @@ function RouteConsole({ models, t }) {
             <KeyRound className="h-4 w-4 text-emerald-300" />
             {t('nav.apiKeys')}
           </div>
-          <pre className="overflow-hidden rounded-lg border border-emerald-400/10 bg-emerald-400/[0.04] p-4 font-mono text-xs leading-6 text-emerald-100/72">
+          <pre className="whitespace-pre-wrap break-all rounded-lg border border-emerald-400/10 bg-emerald-400/[0.04] p-4 font-mono text-xs leading-6 text-emerald-100/72">
 {`$ curl /v1/chat/completions
 > model=${rows[0]?.display_name || rows[0]?.model_name}
 > strategy=latency_first
@@ -211,8 +211,8 @@ function RouteConsole({ models, t }) {
           <div className="space-y-2">
             {rows.slice(0, 5).map((model, index) => (
               <div key={model.id || index} className="flex items-center justify-between rounded-lg border border-emerald-400/10 bg-emerald-400/[0.035] px-3 py-2 font-mono">
-                <span className="truncate text-xs text-emerald-100">{model.display_name || model.model_name}</span>
-                <span className="ml-3 text-[10px] font-black text-emerald-400">{t('officialChannels.online')}</span>
+                <span className="min-w-0 truncate text-xs text-emerald-100">{model.display_name || model.model_name}</span>
+                <span className="ml-3 shrink-0 text-[10px] font-black text-emerald-400">{t('officialChannels.online')}</span>
               </div>
             ))}
           </div>

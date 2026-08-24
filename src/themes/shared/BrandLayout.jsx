@@ -213,11 +213,11 @@ export default function BrandLayout({ variant }) {
 
   return (
     <div className={cfg.root} data-theme={variant}>
-      {site?.announcement && <div className={cfg.announcement}>{site.announcement}</div>}
+      {site?.announcement && <div className={`${cfg.announcement} break-words`}>{site.announcement}</div>}
 
       <header className={cfg.header}>
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-          <Link to="/" className="flex min-w-0 items-center gap-3 group">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
+          <Link to="/" className="group flex min-w-0 items-center gap-3">
             {site?.logo ? (
               <img
                 src={site.logo}
@@ -284,7 +284,8 @@ export default function BrandLayout({ variant }) {
               </div>
             )}
             <button
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-current/10 xl:hidden"
+              type="button"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors hover:bg-current/10 xl:hidden"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label={t('common.toggleMenu')}
               aria-expanded={mobileMenuOpen}
@@ -295,7 +296,7 @@ export default function BrandLayout({ variant }) {
         </div>
 
         {mobileMenuOpen && (
-          <div className="border-t border-current/10 bg-inherit xl:hidden">
+          <div className="border-t border-current/10 bg-inherit shadow-lg shadow-black/[0.03] xl:hidden">
             <nav
               aria-label={t('nav.main', { defaultValue: 'Main navigation' })}
               className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-3 sm:px-6"
@@ -335,12 +336,15 @@ export default function BrandLayout({ variant }) {
       </main>
 
       <footer className={cfg.footer}>
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-8 text-sm opacity-70 sm:px-6 md:flex-row md:items-center md:justify-between">
-          <p>&copy; {new Date().getFullYear()} {siteName}</p>
-          <div className="flex flex-wrap items-center gap-4">
-            <FooterLegalLinks className="flex items-center gap-2" linkClassName="font-semibold hover:opacity-100" />
+        <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-8 text-sm opacity-75 sm:px-6 md:flex-row md:items-center md:justify-between">
+          <div className="min-w-0">
+            <p className="break-words font-semibold opacity-100">&copy; {new Date().getFullYear()} {siteName}</p>
+            <p className="mt-1 break-words text-xs">{t('legal.footerNotice')}</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <FooterLegalLinks className="flex flex-wrap items-center gap-2" linkClassName="font-semibold hover:opacity-100" hideNotice />
             {site?.contact_email && (
-              <a href={`mailto:${site.contact_email}`} className="font-semibold hover:opacity-100">
+              <a href={`mailto:${site.contact_email}`} className="break-all font-semibold hover:opacity-100">
                 {t('nav.contact')}
               </a>
             )}

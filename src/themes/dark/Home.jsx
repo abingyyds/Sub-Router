@@ -31,22 +31,22 @@ export default function DarkHome() {
   return (
     <div className="relative">
       {/* Hero — left-aligned, elegant dark */}
-      <section className="max-w-5xl mx-auto px-6 pt-32 pb-24">
+      <section className="mx-auto max-w-5xl px-4 pb-16 pt-16 sm:px-6 sm:pb-24 sm:pt-24 lg:pt-32">
         <FadeContent blur duration={800} delay={100}>
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/20 mb-8">
+          <div className="min-w-0 max-w-3xl">
+            <div className="mb-8 inline-flex max-w-full items-center gap-2 rounded-full border border-emerald-500/20 px-3 py-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              <span className="text-xs text-emerald-400/80 font-medium tracking-wide">{homeContent.heroTagline}</span>
+              <span className="min-w-0 break-words text-xs font-medium tracking-wide text-emerald-400/80">{homeContent.heroTagline}</span>
             </div>
 
-            <h1 className="text-5xl md:text-6xl font-heading font-bold text-white leading-[1.1] tracking-tight">
+            <h1 className="break-words text-4xl font-heading font-bold leading-[1.1] tracking-tight text-white sm:text-5xl lg:text-6xl">
               {site?.name || t('home.defaultHeroTitle')}
             </h1>
-            <p className="text-lg text-neutral-400 mt-6 leading-relaxed max-w-xl">
+            <p className="mt-6 max-w-xl break-words text-lg leading-relaxed text-neutral-400">
               {homeContent.heroSubtitle}
             </p>
 
-            <div className="flex items-center gap-4 mt-10">
+            <div className="mt-8 flex flex-col gap-3 sm:mt-10 sm:flex-row sm:items-center sm:gap-4">
               {user ? (
                 <Link to="/dashboard" className="px-7 py-3 rounded-lg bg-emerald-500 text-black font-semibold text-sm hover:bg-emerald-400 transition-colors">
                   {t('home.goToDashboard')} →
@@ -71,24 +71,24 @@ export default function DarkHome() {
 
         {/* Stats */}
         <FadeContent blur duration={800} delay={400}>
-          <div className="flex items-center gap-12 mt-20 border-t border-neutral-800 pt-10">
-            <div>
-              <div className="text-2xl font-bold text-emerald-400">
+          <div className="mt-12 grid max-w-xl grid-cols-3 gap-3 border-t border-neutral-800 pt-6 sm:mt-20 sm:gap-5 sm:pt-10">
+            <div className="min-w-0">
+              <div className="text-xl font-bold text-emerald-400 sm:text-2xl">
                 <CountUp from={0} to={enabledModels.length || 50} duration={2} />+
               </div>
-              <p className="text-sm text-neutral-500 mt-0.5">{t('home.aiModels')}</p>
+              <p className="mt-0.5 truncate text-xs text-neutral-500 sm:text-sm">{t('home.aiModels')}</p>
             </div>
-            <div>
-              <div className="text-2xl font-bold text-white">
+            <div className="min-w-0 border-l border-neutral-800 pl-3 sm:pl-5">
+              <div className="text-xl font-bold text-white sm:text-2xl">
                 <CountUp from={0} to={99.9} duration={2.5} />%
               </div>
-              <p className="text-sm text-neutral-500 mt-0.5">{t('home.uptime')}</p>
+              <p className="mt-0.5 truncate text-xs text-neutral-500 sm:text-sm">{t('home.uptime')}</p>
             </div>
-            <div>
-              <div className="text-2xl font-bold text-white">
+            <div className="min-w-0 border-l border-neutral-800 pl-3 sm:pl-5">
+              <div className="text-xl font-bold text-white sm:text-2xl">
                 &lt;<CountUp from={200} to={50} duration={2} direction="down" />ms
               </div>
-              <p className="text-sm text-neutral-500 mt-0.5">{t('home.latency')}</p>
+              <p className="mt-0.5 truncate text-xs text-neutral-500 sm:text-sm">{t('home.latency')}</p>
             </div>
           </div>
         </FadeContent>
@@ -124,8 +124,8 @@ export default function DarkHome() {
       {enabledModels.length > 0 && (
         <section className="max-w-5xl mx-auto px-6 py-20">
           <FadeContent blur duration={800} delay={100}>
-            <div className="flex items-end justify-between mb-8">
-              <div>
+            <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div className="min-w-0">
                 <h2 className="text-2xl font-heading font-bold text-white mb-2">{t('home.availableModels')}</h2>
                 <p className="text-neutral-500">{t('home.availableModelsDesc', { count: enabledModels.length })}</p>
               </div>
@@ -136,7 +136,7 @@ export default function DarkHome() {
               )}
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
               {enabledModels.slice(0, 8).map((m, i) => (
                 <div key={m.id || i} className="px-4 py-3 rounded-lg border border-neutral-800/60 hover:border-emerald-500/20 transition-colors group">
                   <span className="text-sm text-neutral-400 font-mono group-hover:text-neutral-300 transition-colors truncate block">{m.display_name || m.model_name}</span>
@@ -170,8 +170,8 @@ export default function DarkHome() {
                   i === 1 ? 'border-emerald-500/25 bg-emerald-500/[0.04]' : 'border-neutral-800/60 hover:border-neutral-700'
                 }`}>
                   {i === 1 && <span className="text-xs text-emerald-400 font-medium mb-2 uppercase tracking-wider">{t('home.popular') || 'Popular'}</span>}
-                  <h3 className="text-base font-semibold text-white">{pkg.name}</h3>
-                  {pkg.description && <p className="text-sm text-neutral-500 mt-1">{pkg.description}</p>}
+                  <h3 className="break-words text-base font-semibold text-white">{pkg.name}</h3>
+                  {pkg.description && <p className="mt-1 break-words text-sm text-neutral-500">{pkg.description}</p>}
                   <div className="mt-auto pt-6">
                     <span className="text-3xl font-bold text-white">{fmtCNY(pkg.price)}</span>
                     {pkg.original_price > pkg.price && (
@@ -202,7 +202,7 @@ export default function DarkHome() {
           <div className="border-t border-neutral-800 pt-16 text-center">
             <h2 className="text-2xl font-heading font-bold text-white mb-3">{t('home.readyToStart')}</h2>
             <p className="text-neutral-500 mb-8 max-w-md mx-auto">{t('home.readyToStartDesc')}</p>
-            <div className="flex items-center justify-center gap-4">
+            <div className="flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center sm:gap-4">
               {user ? (
                 <Link to="/dashboard" className="px-7 py-3 rounded-lg bg-emerald-500 text-black font-semibold text-sm hover:bg-emerald-400 transition-colors">
                   {t('home.goToDashboard')} →

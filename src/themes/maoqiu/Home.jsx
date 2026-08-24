@@ -49,15 +49,15 @@ export default function MaoqiuHome() {
         <div className="relative mx-auto grid min-h-[calc(100vh-4rem)] max-w-7xl gap-10 px-4 pb-14 pt-12 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:pb-18 lg:pt-16">
           <FadeContent blur duration={700} delay={80}>
             <div className="max-w-2xl">
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white/88 px-3 py-1.5 text-sm font-bold text-[#1b2a5b] shadow-sm">
+              <div className="mb-5 inline-flex max-w-full items-center gap-2 rounded-full border border-blue-100 bg-white/88 px-3 py-1.5 text-sm font-bold text-[#1b2a5b] shadow-sm">
                 <Sparkles className="h-4 w-4 text-[#8a45ff]" />
-                {homeContent.heroTagline}
+                <span className="min-w-0 break-words">{homeContent.heroTagline}</span>
               </div>
 
-              <h1 className="max-w-2xl text-4xl font-black tracking-tight text-[#071337] sm:text-5xl lg:text-6xl">
+              <h1 className="max-w-2xl break-words text-4xl font-black tracking-tight text-[#071337] sm:text-5xl lg:text-6xl">
                 {site?.name || t('home.defaultHeroTitle')}
               </h1>
-              <p className="mt-6 max-w-xl text-base leading-8 text-slate-600 sm:text-lg">
+              <p className="mt-6 max-w-xl break-words text-base leading-8 text-slate-600 sm:text-lg">
                 {homeContent.heroSubtitle}
               </p>
 

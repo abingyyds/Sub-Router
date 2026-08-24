@@ -38,13 +38,15 @@ export function LegalAgreementCheckbox({ id, checked, onChange }) {
   );
 }
 
-export function FooterLegalLinks({ className = '', linkClassName = '' }) {
+export function FooterLegalLinks({ className = '', linkClassName = '', hideNotice = false }) {
   const { t } = useTranslation();
 
   return (
     <div className={className}>
-      <span>{t('legal.footerNotice')}</span>
-      <span className="opacity-40">·</span>
+      {!hideNotice && <>
+        <span>{t('legal.footerNotice')}</span>
+        <span className="opacity-40">·</span>
+      </>}
       <Link to="/user-agreement" className={linkClassName}>
         {t('legal.userAgreement')}
       </Link>

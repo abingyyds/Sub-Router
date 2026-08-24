@@ -40,14 +40,14 @@ export default function MarketHome() {
         <div className="relative mx-auto grid min-h-[calc(100vh-4rem)] max-w-7xl gap-12 px-4 pb-16 pt-16 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:pb-20 lg:pt-20">
           <FadeContent blur duration={700} delay={80}>
             <div className="max-w-2xl">
-              <div className="mb-5 inline-flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-sm font-bold text-stone-700 shadow-sm">
+              <div className="mb-5 inline-flex max-w-full items-center gap-2 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-sm font-bold text-stone-700 shadow-sm">
                 <ShoppingBag className="h-4 w-4 text-orange-600" />
-                {homeContent.heroTagline}
+                <span className="min-w-0 break-words">{homeContent.heroTagline}</span>
               </div>
-              <h1 className="text-4xl font-black tracking-tight text-stone-950 sm:text-5xl lg:text-6xl">
+              <h1 className="break-words text-4xl font-black tracking-tight text-stone-950 sm:text-5xl lg:text-6xl">
                 {site?.name || t('home.defaultHeroTitle')}
               </h1>
-              <p className="mt-6 max-w-xl text-base leading-8 text-stone-600 sm:text-lg">
+              <p className="mt-6 max-w-xl break-words text-base leading-8 text-stone-600 sm:text-lg">
                 {homeContent.heroSubtitle}
               </p>
 

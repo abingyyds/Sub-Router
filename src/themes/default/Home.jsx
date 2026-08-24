@@ -67,17 +67,17 @@ export default function DefaultHome() {
         <div className="absolute inset-0 pointer-events-none opacity-[0.55] [background-image:linear-gradient(#e5e7eb_1px,transparent_1px),linear-gradient(90deg,#e5e7eb_1px,transparent_1px)] [background-size:44px_44px]" />
 
         <div className="relative mx-auto grid max-w-7xl gap-12 px-4 pb-16 pt-16 sm:px-6 lg:grid-cols-[1.02fr_0.98fr] lg:items-center lg:pb-20 lg:pt-20">
-          <FadeContent blur duration={700} delay={80}>
-            <div className="max-w-2xl">
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 shadow-sm">
+          <FadeContent blur duration={700} delay={80} className="min-w-0">
+            <div className="min-w-0 max-w-2xl">
+              <div className="mb-5 inline-flex max-w-full items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 shadow-sm">
                 <Activity className="h-4 w-4 text-emerald-600" />
-                {homeContent.heroTagline}
+                <span className="min-w-0 break-words">{homeContent.heroTagline}</span>
               </div>
 
-              <h1 className="text-4xl font-black tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
+              <h1 className="break-words text-4xl font-black tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
                 {site?.name || t('home.defaultHeroTitle')}
               </h1>
-              <p className="mt-6 max-w-xl text-base leading-8 text-slate-600 sm:text-lg">
+              <p className="mt-6 max-w-xl break-words text-base leading-8 text-slate-600 sm:text-lg">
                 {homeContent.heroSubtitle}
               </p>
 
@@ -117,7 +117,7 @@ export default function DefaultHome() {
             </div>
           </FadeContent>
 
-          <FadeContent blur duration={700} delay={220}>
+          <FadeContent blur duration={700} delay={220} className="min-w-0">
             {homeContent.heroImage ? (
               <HomeHeroImage src={homeContent.heroImage} alt={site?.name} className="aspect-[4/3]" />
             ) : (
@@ -309,8 +309,8 @@ function HeroConsole({ models, t }) {
   const rows = models.slice(0, 3);
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl shadow-slate-200/80">
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-950">
+    <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl shadow-slate-200/80">
+      <div className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-950">
         <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
           <div className="flex items-center gap-2">
             <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
@@ -326,7 +326,7 @@ function HeroConsole({ models, t }) {
               <KeyRound className="h-4 w-4 text-emerald-400" />
               {t('nav.apiKeys')}
             </div>
-            <pre className="overflow-hidden rounded-lg bg-black/40 p-4 text-xs leading-6 text-slate-300">
+            <pre className="whitespace-pre-wrap break-all rounded-lg bg-black/40 p-4 text-xs leading-6 text-slate-300">
 {`curl https://api.example.com/v1/chat/completions
   -H "Authorization: Bearer sk-..."
   -d '{"model":"${rows[0]?.display_name || rows[0]?.model_name}"}'`}

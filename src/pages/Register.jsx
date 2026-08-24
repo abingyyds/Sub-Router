@@ -115,12 +115,13 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-[70vh] flex items-center justify-center px-6">
+    <div className="auth-page-shell flex min-h-[70vh] items-center justify-center px-4 py-10 sm:px-6">
       <div className="w-full max-w-md">
-        <div className="glass rounded-2xl p-8">
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-heading font-bold text-page mb-2">{t('register.createAccount')}</h1>
-            <p className="text-sm text-page-secondary">{site?.name ? t('register.getStartedWith', { name: site.name }) : t('register.getStartedDefault')}</p>
+        <div className="auth-card glass rounded-xl p-6 sm:p-8">
+          <div className="mb-8 text-center">
+            {site?.name && <p className="mb-2 truncate text-xs font-bold uppercase tracking-[0.14em] text-page-link">{site.name}</p>}
+            <h1 className="mb-2 text-2xl font-heading font-bold text-page">{t('register.createAccount')}</h1>
+            <p className="break-words text-sm text-page-secondary">{site?.name ? t('register.getStartedWith', { name: site.name }) : t('register.getStartedDefault')}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">

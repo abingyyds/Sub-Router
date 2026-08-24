@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { ArrowRight, ShieldCheck, WalletCards, Zap } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useSite, useCurrency } from '../../context/SiteContext';
 import { getSiteModels, getSitePackages, Q } from '../../api';
@@ -16,7 +17,7 @@ export default function CleanHome() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { site } = useSite();
-  const { symbol, rate, fmtCNY } = useCurrency();
+  const { fmtCNY } = useCurrency();
   const [models, setModels] = useState([]);
   const [packages, setPackages] = useState([]);
 
@@ -31,29 +32,32 @@ export default function CleanHome() {
   return (
     <div>
       {/* Hero */}
-      <section className="max-w-5xl mx-auto px-6 pt-32 pb-20">
+      <section className="mx-auto max-w-5xl px-4 pb-16 pt-16 sm:px-6 sm:pt-24 lg:pb-20 lg:pt-32">
         <FadeContent blur duration={800} delay={100}>
           <div className="text-center max-w-3xl mx-auto">
             <p className="text-sm font-medium text-blue-600 mb-4 tracking-wide">{homeContent.heroTagline}</p>
-            <h1 className="text-5xl md:text-6xl font-heading font-bold text-gray-900 leading-[1.1] tracking-tight">
+            <h1 className="text-4xl font-heading font-bold leading-[1.1] tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
               {site?.name || t('home.defaultHeroTitle')}
             </h1>
             <p className="text-lg text-gray-500 mt-6 leading-relaxed max-w-xl mx-auto">
               {homeContent.heroSubtitle}
             </p>
 
-            <div className="flex items-center justify-center gap-4 mt-10">
+            <div className="mt-8 flex flex-col gap-3 sm:mt-10 sm:flex-row sm:items-center sm:justify-center sm:gap-4">
               {user ? (
-                <Link to="/dashboard" className="px-7 py-3 rounded-xl bg-blue-600 text-white font-medium text-sm hover:bg-blue-700 transition-colors shadow-sm">
-                  {t('home.goToDashboard')} →
+                <Link to="/dashboard" className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700">
+                  {t('home.goToDashboard')}
+                  <ArrowRight className="h-4 w-4" />
                 </Link>
               ) : (
                 <>
-                  <Link to="/register" className="px-7 py-3 rounded-xl bg-blue-600 text-white font-medium text-sm hover:bg-blue-700 transition-colors shadow-sm">
+                  <Link to="/register" className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700">
                     {t('home.getStarted')}
+                    <ArrowRight className="h-4 w-4" />
                   </Link>
-                  <Link to="/pricing" className="px-7 py-3 text-gray-500 font-medium text-sm hover:text-gray-900 transition-colors">
-                    {t('home.viewPricing')} →
+                  <Link to="/pricing" className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-gray-500 transition-colors hover:bg-blue-50 hover:text-gray-900">
+                    {t('home.viewPricing')}
+                    <ArrowRight className="h-4 w-4" />
                   </Link>
                 </>
               )}
@@ -67,24 +71,24 @@ export default function CleanHome() {
 
         {/* Stats */}
         <FadeContent blur duration={800} delay={400}>
-          <div className="grid grid-cols-3 gap-8 max-w-lg mx-auto mt-20 pt-10 border-t border-gray-100">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">
+          <div className="mx-auto mt-12 grid max-w-xl grid-cols-3 border-t border-gray-100 pt-6 sm:mt-20 sm:pt-10">
+            <div className="min-w-0 px-2 text-center first:pl-0 sm:px-6 sm:first:pl-0">
+              <div className="text-lg font-bold text-gray-900 sm:text-2xl">
                 <CountUp from={0} to={enabledModels.length || 50} duration={2} />+
               </div>
-              <p className="text-sm text-gray-500 mt-0.5">{t('home.aiModels')}</p>
+              <p className="mt-1 truncate text-xs text-gray-500 sm:text-sm">{t('home.aiModels')}</p>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">
+            <div className="min-w-0 border-l border-gray-100 px-2 text-center sm:px-6">
+              <div className="text-lg font-bold text-gray-900 sm:text-2xl">
                 <CountUp from={0} to={99.9} duration={2.5} />%
               </div>
-              <p className="text-sm text-gray-500 mt-0.5">{t('home.uptime')}</p>
+              <p className="mt-1 truncate text-xs text-gray-500 sm:text-sm">{t('home.uptime')}</p>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">
+            <div className="min-w-0 border-l border-gray-100 px-2 pr-0 text-center sm:px-6 sm:pr-0">
+              <div className="text-lg font-bold text-gray-900 sm:text-2xl">
                 &lt;<CountUp from={200} to={50} duration={2} direction="down" />ms
               </div>
-              <p className="text-sm text-gray-500 mt-0.5">{t('home.latency')}</p>
+              <p className="mt-1 truncate text-xs text-gray-500 sm:text-sm">{t('home.latency')}</p>
             </div>
           </div>
         </FadeContent>
@@ -93,7 +97,7 @@ export default function CleanHome() {
       <ApiEndpoints />
 
       {/* Features */}
-      <section className="max-w-5xl mx-auto px-6 py-20">
+      <section className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:py-20">
         <FadeContent blur duration={800} delay={100}>
           <div className="text-center mb-14">
             <h2 className="text-2xl font-heading font-bold text-gray-900 mb-3">{t('home.whyChooseUs')}</h2>
@@ -102,46 +106,38 @@ export default function CleanHome() {
 
           <div className="grid md:grid-cols-3 gap-5">
             {[
-              { title: t('home.lightningFast'), desc: t('home.lightningFastDesc'), color: 'blue', icon: (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              )},
-              { title: t('home.securePrivate'), desc: t('home.securePrivateDesc'), color: 'indigo', icon: (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-              )},
-              { title: t('home.payAsYouGo'), desc: t('home.payAsYouGoDesc'), color: 'emerald', icon: (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              )},
-            ].map((f, i) => (
+              { title: t('home.lightningFast'), desc: t('home.lightningFastDesc'), tone: 'bg-blue-50 text-blue-600', icon: Zap },
+              { title: t('home.securePrivate'), desc: t('home.securePrivateDesc'), tone: 'bg-indigo-50 text-indigo-600', icon: ShieldCheck },
+              { title: t('home.payAsYouGo'), desc: t('home.payAsYouGoDesc'), tone: 'bg-emerald-50 text-emerald-600', icon: WalletCards },
+            ].map((f, i) => {
+              const Icon = f.icon;
+              return (
               <div key={i} className="p-6 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all">
-                <div className={`w-10 h-10 rounded-lg bg-${f.color}-50 text-${f.color}-600 flex items-center justify-center mb-4`}>
-                  {f.icon}
+                <div className={`mb-4 flex h-10 w-10 items-center justify-center rounded-lg ${f.tone}`}>
+                  <Icon className="h-5 w-5" />
                 </div>
                 <h3 className="text-base font-semibold text-gray-900 mb-2">{f.title}</h3>
                 <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
               </div>
-            ))}
+              );
+            })}
           </div>
         </FadeContent>
       </section>
 
       {/* Models */}
       {enabledModels.length > 0 && (
-        <section className="max-w-5xl mx-auto px-6 py-20">
+        <section className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:py-20">
           <FadeContent blur duration={800} delay={100}>
-            <div className="flex items-end justify-between mb-8">
+            <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <h2 className="text-2xl font-heading font-bold text-gray-900 mb-2">{t('home.availableModels')}</h2>
                 <p className="text-gray-500">{t('home.availableModelsDesc', { count: enabledModels.length })}</p>
               </div>
               {enabledModels.length > 8 && (
-                <Link to="/pricing" className="text-sm text-blue-600 hover:text-blue-700 transition-colors">
-                  {t('home.viewAllModels', { count: enabledModels.length })} →
+                <Link to="/pricing" className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 transition-colors hover:text-blue-700">
+                  {t('home.viewAllModels', { count: enabledModels.length })}
+                  <ArrowRight className="h-4 w-4" />
                 </Link>
               )}
             </div>
@@ -159,7 +155,7 @@ export default function CleanHome() {
 
       {/* Packages */}
       {packages.length > 0 && (
-        <section className="max-w-5xl mx-auto px-6 py-20">
+        <section className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:py-20">
           <FadeContent blur duration={800} delay={100}>
             <h2 className="text-2xl font-heading font-bold text-gray-900 mb-2">{t('home.plansPackages')}</h2>
             <p className="text-gray-500 mb-10">{t('home.choosePlan')}</p>
@@ -190,7 +186,7 @@ export default function CleanHome() {
                     {pkg.duration > 0 && <p className="text-xs text-gray-500 mt-1">{t('home.days', { count: pkg.duration })}</p>}
                   </div>
                   {equiv.length > 0 && (
-                    <p className="text-xs text-amber-600 mt-2">🔥 <RotatingEquiv items={equiv} text={(item) => t('packages.officialEquiv', { model: item.label, amount: item.equivDollars })} /></p>
+                    <p className="mt-2 text-xs font-medium text-amber-700"><RotatingEquiv items={equiv} text={(item) => t('packages.officialEquiv', { model: item.label, amount: item.equivDollars })} /></p>
                   )}
                   <Link to={user ? '/packages' : '/register'} className={`mt-4 py-2.5 rounded-lg font-medium text-sm text-center transition-colors ${
                     i === 1
@@ -207,22 +203,24 @@ export default function CleanHome() {
       )}
 
       {/* CTA */}
-      <section className="max-w-5xl mx-auto px-6 py-24">
+      <section className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:py-24">
         <FadeContent blur duration={800} delay={100}>
           <div className="border-t border-gray-100 pt-16 text-center">
             <h2 className="text-2xl font-heading font-bold text-gray-900 mb-3">{t('home.readyToStart')}</h2>
             <p className="text-gray-500 mb-8 max-w-md mx-auto">{t('home.readyToStartDesc')}</p>
-            <div className="flex items-center justify-center gap-4">
+            <div className="flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center sm:gap-4">
               {user ? (
-                <Link to="/dashboard" className="px-7 py-3 rounded-xl bg-blue-600 text-white font-medium text-sm hover:bg-blue-700 transition-colors shadow-sm">
-                  {t('home.goToDashboard')} →
+                <Link to="/dashboard" className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700">
+                  {t('home.goToDashboard')}
+                  <ArrowRight className="h-4 w-4" />
                 </Link>
               ) : (
                 <>
-                  <Link to="/register" className="px-7 py-3 rounded-xl bg-blue-600 text-white font-medium text-sm hover:bg-blue-700 transition-colors shadow-sm">
-                    {t('home.createFreeAccount')} →
+                  <Link to="/register" className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700">
+                    {t('home.createFreeAccount')}
+                    <ArrowRight className="h-4 w-4" />
                   </Link>
-                  <Link to="/login" className="px-7 py-3 text-gray-500 font-medium text-sm hover:text-gray-900 transition-colors">
+                  <Link to="/login" className="inline-flex items-center justify-center rounded-xl px-6 py-3 text-sm font-semibold text-gray-500 transition-colors hover:bg-blue-50 hover:text-gray-900">
                     {t('home.signIn')}
                   </Link>
                 </>

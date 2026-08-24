@@ -52,15 +52,15 @@ export default function AuroraHome() {
         <div className="relative mx-auto grid min-h-[calc(100vh-4rem)] max-w-7xl gap-12 px-4 pb-16 pt-14 sm:px-6 lg:grid-cols-[0.92fr_1.08fr] lg:items-center lg:pb-20 lg:pt-20">
           <FadeContent blur duration={700} delay={80}>
             <div className="max-w-2xl">
-              <div className="mb-5 inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white/90 px-3 py-1.5 text-sm font-bold text-slate-600 shadow-sm">
+              <div className="mb-5 inline-flex max-w-full items-center gap-2 rounded-lg border border-slate-200 bg-white/90 px-3 py-1.5 text-sm font-bold text-slate-600 shadow-sm">
                 <Sparkles className="h-4 w-4 text-teal-600" />
-                {homeContent.heroTagline}
+                <span className="min-w-0 break-words">{homeContent.heroTagline}</span>
               </div>
 
-              <h1 className="max-w-2xl text-4xl font-black tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
+              <h1 className="max-w-2xl break-words text-4xl font-black tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
                 {site?.name || t('home.defaultHeroTitle')}
               </h1>
-              <p className="mt-6 max-w-xl text-base leading-8 text-slate-600 sm:text-lg">
+              <p className="mt-6 max-w-xl break-words text-base leading-8 text-slate-600 sm:text-lg">
                 {homeContent.heroSubtitle}
               </p>
 
@@ -258,7 +258,7 @@ function RoutingWorkbench({ models, t }) {
           <div className="grid gap-2 sm:grid-cols-2">
             {preview.slice(0, 4).map((model, index) => (
               <div key={model.id || index} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2">
-                <span className="truncate font-mono text-xs font-semibold text-slate-700">{model.display_name || model.model_name}</span>
+                <span className="min-w-0 truncate font-mono text-xs font-semibold text-slate-700">{model.display_name || model.model_name}</span>
                 <CheckCircle2 className="h-4 w-4 shrink-0 text-teal-600" />
               </div>
             ))}
@@ -279,8 +279,8 @@ function RouteRow({ model, index, active, t }) {
   return (
     <div className={`rounded-lg border p-3 ${active ? 'border-blue-400/40 bg-blue-400/10' : 'border-white/10 bg-white/[0.035]'}`}>
       <div className="flex items-center justify-between gap-3">
-        <span className="truncate font-mono text-xs font-semibold text-slate-200">{model.display_name || model.model_name}</span>
-        <span className={active ? 'text-xs font-black text-blue-200' : 'text-xs font-semibold text-slate-500'}>
+        <span className="min-w-0 truncate font-mono text-xs font-semibold text-slate-200">{model.display_name || model.model_name}</span>
+        <span className={`shrink-0 ${active ? 'text-xs font-black text-blue-200' : 'text-xs font-semibold text-slate-500'}`}>
           {active ? t('home.primary') : `R${index + 1}`}
         </span>
       </div>
