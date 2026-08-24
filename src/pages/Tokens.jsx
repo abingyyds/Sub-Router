@@ -1697,89 +1697,89 @@ function GroupPricingModal({
         className="glass flex h-[calc(100dvh-2rem)] max-h-[88vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="max-h-[45%] shrink-0 overflow-y-auto border-b border-page-divider px-4 py-4 sm:px-6 sm:py-5">
+        <div className="max-h-[38%] shrink-0 overflow-y-auto border-b border-page-divider px-4 py-3 sm:px-5 sm:py-3.5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="break-words text-xl font-heading font-semibold text-page">
+              <h2 className="break-words text-base font-heading font-semibold leading-6 text-page sm:text-lg">
                 {displayGroup.name} · {t('tokens.groupPricingTitle')}
               </h2>
-              <p className="text-sm text-page-secondary mt-1 max-w-3xl">
+              <p className="mt-1 max-w-3xl text-xs leading-5 text-page-secondary">
                 {t('tokens.groupPricingSubtitle')}
               </p>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="px-3 py-1.5 text-sm rounded-lg border border-page-divider text-page-secondary hover:bg-page-surface-hover transition-colors"
+              className="shrink-0 rounded-lg border border-page-divider px-2.5 py-1.5 text-xs text-page-secondary transition-colors hover:bg-page-surface-hover"
             >
               {t('tokens.cancel')}
             </button>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 mt-4">
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
             {displayGroup.discount_label && (
-              <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-green-500/10 text-page-success">
+              <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-[11px] font-semibold text-page-success">
                 {displayGroup.discount_label}
               </span>
             )}
             {priceDiscount > 0 && priceDiscount < 1 && (
-              <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-violet-500/10 text-violet-500">
+              <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[11px] font-semibold text-violet-500">
                 {t('tokens.groupSettlementDiscount', { discount: priceDiscount.toFixed(2) })}
               </span>
             )}
             {displayGroup.rmb_per_usd > 0 && (
-              <span className="px-2.5 py-1 rounded-full text-xs bg-page-surface text-page-secondary">
+              <span className="rounded-full bg-page-surface px-2 py-0.5 text-[11px] text-page-secondary">
                 {displayGroup.rmb_per_usd} {t('tokens.rmbPerUsd')}
               </span>
             )}
             {summary && (
-              <span className="px-2.5 py-1 rounded-full text-xs bg-page-surface text-page-secondary">
+              <span className="rounded-full bg-page-surface px-2 py-0.5 text-[11px] text-page-secondary">
                 {t('tokens.groupPricingAvailableLines')}: {summary.provider_count}
               </span>
             )}
             {summary && (
-              <span className="px-2.5 py-1 rounded-full text-xs bg-page-surface text-page-secondary">
+              <span className="rounded-full bg-page-surface px-2 py-0.5 text-[11px] text-page-secondary">
                 {t('tokens.groupPricingAvailableModels')}: {summary.model_count}
               </span>
             )}
             {summary?.provider_limited && (
-              <span className="px-2.5 py-1 rounded-full text-xs bg-brand-500/10 text-brand-500">
+              <span className="rounded-full bg-brand-500/10 px-2 py-0.5 text-[11px] text-brand-500">
                 {t('tokens.restrictedByProviders')}
               </span>
             )}
             {summary?.model_limited && (
-              <span className="px-2.5 py-1 rounded-full text-xs bg-brand-500/10 text-brand-500">
+              <span className="rounded-full bg-brand-500/10 px-2 py-0.5 text-[11px] text-brand-500">
                 {t('tokens.restrictedByModels')}
               </span>
             )}
           </div>
 
           {displayGroup.description && (
-            <p className="text-sm text-page-secondary mt-3">
+            <p className="mt-2 text-xs leading-5 text-page-secondary">
               {displayGroup.description}
             </p>
           )}
         </div>
 
-        <div className="shrink-0 border-b border-page-divider bg-page-surface/40 px-4 py-3 sm:px-6 sm:py-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <p className="text-sm text-page-secondary">
+        <div className="shrink-0 border-b border-page-divider bg-page-surface/40 px-4 py-2.5 sm:px-5 sm:py-3">
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+            <p className="text-xs leading-5 text-page-secondary">
               {t('tokens.groupPricingNotice')}
               {priceDiscount > 0 && priceDiscount < 1 && (
-                <span className="mt-1 block text-xs text-page-muted">{t('tokens.groupDiscountCostFloor')}</span>
+                <span className="mt-0.5 block text-[11px] text-page-muted">{t('tokens.groupDiscountCostFloor')}</span>
               )}
             </p>
             <input
               type="text"
               value={search}
               onChange={(event) => onSearchChange(event.target.value)}
-              className="input lg:max-w-xs"
+              className="input h-8 text-xs lg:max-w-56"
               placeholder={t('tokens.groupPricingSearchPlaceholder')}
             />
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 sm:px-5 sm:py-4">
           {loading ? (
             <div className="flex items-center gap-2 text-sm text-page-secondary">
               <div className="w-4 h-4 border-2 border-brand-500/30 border-t-brand-500 rounded-full animate-spin" />
@@ -1799,36 +1799,36 @@ function GroupPricingModal({
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm min-w-[860px]">
+              <table className="min-w-[800px] w-full text-xs">
                 <thead>
                   <tr className="border-b border-page-divider">
-                    <th className="text-left px-4 py-3 font-medium text-page-secondary">{t('pricing.model')}</th>
-                    <th className="text-left px-4 py-3 font-medium text-page-secondary">{t('定价方式')}</th>
-                    <th className="text-right px-4 py-3 font-medium text-page-secondary">{t('tokens.groupPricingReferencePrice')}</th>
-                    <th className="text-right px-4 py-3 font-medium text-page-secondary">{t('pricing.outputPrice')}</th>
-                    <th className="text-right px-4 py-3 font-medium text-page-secondary">{t('pricing.cacheReadPrice')}</th>
-                    <th className="text-right px-4 py-3 font-medium text-page-secondary">{t('pricing.cacheCreationPrice')}</th>
-                    <th className="text-center px-4 py-3 font-medium text-page-secondary">{t('tokens.groupPricingLines')}</th>
+                    <th className="px-3 py-2 text-left text-[11px] font-medium leading-4 text-page-secondary">{t('pricing.model')}</th>
+                    <th className="px-3 py-2 text-left text-[11px] font-medium leading-4 text-page-secondary">{t('定价方式')}</th>
+                    <th className="px-3 py-2 text-right text-[11px] font-medium leading-4 text-page-secondary">{t('tokens.groupPricingReferencePrice')}</th>
+                    <th className="px-3 py-2 text-right text-[11px] font-medium leading-4 text-page-secondary">{t('pricing.outputPrice')}</th>
+                    <th className="px-3 py-2 text-right text-[11px] font-medium leading-4 text-page-secondary">{t('pricing.cacheReadPrice')}</th>
+                    <th className="px-3 py-2 text-right text-[11px] font-medium leading-4 text-page-secondary">{t('pricing.cacheCreationPrice')}</th>
+                    <th className="px-3 py-2 text-center text-[11px] font-medium leading-4 text-page-secondary">{t('tokens.groupPricingLines')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {items.map((item) => (
                     <tr key={`${item.model_name}:${item.billing_type}`} className="border-b border-page-divider last:border-0 align-top">
-                      <td className="px-4 py-3.5">
+                      <td className="px-3 py-2.5">
                         <div className="min-w-0">
-                          <div className="font-medium text-page">{item.display_name || item.model_name}</div>
+                          <div className="text-xs font-medium leading-4 text-page">{item.display_name || item.model_name}</div>
                           {(item.display_name || item.model_name) !== item.model_name && (
-                            <div className="text-xs text-page-muted font-mono mt-1">{item.model_name}</div>
+                            <div className="mt-0.5 font-mono text-[11px] leading-4 text-page-muted">{item.model_name}</div>
                           )}
                           {item.category && (
-                            <div className="text-xs text-page-muted mt-1 uppercase tracking-wide">{item.category}</div>
+                            <div className="mt-0.5 text-[10px] uppercase tracking-wide text-page-muted">{item.category}</div>
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3.5 text-page-secondary">
+                      <td className="px-3 py-2.5 text-xs leading-4 text-page-secondary">
                         {item.billing_type === 'per_call' ? t('pricing.perCall') : t('按量计费')}
                       </td>
-                      <td className="px-4 py-3.5 text-right font-mono text-page-label whitespace-nowrap">
+                      <td className="whitespace-nowrap px-3 py-2.5 text-right font-mono text-[11px] leading-4 tabular-nums text-page-label">
                         {item.status !== 'healthy'
                           ? t('pricing.unknown')
                           : item.billing_type === 'per_call'
@@ -1837,29 +1837,29 @@ function GroupPricingModal({
                               ? formatGroupTieredPrice(item, currency, t)
                               : formatGroupPriceRange(item.input_price_min, item.input_price_max, symbol, rate, false, t)}
                       </td>
-                      <td className="px-4 py-3.5 text-right font-mono text-page-label whitespace-nowrap">
+                      <td className="whitespace-nowrap px-3 py-2.5 text-right font-mono text-[11px] leading-4 tabular-nums text-page-label">
                         {item.status !== 'healthy'
                           ? '-'
                           : item.billing_type === 'per_call' || item.billing_type === 'tiered_expr'
                             ? '-'
                             : formatGroupPriceRange(item.output_price_min, item.output_price_max, symbol, rate, false, t)}
                       </td>
-                      <td className="px-4 py-3.5 text-right font-mono text-page-label whitespace-nowrap">
+                      <td className="whitespace-nowrap px-3 py-2.5 text-right font-mono text-[11px] leading-4 tabular-nums text-page-label">
                         {item.status !== 'healthy'
                           ? '-'
                           : item.billing_type === 'per_call' || item.billing_type === 'tiered_expr'
                             ? '-'
                             : formatGroupPriceRange(item.cache_read_price_min, item.cache_read_price_max, symbol, rate, false, t)}
                       </td>
-                      <td className="px-4 py-3.5 text-right font-mono text-page-label whitespace-nowrap">
+                      <td className="whitespace-nowrap px-3 py-2.5 text-right font-mono text-[11px] leading-4 tabular-nums text-page-label">
                         {item.status !== 'healthy'
                           ? '-'
                           : item.billing_type === 'per_call' || item.billing_type === 'tiered_expr'
                             ? '-'
                             : formatGroupCachePriceRange(item, symbol, rate, t)}
                       </td>
-                      <td className="px-4 py-3.5 text-center">
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-page-surface text-page-secondary">
+                      <td className="px-3 py-2.5 text-center">
+                        <span className="inline-flex items-center rounded-full bg-page-surface px-1.5 py-0.5 text-[10px] leading-4 text-page-secondary">
                           {formatRouteCount(item.route_count, item.has_range, t)}
                         </span>
                       </td>
