@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Check, CheckCircle2, Copy, Globe2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { useSite } from '../context/SiteContext';
+import { SHARED_API_ENDPOINTS } from '../constants/apiEndpoints';
 
 const normalizeOrigin = (value) => {
   const raw = String(value || '').trim();
@@ -30,17 +30,22 @@ const copyToClipboard = async (value) => {
 
 export default function CreatedKeyResultModal({ createdKey, onClose }) {
   const { t } = useTranslation();
-  const { site } = useSite();
   const [copiedTarget, setCopiedTarget] = useState('');
-
-  const siteOrigin = useMemo(() => {
-    const configuredDomain = String(site?.domain || '').trim();
-    if (configuredDomain) return normalizeOrigin(configuredDomain);
-    return normalizeOrigin(
-      typeof window !== 'undefined' ? window.location.origin : '',
-    );
-  }, [site?.domain]);
-  const apiEndpoint = siteOrigin ? `${siteOrigin}/v1` : '';
+  const [selectedEndpointId, setSelectedEndpointId] = useState(
+    'overseas-direct',
+  );
+  const endpoints = useMemo(
+    () =>
+      SHARED_API_ENDPOINTS.map((endpoint) => ({
+        ...endpoint,
+        url: `${normalizeOrigin(endpoint.url)}/v1`,
+      })),
+    [],
+  );
+  const selectedEndpoint =
+    endpoints.find((endpoint) => endpoint.id === selectedEndpointId) ||
+    endpoints[0];
+  const apiEndpoint = selectedEndpoint?.url || '';
   const allCredentials = `API Key: ${createdKey}\nBase URL: ${apiEndpoint}`;
 
   useEffect(() => {
@@ -132,13 +137,27 @@ export default function CreatedKeyResultModal({ createdKey, onClose }) {
                 <div className="flex items-start gap-2">
                   <Globe2 className="mt-0.5 h-4 w-4 shrink-0 text-brand-500" />
                   <div>
-                    <p className="text-sm font-semibold text-page">{t('home.apiEndpointSite')}</p>
+                    <p className="text-sm font-semibold text-page">{t('officialChannels.endpointTitle')}</p>
                     <p className="mt-0.5 text-xs text-page-muted">{t('home.apiEndpointClickToCopy')}</p>
                   </div>
                 </div>
-                <span className="rounded-full bg-brand-500/10 px-2.5 py-1 text-[10px] font-semibold text-brand-500">
-                  OpenAI Compatible
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full bg-brand-500/10 px-2.5 py-1 text-[10px] font-semibold text-brand-500">
+                    OpenAI Compatible
+                  </span>
+                  <select
+                    value={selectedEndpoint.id}
+                    onChange={(event) => setSelectedEndpointId(event.target.value)}
+                    className="h-8 min-w-32 rounded-lg border border-page-divider bg-page-surface px-2 text-xs font-semibold text-page focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+                    aria-label={t('officialChannels.endpointTitle')}
+                  >
+                    {endpoints.map((endpoint) => (
+                      <option key={endpoint.id} value={endpoint.id}>
+                        {t(endpoint.labelKey)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div className="flex items-center gap-2 rounded-lg bg-page-inset px-3 py-2.5">
                 <code className="min-w-0 flex-1 break-all text-xs leading-5 text-page">{apiEndpoint}</code>
@@ -160,7 +179,9 @@ export default function CreatedKeyResultModal({ createdKey, onClose }) {
             className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-page-divider bg-page-surface px-4 py-3 text-sm font-semibold text-page transition hover:border-brand-500/40 hover:bg-page-surface-hover"
           >
             {copiedTarget === 'all' ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
-            {copiedTarget === 'all' ? t('tokens.copied') : t('tokens.copyKeyAndEndpoint')}
+            {copiedTarget === 'all'
+              ? t('tokens.copied')
+              : `${t('tokens.copy')} Key + ${t('officialChannels.endpointTitle')}`}
           </button>
         </div>
 
