@@ -257,17 +257,6 @@ export default function BrandLayout({ variant }) {
                 <span className="truncate text-base font-black tracking-tight sm:text-lg">{siteName}</span>
               )}
             </Link>
-            {showDashboardBack && (
-              <Link
-                to="/dashboard"
-                className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-current/10 px-2.5 text-xs font-semibold opacity-75 transition hover:bg-current/10 hover:opacity-100 sm:px-3"
-                title={t('nav.backToDashboard')}
-                aria-label={t('nav.backToDashboard')}
-              >
-                <ArrowLeft className="h-4 w-4" />
-                <span className="hidden sm:inline">{t('nav.backToDashboard')}</span>
-              </Link>
-            )}
           </div>
 
           <nav aria-label={t('nav.main')} className={cfg.navWrap}>
@@ -357,6 +346,19 @@ export default function BrandLayout({ variant }) {
       </header>
 
       <main className={cfg.main || 'flex-1'}>
+        {showDashboardBack && (
+          <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-6">
+            <Link
+              to="/dashboard"
+              className="inline-flex items-center gap-2 rounded-lg border border-current/10 px-3 py-2 text-sm font-semibold opacity-75 transition hover:bg-current/10 hover:opacity-100"
+              title={t('nav.backToDashboard')}
+              aria-label={t('nav.backToDashboard')}
+            >
+              <ArrowLeft className="h-4 w-4 shrink-0" />
+              <span>{t('nav.backToDashboard')}</span>
+            </Link>
+          </div>
+        )}
         <Outlet />
       </main>
 
