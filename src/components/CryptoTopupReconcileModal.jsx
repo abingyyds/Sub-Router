@@ -149,7 +149,7 @@ export default function CryptoTopupReconcileModal({
 
   return (
     <div
-      className="modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm"
+      className="modal-overlay fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -158,7 +158,7 @@ export default function CryptoTopupReconcileModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="crypto-reconcile-title"
-        className="glass max-h-[calc(100vh-3rem)] w-full max-w-2xl overflow-y-auto rounded-2xl p-5 sm:p-6"
+        className="glass max-h-[calc(100dvh-3rem)] w-full max-w-2xl overflow-y-auto rounded-2xl p-5 sm:p-6"
       >
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="min-w-0">

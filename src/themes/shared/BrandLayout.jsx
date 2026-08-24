@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, Menu, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Menu, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useSite } from '../../context/SiteContext';
 import LanguageSwitch from '../../components/LanguageSwitch';
@@ -205,6 +205,21 @@ export default function BrandLayout({ variant }) {
   const mobileNavItems = getVisibleNavItems(getHeaderNavItems(siteNavItems), user);
   const userMenuItems = getUserMenuNavItems(siteNavItems, user);
   const isNavActive = (to) => isSiteNavActive(location.pathname, to);
+  const consoleSubpagePrefixes = [
+    '/tokens',
+    '/shared-subscriptions',
+    '/provider-application',
+    '/logs',
+    '/tasks',
+    '/topup',
+    '/account',
+  ];
+  const showDashboardBack =
+    Boolean(user) &&
+    consoleSubpagePrefixes.some(
+      (prefix) =>
+        location.pathname === prefix || location.pathname.startsWith(`${prefix}/`),
+    );
 
   const handleLogout = async () => {
     await logout();
@@ -217,30 +232,43 @@ export default function BrandLayout({ variant }) {
 
       <header className={cfg.header}>
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
-          <Link to="/" className="group flex min-w-0 items-center gap-3">
-            {site?.logo ? (
-              <img
-                src={site.logo}
-                alt={siteName}
-                className="h-8 w-auto max-w-[110px] object-contain sm:max-w-[150px]"
-                onError={(event) => {
-                  if (!cfg.logoImage || event.currentTarget.src === cfg.logoImage) return;
-                  event.currentTarget.src = cfg.logoImage;
-                }}
-              />
-            ) : cfg.logoImage ? (
-              <div className={`flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl ${cfg.logo}`}>
-                <img src={cfg.logoImage} alt={siteName} className="h-full w-full object-cover" />
-              </div>
-            ) : (
-              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-black ${cfg.logo}`}>
-                {siteName.charAt(0)}
-              </div>
+          <div className="flex min-w-0 items-center gap-2">
+            <Link to="/" className="group flex min-w-0 items-center gap-3">
+              {site?.logo ? (
+                <img
+                  src={site.logo}
+                  alt={siteName}
+                  className="h-8 w-auto max-w-[110px] object-contain sm:max-w-[150px]"
+                  onError={(event) => {
+                    if (!cfg.logoImage || event.currentTarget.src === cfg.logoImage) return;
+                    event.currentTarget.src = cfg.logoImage;
+                  }}
+                />
+              ) : cfg.logoImage ? (
+                <div className={`flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl ${cfg.logo}`}>
+                  <img src={cfg.logoImage} alt={siteName} className="h-full w-full object-cover" />
+                </div>
+              ) : (
+                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-black ${cfg.logo}`}>
+                  {siteName.charAt(0)}
+                </div>
+              )}
+              {!site?.logo && (
+                <span className="truncate text-base font-black tracking-tight sm:text-lg">{siteName}</span>
+              )}
+            </Link>
+            {showDashboardBack && (
+              <Link
+                to="/dashboard"
+                className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-current/10 px-2.5 text-xs font-semibold opacity-75 transition hover:bg-current/10 hover:opacity-100 sm:px-3"
+                title={t('nav.backToDashboard')}
+                aria-label={t('nav.backToDashboard')}
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span className="hidden sm:inline">{t('nav.backToDashboard')}</span>
+              </Link>
             )}
-            {!site?.logo && (
-              <span className="truncate text-base font-black tracking-tight sm:text-lg">{siteName}</span>
-            )}
-          </Link>
+          </div>
 
           <nav
             aria-label={t('nav.main', { defaultValue: 'Main navigation' })}

@@ -74,7 +74,7 @@ export default function CreatedKeyResultModal({ createdKey, onClose }) {
       role="presentation"
     >
       <div
-        className="glass flex max-h-[calc(100vh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-page-divider shadow-2xl"
+        className="glass flex max-h-[calc(100dvh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-page-divider shadow-2xl"
         onClick={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -89,7 +89,7 @@ export default function CreatedKeyResultModal({ createdKey, onClose }) {
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400">
                 {t('tokens.createSuccess')}
               </p>
-              <h2 id="created-key-result-title" className="mt-1 text-xl font-bold text-page">
+              <h2 id="created-key-result-title" className="mt-1 break-words text-xl font-bold text-page">
                 {t('tokens.newApiKey')}
               </h2>
               <p className="mt-1 text-sm leading-5 text-page-secondary">

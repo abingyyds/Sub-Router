@@ -367,8 +367,8 @@ export default function Packages() {
         const resetPeriod = confirmPkg.quota_reset_period || 'never';
         const isSubscription = resetPeriod !== 'never';
         return (
-        <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => !subscribing && setConfirmPkg(null)}>
-          <div className="glass rounded-2xl p-6 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-overlay fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={() => !subscribing && setConfirmPkg(null)}>
+          <div className="glass max-h-[calc(100dvh-2rem)] w-full max-w-sm overflow-y-auto rounded-2xl p-6" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-lg font-semibold text-page mb-3">{t('packages.confirmTitle')}</h2>
             <p className="text-sm text-page-secondary mb-2">
               {t('packages.confirmDesc', { name: confirmPkg.name, price: fmtCNY(pkgPrice) })}

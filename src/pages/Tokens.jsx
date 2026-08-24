@@ -120,7 +120,14 @@ const parseModelLimits = (value) => {
     .filter(Boolean);
 };
 
-const buildTokenControlPayload = (form, rate, t, includeModelLimits = true, fullMode = false) => {
+const buildTokenControlPayload = (
+  form,
+  rate,
+  t,
+  includeModelLimits = true,
+  fullMode = false,
+  includeSharedSubscriptionRouting = false,
+) => {
   const expiredTime = parseDateTimeLocal(form.expired_time);
   if (expiredTime === null) {
     toast.error(t('tokens.invalidExpireTime'));
@@ -148,6 +155,8 @@ const buildTokenControlPayload = (form, rate, t, includeModelLimits = true, full
 	  payload.subrouter_model_providers = String(form.subrouter_model_providers || '').trim();
 	  payload.subrouter_model_price_limits = String(form.subrouter_model_price_limits || '').trim();
 	  payload.include_provider_self = Boolean(form.include_provider_self);
+	}
+	if (includeSharedSubscriptionRouting) {
 	  payload.include_shared_subscriptions = Boolean(form.include_shared_subscriptions);
 	  payload.shared_subscription_max_discount = Number(form.shared_subscription_max_discount || 0);
 	}
@@ -180,6 +189,12 @@ const isValidOfficialRoutingMaxDiscount = (value) => {
   if (String(value ?? '').trim() === '') return true;
   const discount = Number(value);
   return Number.isFinite(discount) && discount >= 0 && discount <= 1;
+};
+
+const isValidSharedSubscriptionMaxDiscount = (value) => {
+  if (String(value ?? '').trim() === '') return true;
+  const discount = Number(value);
+  return Number.isInteger(discount) && discount >= 0 && discount <= 10000;
 };
 
 export default function Tokens() {
@@ -424,12 +439,18 @@ export default function Tokens() {
 		t,
 		createType === 'normal',
 		fullMode && createType === 'normal',
+		fullMode && createType === 'normal' && sharedSubscriptionsEnabled,
 	  );
       if (!controlPayload) {
         setCreating(false);
         return;
       }
 		Object.assign(payload, controlPayload);
+		if (fullMode && createType === 'normal' && sharedSubscriptionsEnabled && !isValidSharedSubscriptionMaxDiscount(createControls.shared_subscription_max_discount)) {
+		  toast.error(t('tokens.invalidSharedSubscriptionMaxDiscount'));
+		  setCreating(false);
+		  return;
+		}
 		if (fullMode && createType === 'normal') {
 		  if (normalTokens.length === 0 && providerOptionsLoading) {
 			toast.error(t('tokens.loadingProviders'));
@@ -532,10 +553,15 @@ export default function Tokens() {
 	  t,
 	  !isOfficialToken && !isSharedToken,
 	  fullMode && !isOfficialToken && !isSharedToken,
+	  fullMode && !isOfficialToken && !isSharedToken && sharedSubscriptionsEnabled,
 	);
-    if (!payload) return;
-    payload.name = String(editForm.name || '').trim();
-    if (isOfficialToken) {
+	if (!payload) return;
+	payload.name = String(editForm.name || '').trim();
+	if (fullMode && !isOfficialToken && !isSharedToken && sharedSubscriptionsEnabled && !isValidSharedSubscriptionMaxDiscount(editForm.shared_subscription_max_discount)) {
+	  toast.error(t('tokens.invalidSharedSubscriptionMaxDiscount'));
+	  return;
+	}
+	if (isOfficialToken) {
       payload.official_key_max_discount = normalizeOfficialKeyMaxDiscount(editForm.official_key_max_discount);
 	} else if (!isSharedToken && officialChannelsEnabled) {
       payload.include_official_channels = Boolean(editForm.include_official_channels);
@@ -802,7 +828,7 @@ export default function Tokens() {
 
       {/* ========== Create Modal ========== */}
       {showCreate && (
-        <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm" onClick={closeCreateModal}>
+        <div className="modal-overlay fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm" onClick={closeCreateModal}>
           <div className="glass flex h-[calc(100dvh-2rem)] max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="shrink-0 border-b border-page-divider px-4 py-4 sm:px-6">
               <h2 className="text-lg font-semibold text-page">
@@ -873,6 +899,13 @@ export default function Tokens() {
                     t={t}
                   />
                 )}
+                {createType === 'normal' && fullMode && sharedSubscriptionsEnabled && (
+                  <SharedSubscriptionRoutingFields
+                    form={createControls}
+                    onChange={(field, value) => setCreateControls((prev) => ({ ...prev, [field]: value }))}
+                    t={t}
+                  />
+                )}
                 <TokenControlFields
                   form={createControls}
                   onChange={(field, value) => setCreateControls((prev) => ({ ...prev, [field]: value }))}
@@ -902,7 +935,7 @@ export default function Tokens() {
       )}
 
       {editingToken && editForm && (
-        <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm" onClick={closeEditToken}>
+        <div className="modal-overlay fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm" onClick={closeEditToken}>
           <div className="glass flex h-[calc(100dvh-2rem)] max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="shrink-0 border-b border-page-divider px-4 py-4 sm:px-6">
               <h2 className="text-lg font-semibold text-page">{t('tokens.editKey')}</h2>
@@ -937,6 +970,13 @@ export default function Tokens() {
                 )}
                 {editingToken.type !== 'shared' && !(editingToken.type === 'official' || editingToken.group === 'dist_official') && officialChannelsEnabled && (
                   <OfficialRoutingFields
+                    form={editForm}
+                    onChange={(field, value) => setEditForm((prev) => ({ ...prev, [field]: value }))}
+                    t={t}
+                  />
+                )}
+                {editingToken.type !== 'shared' && !(editingToken.type === 'official' || editingToken.group === 'dist_official') && fullMode && sharedSubscriptionsEnabled && (
+                  <SharedSubscriptionRoutingFields
                     form={editForm}
                     onChange={(field, value) => setEditForm((prev) => ({ ...prev, [field]: value }))}
                     t={t}
@@ -989,7 +1029,7 @@ export default function Tokens() {
 
       {/* ========== Delete Confirmation Modal ========== */}
       {deleteConfirm && (
-        <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setDeleteConfirm(null)}>
+        <div className="modal-overlay fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={() => setDeleteConfirm(null)}>
           <div className="glass max-h-[calc(100dvh-2rem)] w-full max-w-sm overflow-y-auto rounded-2xl p-5 sm:p-6" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-lg font-semibold text-page mb-3">{t('tokens.deleteToken')}</h2>
             <p className="mb-4 break-words text-sm text-page-secondary">
@@ -1329,6 +1369,55 @@ function OfficialRoutingFields({ form, onChange, t }) {
   );
 }
 
+function SharedSubscriptionRoutingFields({ form, onChange, t }) {
+  const enabled = Boolean(form.include_shared_subscriptions);
+
+  return (
+    <div className="space-y-3 rounded-xl border border-page-divider bg-page-surface px-4 py-3">
+      <label className="flex items-start justify-between gap-4">
+        <span className="min-w-0">
+          <span className="block text-sm font-medium text-page">
+            {t('tokens.includeSharedSubscriptions')}
+          </span>
+          <span className="mt-1 block text-xs text-page-secondary">
+            {t('tokens.includeSharedSubscriptionsDesc')}
+          </span>
+        </span>
+        <input
+          type="checkbox"
+          checked={enabled}
+          onChange={(event) => {
+            const next = event.target.checked;
+            onChange('include_shared_subscriptions', next);
+            if (!next) onChange('shared_subscription_max_discount', '');
+          }}
+          className="mt-0.5 h-4 w-4 shrink-0 accent-brand-500"
+        />
+      </label>
+      {enabled && (
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-page-label">
+            {t('tokens.sharedSubscriptionMaxDiscount')}
+          </label>
+          <input
+            type="number"
+            min="0"
+            max="10000"
+            step="100"
+            value={form.shared_subscription_max_discount}
+            onChange={(event) => onChange('shared_subscription_max_discount', event.target.value)}
+            className="input"
+            placeholder={t('tokens.sharedSubscriptionMaxDiscountPlaceholder')}
+          />
+          <p className="mt-1.5 text-xs text-page-muted">
+            {t('tokens.sharedSubscriptionMaxDiscountDesc')}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function TokenControlSummary({ token, currency, t }) {
   const { symbol = '$', rate = 1 } = currency || {};
   const modelCount = parseModelLimits(token.model_limits).length;
@@ -1529,10 +1618,6 @@ function TokenControlFields({
 		  <div className="min-w-0 rounded-xl border border-page-divider bg-page-surface p-4">
 			<label className="flex items-start justify-between gap-4"><span className="min-w-0"><span className="block text-sm font-medium text-page">{t('tokens.includeProviderSelf')}</span><span className="mt-1 block break-words text-xs text-page-secondary">{t('tokens.includeProviderSelfDesc')}</span></span><input type="checkbox" className="mt-0.5 h-4 w-4 shrink-0" checked={Boolean(form.include_provider_self)} onChange={(event) => onChange('include_provider_self', event.target.checked)} /></label>
 		  </div>
-		  <div className="min-w-0 rounded-xl border border-page-divider bg-page-surface p-4 space-y-3">
-			<label className="flex items-start justify-between gap-4"><span className="min-w-0"><span className="block text-sm font-medium text-page">启用订阅共享线路</span><span className="mt-1 block break-words text-xs text-page-secondary">仅使用已订阅的共享计划。</span></span><input type="checkbox" className="mt-0.5 h-4 w-4 shrink-0" checked={Boolean(form.include_shared_subscriptions)} onChange={(event) => onChange('include_shared_subscriptions', event.target.checked)} /></label>
-			{form.include_shared_subscriptions && <div><label className="mb-1.5 block text-sm font-medium text-page-label">共享线路最高价格（基点）</label><input type="number" min="0" max="10000" step="100" className="input" value={form.shared_subscription_max_discount} onChange={(event) => onChange('shared_subscription_max_discount', event.target.value)} placeholder="0 表示不限制" /></div>}
-		  </div>
 		  <div className="grid min-w-0 gap-4 md:grid-cols-2">
 			<label className="min-w-0"><span className="mb-1.5 block text-sm font-medium text-page-label">模型商家来源过滤</span><textarea rows={4} className="input max-w-full resize-y break-all font-mono text-xs" value={form.subrouter_model_providers} onChange={(event) => onChange('subrouter_model_providers', event.target.value)} placeholder={'{"gpt-5":["provider-slug"]}'} /></label>
 			<label className="min-w-0"><span className="mb-1.5 block text-sm font-medium text-page-label">模型价格上限</span><textarea rows={4} className="input max-w-full resize-y break-all font-mono text-xs" value={form.subrouter_model_price_limits} onChange={(event) => onChange('subrouter_model_price_limits', event.target.value)} placeholder={'{"gpt-5":{"input":1,"output":5}}'} /></label>
@@ -1690,7 +1775,7 @@ function GroupPricingModal({
 
   return (
     <div
-      className="modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+      className="modal-overlay fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <div

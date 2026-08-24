@@ -152,11 +152,11 @@ export default function TwoFactorSettings() {
 
       {setupData && (
         <div className="modal-overlay fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={() => !actionLoading && setSetupData(null)}>
-          <div className="glass max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl p-6" onClick={(event) => event.stopPropagation()}>
+          <div className="glass max-h-[calc(100dvh-2rem)] w-full max-w-xl overflow-y-auto rounded-2xl p-6" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="text-lg font-semibold text-page">{t('security.setupTitle')}</h3>
-                <p className="mt-1 text-sm text-page-secondary">{t('security.setupDescription')}</p>
+              <div className="min-w-0">
+                <h3 className="break-words text-lg font-semibold text-page">{t('security.setupTitle')}</h3>
+                <p className="mt-1 break-words text-sm text-page-secondary">{t('security.setupDescription')}</p>
               </div>
               <button type="button" className="text-page-muted hover:text-page" onClick={() => !actionLoading && setSetupData(null)}>
                 <X className="h-5 w-5" />
@@ -207,7 +207,7 @@ export default function TwoFactorSettings() {
               />
             </label>
 
-            <div className="mt-6 flex justify-end gap-3">
+            <div className="mt-6 flex flex-wrap justify-end gap-3">
               <button type="button" className="btn-secondary px-4 py-2" disabled={actionLoading} onClick={() => setSetupData(null)}>
                 {t('tokens.cancel')}
               </button>
@@ -221,7 +221,7 @@ export default function TwoFactorSettings() {
 
       {disableOpen && (
         <div className="modal-overlay fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={() => !actionLoading && setDisableOpen(false)}>
-          <div className="glass w-full max-w-md rounded-2xl p-6" onClick={(event) => event.stopPropagation()}>
+          <div className="glass max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl p-6" onClick={(event) => event.stopPropagation()}>
             <h3 className="text-lg font-semibold text-page">{t('security.disableTitle')}</h3>
             <p className="mt-2 text-sm text-page-secondary">{t('security.disableWarning')}</p>
             <input
@@ -233,7 +233,7 @@ export default function TwoFactorSettings() {
               placeholder={t('security.codeOrBackupPlaceholder')}
               className="input mt-5"
             />
-            <div className="mt-6 flex justify-end gap-3">
+            <div className="mt-6 flex flex-wrap justify-end gap-3">
               <button type="button" className="btn-secondary px-4 py-2" disabled={actionLoading} onClick={() => setDisableOpen(false)}>
                 {t('tokens.cancel')}
               </button>

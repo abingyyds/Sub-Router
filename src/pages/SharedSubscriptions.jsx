@@ -917,17 +917,17 @@ export default function SharedSubscriptions() {
       />
 
       {generatedToken && (
-        <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="modal-overlay fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div
-            className="w-full max-w-lg rounded-lg border border-page-divider p-5 shadow-xl"
+            className="max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-lg border border-page-divider p-5 shadow-xl"
             style={{ background: "var(--page-bg)" }}
           >
             <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-lg font-semibold text-page">
+              <div className="min-w-0">
+                <h2 className="break-words text-lg font-semibold text-page">
                   共享订阅 Key 已生成
                 </h2>
-                <p className="mt-1 text-sm text-page-muted">
+                <p className="mt-1 break-words text-sm text-page-muted">
                   Key 只显示在当前窗口，请妥善保管。
                 </p>
               </div>
@@ -1001,21 +1001,21 @@ function ModalShell({ open, title, description, onClose, children, footer }) {
   if (!open) return null;
   return (
     <div
-      className="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="modal-overlay fixed inset-0 z-[60] flex items-center justify-center p-4"
       role="presentation"
     >
       <section
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="flex max-h-[calc(100vh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-lg border border-page-divider shadow-2xl"
+        className="flex max-h-[calc(100dvh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-lg border border-page-divider shadow-2xl"
         style={{ background: "var(--page-bg)" }}
       >
-        <header className="flex items-start justify-between gap-4 border-b border-page-divider px-5 py-4">
-          <div>
-            <h2 className="text-lg font-semibold text-page">{title}</h2>
+        <header className="flex shrink-0 items-start justify-between gap-4 border-b border-page-divider px-5 py-4">
+          <div className="min-w-0">
+            <h2 className="break-words text-lg font-semibold text-page">{title}</h2>
             {description && (
-              <p className="mt-1 text-sm text-page-muted">{description}</p>
+              <p className="mt-1 break-words text-sm text-page-muted">{description}</p>
             )}
           </div>
           <button
@@ -1032,7 +1032,7 @@ function ModalShell({ open, title, description, onClose, children, footer }) {
           {children}
         </div>
         {footer && (
-          <footer className="flex justify-end gap-2 border-t border-page-divider px-5 py-4">
+          <footer className="flex shrink-0 justify-end gap-2 border-t border-page-divider px-5 py-4">
             {footer}
           </footer>
         )}

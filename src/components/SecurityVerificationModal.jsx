@@ -47,15 +47,15 @@ export default function SecurityVerificationModal({ open, loading, onClose, onVe
 
   return (
     <div className="modal-overlay fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={() => !loading && onClose()}>
-      <div className="glass w-full max-w-md rounded-2xl p-6" onClick={(event) => event.stopPropagation()}>
+      <div className="glass max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl p-6" onClick={(event) => event.stopPropagation()}>
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-500/10 text-brand-500">
               <ShieldCheck className="h-5 w-5" />
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-page">{t('security.verificationTitle')}</h3>
-              <p className="mt-1 text-sm text-page-secondary">{t('security.withdrawDescription')}</p>
+            <div className="min-w-0">
+              <h3 className="break-words text-lg font-semibold text-page">{t('security.verificationTitle')}</h3>
+              <p className="mt-1 break-words text-sm text-page-secondary">{t('security.withdrawDescription')}</p>
             </div>
           </div>
           <button type="button" disabled={loading} className="text-page-muted hover:text-page disabled:opacity-50" onClick={onClose}>
@@ -86,7 +86,7 @@ export default function SecurityVerificationModal({ open, loading, onClose, onVe
               />
             </label>
             <p className="mt-2 text-xs text-page-muted">{t('security.authenticatorHint')}</p>
-            <div className="mt-6 flex justify-end gap-3">
+            <div className="mt-6 flex flex-wrap justify-end gap-3">
               <button type="button" disabled={loading} className="btn-secondary px-4 py-2" onClick={onClose}>
                 {t('tokens.cancel')}
               </button>
@@ -99,7 +99,7 @@ export default function SecurityVerificationModal({ open, loading, onClose, onVe
           <div className="mt-6 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
             <p className="font-medium text-page">{t('security.noMethodTitle')}</p>
             <p className="mt-1 text-sm text-page-secondary">{t('security.noMethodDescription')}</p>
-            <div className="mt-4 flex justify-end gap-3">
+            <div className="mt-4 flex flex-wrap justify-end gap-3">
               <button type="button" className="btn-secondary px-4 py-2" onClick={onClose}>
                 {t('tokens.cancel')}
               </button>

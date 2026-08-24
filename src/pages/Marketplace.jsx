@@ -321,11 +321,11 @@ export default function Marketplace() {
 
       {quickStart && (
         <div
-          className="modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          className="modal-overlay fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
           onClick={() => setQuickStart(null)}
         >
           <div
-            className="w-full max-w-2xl overflow-hidden rounded-lg bg-page-surface shadow-xl"
+            className="flex max-h-[calc(100dvh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-lg bg-page-surface shadow-xl"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="border-b border-page-divider px-5 py-4">
@@ -333,7 +333,7 @@ export default function Marketplace() {
                 选择智能路由商家
               </h2>
             </div>
-            <div className="max-h-[55vh] space-y-2 overflow-y-auto p-5">
+            <div className="min-h-0 max-h-[55vh] flex-1 space-y-2 overflow-y-auto p-5">
               {quickStart.map((item) => {
                 const provider = item.provider || {};
                 const checked = selectedProviders.has(provider.id);

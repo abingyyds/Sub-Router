@@ -891,10 +891,10 @@ export default function Dashboard() {
 
       {showWithdrawModal && (
         <div
-          className="modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          className="modal-overlay fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
           onClick={handleCloseWithdraw}
         >
-          <div className="glass w-full max-w-md rounded-2xl p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="glass max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl p-6" onClick={(e) => e.stopPropagation()}>
             <div className="mb-5">
               <h3 className="text-lg font-semibold text-page mb-1">{t('topup.withdrawTitle')}</h3>
               <p className="text-sm text-page-secondary">{t('topup.withdrawSubtitle')}</p>
@@ -978,10 +978,10 @@ export default function Dashboard() {
 
       {showKolApplyModal && (
         <div
-          className="modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          className="modal-overlay fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
           onClick={handleCloseKolApply}
         >
-          <div className="glass w-full max-w-md rounded-2xl p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="glass max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl p-6" onClick={(e) => e.stopPropagation()}>
             <div className="mb-5">
               <h3 className="text-lg font-semibold text-page mb-1">{t('topup.kolApplyModalTitle')}</h3>
               <p className="text-sm text-page-secondary">{t('topup.kolApplyModalDesc')}</p>

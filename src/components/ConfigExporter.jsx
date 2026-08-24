@@ -1152,11 +1152,11 @@ print(message.content[0].text)`;
 
       {showCCSwitchDownload && (
         <div
-          className="modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          className="modal-overlay fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
           onClick={() => setShowCCSwitchDownload(false)}
         >
           <div
-            className="glass rounded-2xl p-6 w-full max-w-md"
+            className="glass max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-lg font-semibold text-page mb-2">

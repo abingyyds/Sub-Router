@@ -22,7 +22,7 @@ export default function NotificationBell() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 z-[80] flex h-14 w-14 items-center justify-center rounded-full border border-brand-500/30 bg-brand-500 text-white shadow-2xl shadow-brand-500/30 transition hover:scale-105 hover:bg-brand-600 hover:opacity-50 focus:outline-none focus:ring-2 focus:ring-brand-400"
+        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full border border-brand-500/30 bg-brand-500 text-white shadow-2xl shadow-brand-500/30 transition hover:scale-105 hover:bg-brand-600 hover:opacity-50 focus:outline-none focus:ring-2 focus:ring-brand-400"
         aria-label={t('notifications.open')}
       >
         <Bell size={22} />
@@ -34,7 +34,7 @@ export default function NotificationBell() {
       {open && (
         <div className="modal-overlay fixed inset-0 z-[90] flex items-end justify-center px-4 py-6 sm:items-center" onClick={() => setOpen(false)}>
           <div
-            className="w-full max-w-lg overflow-hidden rounded-3xl border border-page-card-border bg-[var(--page-bg)] shadow-2xl"
+            className="flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-page-card-border bg-[var(--page-bg)] shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-page-card-border bg-page-surface px-5 py-4">
@@ -57,7 +57,7 @@ export default function NotificationBell() {
               </button>
             </div>
 
-            <div className="max-h-[65vh] space-y-3 overflow-y-auto p-5">
+            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-5">
               {notifications.map((item, index) => (
                 <div key={`${item.publish_date || 'notice'}-${index}`} className="rounded-2xl border border-page-card-border bg-page-surface p-4">
                   <div className="mb-2 inline-flex rounded-full bg-brand-500/10 px-3 py-1 text-xs font-medium text-page-link">
