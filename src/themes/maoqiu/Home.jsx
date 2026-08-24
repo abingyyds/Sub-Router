@@ -5,9 +5,6 @@ import {
   ArrowRight,
   Cpu,
   Gauge,
-  KeyRound,
-  Layers3,
-  Palette,
   ShieldCheck,
   Sparkles,
   WalletCards,
@@ -17,10 +14,10 @@ import { useSite, useCurrency } from '../../context/SiteContext';
 import { calcOfficialEquivList } from '../../utils/officialEquiv';
 import { getHomeContent } from '../../utils/siteContent';
 import ApiEndpoints from '../../components/ApiEndpoints';
-import CountUp from '../../components/bits/CountUp';
 import FadeContent from '../../components/bits/FadeContent';
 import RotatingEquiv from '../../components/bits/RotatingEquiv';
 import { packageQuotaDollars, useHomeData } from '../shared/useHomeData';
+import { PUBLIC_API_ENDPOINT_COUNT } from '../../constants/apiEndpoints';
 import heroImage from '../../assets/maoqiu-ai.png';
 
 const features = [
@@ -43,9 +40,6 @@ export default function MaoqiuHome() {
       <section className="relative border-b border-slate-200 bg-white">
         <div className="absolute inset-0 bg-[linear-gradient(180deg,#ffffff_0%,#f7f9ff_58%,#ffffff_100%)]" />
         <div className="absolute inset-x-0 top-0 h-[440px] bg-[radial-gradient(circle_at_26%_18%,rgba(7,136,255,0.14),transparent_34%),radial-gradient(circle_at_74%_12%,rgba(239,75,255,0.16),transparent_32%)]" />
-        <div className="absolute left-[8%] top-24 hidden h-12 w-12 rounded-full bg-gradient-to-br from-[#0788ff] to-[#ef4bff] opacity-80 blur-[1px] md:block maoqiu-float-dot" />
-        <div className="absolute right-[12%] top-32 hidden h-7 w-7 rounded-full bg-gradient-to-br from-[#ef4bff] to-[#8a45ff] opacity-70 md:block maoqiu-float-dot maoqiu-float-dot--slow" />
-
         <div className="relative mx-auto grid min-h-[calc(100vh-4rem)] max-w-7xl gap-10 px-4 pb-14 pt-12 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:pb-18 lg:pt-16">
           <FadeContent blur duration={700} delay={80}>
             <div className="max-w-2xl">
@@ -73,16 +67,16 @@ export default function MaoqiuHome() {
                 </Link>
               </div>
 
-              <div className="mt-10 grid max-w-xl grid-cols-3 gap-3">
-                <Metric value={enabledModels.length || 50} suffix="+" label={t('home.aiModels')} />
-                <Metric value={99.9} suffix="%" label={t('home.uptime')} />
-                <Metric value={50} prefix="<" suffix="ms" label={t('home.latency')} />
+              <div className="mt-10 flex max-w-xl flex-wrap gap-x-7 gap-y-3 border-t border-blue-100 pt-5">
+                <HeroFact value={enabledModels.length} label={t('home.aiModels')} />
+                <HeroFact value={visiblePackages.length} label={t('home.plansPackages')} />
+                <HeroFact value={PUBLIC_API_ENDPOINT_COUNT} label={t('home.apiEndpointsTitle')} />
               </div>
             </div>
           </FadeContent>
 
           <FadeContent blur duration={700} delay={180}>
-            <HeroPanel models={models} siteName={site?.name} t={t} />
+            <BrandModelShowcase models={enabledModels} siteName={site?.name} t={t} />
           </FadeContent>
         </div>
       </section>
@@ -170,11 +164,11 @@ function PrimaryLink({ to, children, light = false }) {
   );
 }
 
-function Metric({ value, label, prefix = '', suffix = '' }) {
+function HeroFact({ value, label }) {
   return (
-    <div className="rounded-xl border border-blue-100 bg-white/92 p-4 shadow-sm">
-      <div className="text-xl font-black text-[#071337]">{prefix}<CountUp from={0} to={value} duration={2} />{suffix}</div>
-      <p className="mt-1 truncate text-xs font-semibold text-slate-500">{label}</p>
+    <div className="flex items-baseline gap-2">
+      <span className="text-lg font-black text-[#071337]">{value}</span>
+      <span className="text-xs font-semibold text-slate-500">{label}</span>
     </div>
   );
 }
@@ -188,85 +182,50 @@ function SectionTitle({ title, desc, compact = false }) {
   );
 }
 
-function HeroPanel({ models, siteName, t }) {
+function BrandModelShowcase({ models, siteName, t }) {
   const preview = models.slice(0, 4);
 
   return (
-    <div className="relative mx-auto max-w-xl">
-      <div className="absolute -inset-6 rounded-[2rem] bg-[radial-gradient(circle_at_22%_12%,rgba(7,136,255,0.22),transparent_34%),radial-gradient(circle_at_82%_20%,rgba(239,75,255,0.22),transparent_34%)] blur-2xl" />
-      <div className="relative rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_28px_90px_rgba(30,64,175,0.14)]">
-        <div className="grid items-center gap-5 lg:grid-cols-[0.92fr_1.08fr]">
-          <div className="relative overflow-hidden rounded-xl border border-blue-100 bg-[#fbfdff] p-5">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_42%_28%,rgba(7,136,255,0.1),transparent_34%),radial-gradient(circle_at_72%_22%,rgba(239,75,255,0.12),transparent_32%)]" />
-            <div className="maoqiu-hero-orbit" />
-            <img src={heroImage} alt={siteName || 'Maoqiu AI'} className="relative mx-auto aspect-square w-full max-w-[260px] object-contain maoqiu-hero-mark" />
+    <div className="relative mx-auto w-full max-w-xl">
+      <div className="absolute inset-x-8 top-10 h-64 bg-[radial-gradient(circle,rgba(34,80,255,0.16),rgba(239,75,255,0.1)_42%,transparent_72%)] blur-2xl" />
+      <img src={heroImage} alt={siteName || 'Maoqiu AI'} className="relative mx-auto aspect-square w-full max-w-[340px] object-contain maoqiu-hero-mark" />
+
+      <div className="relative mt-2 border-t border-blue-100 pt-5">
+        <div className="flex items-start justify-between gap-5">
+          <div>
+            <p className="font-black text-[#071337]">{t('home.availableModels')}</p>
+            <p className="mt-1 text-sm text-slate-500">{t('home.availableModelsDesc', { count: models.length })}</p>
           </div>
-
-          <div className="space-y-3">
-            <div className="rounded-xl border border-slate-200 bg-[#071337] p-4 text-white">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-sm font-black">
-                  <Layers3 className="h-4 w-4 text-[#7ac7ff]" />
-                  {t('home.smartRoute')}
-                </div>
-                <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-bold text-[#f0b8ff]">{t('officialChannels.online')}</span>
-              </div>
-              <div className="space-y-2">
-                {preview.slice(0, 4).map((model, index) => (
-                  <RouteRow key={model.id || index} model={model} index={index} t={t} />
-                ))}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <MiniStat icon={KeyRound} label={t('home.keysLabel')} value={t('home.ready')} />
-              <MiniStat icon={Palette} label={t('home.themeLabel')} value={t('home.custom')} />
-            </div>
-          </div>
+          <Cpu className="mt-1 h-5 w-5 shrink-0 text-[#2250ff]" />
         </div>
-      </div>
-    </div>
-  );
-}
 
-function RouteRow({ model, index, t }) {
-  const active = index === 0;
-  return (
-    <div className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2 ${active ? 'border-[#7ac7ff]/30 bg-white/12' : 'border-white/10 bg-white/[0.06]'}`}>
-      <span className="min-w-0 truncate font-mono text-xs font-semibold text-slate-100">{model.display_name || model.model_name}</span>
-      <span className={active ? 'text-xs font-black text-[#7ac7ff]' : 'text-xs font-semibold text-slate-400'}>
-        {active ? t('home.best') : `R${index + 1}`}
-      </span>
-    </div>
-  );
-}
-
-function MiniStat({ icon: Icon, label, value }) {
-  return (
-    <div className="rounded-xl border border-blue-100 bg-[#f7f9ff] p-3">
-      <div className="flex items-center gap-2 text-xs font-bold uppercase text-slate-400">
-        <Icon className="h-3.5 w-3.5 text-[#2250ff]" />
-        {label}
-      </div>
-      <p className="mt-2 font-mono text-sm font-black text-[#071337]">{value}</p>
-    </div>
-  );
-}
-
-function ModelTile({ model, index, t }) {
-  const active = index % 3 === 0;
-  return (
-    <div className="group rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-blue-200 hover:bg-white">
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#f0f6ff] text-[#2352ff] ring-1 ring-blue-100">
-          <Cpu className="h-4 w-4" />
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          {preview.map((model) => (
+            <div key={model.id || model.model_name} className="min-w-0 rounded-lg border border-blue-100 bg-white/80 px-3 py-2.5 shadow-sm">
+              <p className="truncate font-mono text-xs font-semibold text-[#1b2a5b]">{model.display_name || model.model_name}</p>
+            </div>
+          ))}
         </div>
-        <span className={`rounded-md px-2 py-1 text-xs font-bold ${active ? 'bg-blue-50 text-blue-700' : 'bg-fuchsia-50 text-fuchsia-700'}`}>
-          {active ? t('home.primary') : t('officialChannels.online')}
-        </span>
+
+        <Link to="/pricing" className="mt-4 inline-flex items-center gap-2 text-sm font-black text-[#2352ff] hover:text-[#071337]">
+          {t('home.viewAllModels', { count: models.length })}
+          <ArrowRight className="h-4 w-4" />
+        </Link>
       </div>
-      <p className="truncate font-mono text-sm font-semibold text-[#071337]">{model.display_name || model.model_name}</p>
-      <p className="mt-2 text-xs font-semibold text-slate-500">{t('home.balancedRoutePool')}</p>
+    </div>
+  );
+}
+
+function ModelTile({ model, index }) {
+  return (
+    <div className="group flex min-w-0 items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-blue-200">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#f0f6ff] text-[#2352ff] ring-1 ring-blue-100">
+        <Cpu className="h-4 w-4" />
+      </div>
+      <div className="min-w-0">
+        <p className="truncate font-mono text-sm font-semibold text-[#071337]">{model.display_name || model.model_name}</p>
+        <p className="mt-1 text-xs font-semibold text-slate-400">{String(index + 1).padStart(2, '0')}</p>
+      </div>
     </div>
   );
 }

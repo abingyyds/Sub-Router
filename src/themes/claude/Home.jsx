@@ -5,8 +5,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useSite, useCurrency } from '../../context/SiteContext';
 import { getSiteModels, getSitePackages, Q } from '../../api';
 import { calcOfficialEquivList } from '../../utils/officialEquiv';
+import { PUBLIC_API_ENDPOINT_COUNT } from '../../constants/apiEndpoints';
 import RotatingEquiv from '../../components/bits/RotatingEquiv';
-import CountUp from '../../components/bits/CountUp';
 import FadeContent from '../../components/bits/FadeContent';
 import ApiEndpoints from '../../components/ApiEndpoints';
 import { getHomeContent } from '../../utils/siteContent';
@@ -26,6 +26,7 @@ export default function ClaudeHome() {
   }, []);
 
   const enabledModels = models.filter(m => m.enabled !== false);
+  const visiblePackageCount = packages.filter(p => p.enabled).length;
   const homeContent = getHomeContent(site, t);
 
   return (
@@ -72,21 +73,21 @@ export default function ClaudeHome() {
           <div className="mt-12 grid max-w-xl grid-cols-3 gap-3 border-t border-[#E8DDD0] pt-6 sm:mt-20 sm:gap-5 sm:pt-10">
             <div className="min-w-0">
               <div className="text-xl font-bold text-[#3D3024] sm:text-2xl">
-                <CountUp from={0} to={enabledModels.length || 50} duration={2} />+
+                {enabledModels.length}
               </div>
               <p className="mt-0.5 truncate text-xs text-[#8B7D6E] sm:text-sm">{t('home.aiModels')}</p>
             </div>
             <div className="min-w-0 border-l border-[#E8DDD0] pl-3 sm:pl-5">
               <div className="text-xl font-bold text-[#3D3024] sm:text-2xl">
-                <CountUp from={0} to={99.9} duration={2.5} />%
+                {visiblePackageCount}
               </div>
-              <p className="mt-0.5 truncate text-xs text-[#8B7D6E] sm:text-sm">{t('home.uptime')}</p>
+              <p className="mt-0.5 truncate text-xs text-[#8B7D6E] sm:text-sm">{t('home.plansPackages')}</p>
             </div>
             <div className="min-w-0 border-l border-[#E8DDD0] pl-3 sm:pl-5">
               <div className="text-xl font-bold text-[#3D3024] sm:text-2xl">
-                &lt;<CountUp from={200} to={50} duration={2} direction="down" />ms
+                {PUBLIC_API_ENDPOINT_COUNT}
               </div>
-              <p className="mt-0.5 truncate text-xs text-[#8B7D6E] sm:text-sm">{t('home.latency')}</p>
+              <p className="mt-0.5 truncate text-xs text-[#8B7D6E] sm:text-sm">{t('home.apiEndpointsTitle')}</p>
             </div>
           </div>
         </FadeContent>

@@ -1,12 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, BadgeCheck, Boxes, Cpu, Gem, Layers3, PackageCheck, ShoppingBag, Tags } from 'lucide-react';
+import { ArrowRight, BadgeCheck, Cpu, Gem, Layers3, PackageCheck, ShoppingBag, Tags } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useSite, useCurrency } from '../../context/SiteContext';
 import { calcOfficialEquivList } from '../../utils/officialEquiv';
 import { packageQuotaDollars, useHomeData } from '../shared/useHomeData';
-import CountUp from '../../components/bits/CountUp';
+import { PUBLIC_API_ENDPOINT_COUNT } from '../../constants/apiEndpoints';
 import FadeContent from '../../components/bits/FadeContent';
 import RotatingEquiv from '../../components/bits/RotatingEquiv';
 import ApiEndpoints from '../../components/ApiEndpoints';
@@ -60,10 +60,10 @@ export default function MarketHome() {
                 </Link>
               </div>
 
-              <div className="mt-10 grid max-w-xl grid-cols-3 gap-3">
-                <Metric value={enabledModels.length || 50} suffix="+" label={t('home.aiModels')} />
-                <Metric value={99.9} suffix="%" label={t('home.uptime')} />
-                <Metric value={50} prefix="<" suffix="ms" label={t('home.latency')} />
+              <div className="mt-10 flex max-w-xl flex-wrap gap-x-7 gap-y-3 border-t border-stone-300 pt-5">
+                <HeroFact value={enabledModels.length} label={t('home.aiModels')} />
+                <HeroFact value={visiblePackages.length} label={t('home.plansPackages')} />
+                <HeroFact value={PUBLIC_API_ENDPOINT_COUNT} label={t('home.apiEndpointsTitle')} />
               </div>
             </div>
           </FadeContent>
@@ -72,7 +72,7 @@ export default function MarketHome() {
             {homeContent.heroImage ? (
               <HomeHeroImage src={homeContent.heroImage} alt={site?.name} className="aspect-[4/3]" />
             ) : (
-              <MarketBoard models={models} t={t} />
+              <MarketCatalog models={enabledModels} t={t} />
             )}
           </FadeContent>
         </div>
@@ -115,7 +115,7 @@ export default function MarketHome() {
               )}
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {models.map((model, index) => <ModelCard key={model.id || index} model={model} index={index} t={t} />)}
+              {models.map((model, index) => <ModelCard key={model.id || index} model={model} index={index} />)}
             </div>
           </div>
         </section>
@@ -161,11 +161,11 @@ function MarketButton({ to, children, light = false }) {
   );
 }
 
-function Metric({ value, label, prefix = '', suffix = '' }) {
+function HeroFact({ value, label }) {
   return (
-    <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
-      <div className="text-xl font-black text-stone-950">{prefix}<CountUp from={0} to={value} duration={2} />{suffix}</div>
-      <p className="mt-1 truncate text-xs font-bold text-stone-500">{label}</p>
+    <div className="flex items-baseline gap-2">
+      <span className="text-lg font-black text-stone-950">{value}</span>
+      <span className="text-xs font-bold text-stone-500">{label}</span>
     </div>
   );
 }
@@ -179,58 +179,48 @@ function SectionTitle({ title, desc, compact = false }) {
   );
 }
 
-function MarketBoard({ models, t }) {
-  const rows = models.slice(0, 4);
+function MarketCatalog({ models, t }) {
+  const rows = models.slice(0, 6);
   return (
-    <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-[0_28px_80px_rgba(41,37,36,0.12)]">
-      <div className="mb-4 flex items-center justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-stone-950 text-white">
-            <Boxes className="h-5 w-5" />
-          </div>
-          <div className="min-w-0">
-            <p className="truncate font-black text-stone-950">{t('home.availableModels')}</p>
-            <p className="text-xs font-bold text-stone-500">{t('home.curatedModelShelf')}</p>
-          </div>
+    <div className="mx-auto w-full max-w-xl border-y border-stone-300 py-6">
+      <div className="flex items-start justify-between gap-5">
+        <div>
+          <p className="text-lg font-black text-stone-950">{t('home.availableModels')}</p>
+          <p className="mt-1 max-w-md text-sm leading-6 text-stone-600">
+            {t('home.availableModelsDesc', { count: models.length })}
+          </p>
         </div>
-        <span className="shrink-0 rounded-md bg-orange-50 px-2.5 py-1 text-xs font-black text-orange-700">{rows.length}+ {t('officialChannels.online')}</span>
+        <ShoppingBag className="mt-1 h-5 w-5 shrink-0 text-orange-700" />
       </div>
 
-      <div className="rounded-xl border border-stone-200 bg-[#fbfaf7] p-3">
-        <div className="grid gap-3 sm:grid-cols-2">
-          {rows.slice(0, 6).map((model, index) => <ModelCard key={model.id || index} model={model} index={index} compact t={t} />)}
-        </div>
-      </div>
-
-      <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        {[
-          { label: t('home.catalog'), value: `${rows.length}+` },
-          { label: t('home.routing'), value: t('home.auto') },
-          { label: t('home.billing'), value: t('home.clear') },
-        ].map((item) => (
-          <div key={item.label} className="rounded-xl border border-stone-200 bg-white p-3">
-            <p className="text-[11px] font-bold uppercase tracking-wide text-stone-400">{item.label}</p>
-            <p className="mt-1 font-mono text-sm font-black text-stone-950">{item.value}</p>
+      <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        {rows.map((model, index) => (
+          <div key={model.id || index} className="flex min-w-0 items-center gap-3 rounded-lg border border-stone-200 bg-white px-4 py-3 shadow-sm">
+            <div className={`h-8 w-1 shrink-0 rounded-full ${accents[index % accents.length].line}`} />
+            <span className="min-w-0 truncate font-mono text-sm font-black text-stone-900">
+              {model.display_name || model.model_name}
+            </span>
           </div>
         ))}
       </div>
+
+      <Link to="/pricing" className="mt-5 inline-flex items-center gap-2 text-sm font-black text-orange-700 hover:text-stone-950">
+        {t('home.viewAllModels', { count: models.length })}
+        <ArrowRight className="h-4 w-4" />
+      </Link>
     </div>
   );
 }
 
-function ModelCard({ model, index, compact = false, t }) {
+function ModelCard({ model, index, compact = false }) {
   const accent = accents[index % accents.length];
   return (
-    <div className={`group relative overflow-hidden rounded-xl border ${compact ? 'bg-white' : 'bg-[#fbfaf7]'} ${accent.border} p-4 shadow-sm transition-colors hover:bg-white`}>
+    <div className={`group relative flex min-w-0 items-center gap-3 overflow-hidden rounded-xl border ${compact ? 'bg-white' : 'bg-[#fbfaf7]'} ${accent.border} p-4 shadow-sm transition-colors hover:bg-white`}>
       <div className={`absolute inset-x-0 top-0 h-1 ${accent.line}`} />
-      <div className="flex items-start justify-between gap-3">
-        <div className={`flex ${compact ? 'h-9 w-9' : 'h-10 w-10'} shrink-0 items-center justify-center rounded-lg ${accent.soft} ${accent.text}`}>
-          <Cpu className="h-4 w-4" />
-        </div>
-        <span className={`rounded-md ${accent.soft} px-2 py-1 text-[10px] font-black ${accent.text}`}>{t('officialChannels.online')}</span>
+      <div className={`flex ${compact ? 'h-9 w-9' : 'h-10 w-10'} shrink-0 items-center justify-center rounded-lg ${accent.soft} ${accent.text}`}>
+        <Cpu className="h-4 w-4" />
       </div>
-      <p className="mt-4 truncate font-mono text-sm font-black text-stone-950">{model.display_name || model.model_name}</p>
-      {!compact && <p className="mt-2 text-xs font-semibold text-stone-500">{t('home.providerReadyTransparentPrice')}</p>}
+      <p className="min-w-0 truncate font-mono text-sm font-black text-stone-950">{model.display_name || model.model_name}</p>
     </div>
   );
 }

@@ -42,3 +42,5 @@ export const SHARED_API_ENDPOINTS = [
     url: 'https://asiasouth.up.railway.app',
   },
 ];
+
+export const PUBLIC_API_ENDPOINT_COUNT = SHARED_API_ENDPOINTS.length + 1;

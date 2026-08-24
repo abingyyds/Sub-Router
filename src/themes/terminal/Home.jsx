@@ -1,14 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, CheckCircle2, Cpu, KeyRound, LockKeyhole, RadioTower, ShieldCheck, TerminalSquare, Zap } from 'lucide-react';
+import { ArrowRight, Cpu, LockKeyhole, ShieldCheck, TerminalSquare, Zap } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useSite, useCurrency } from '../../context/SiteContext';
 import { calcOfficialEquivList } from '../../utils/officialEquiv';
 import { packageQuotaDollars, useHomeData } from '../shared/useHomeData';
+import { PUBLIC_API_ENDPOINT_COUNT } from '../../constants/apiEndpoints';
 import DecryptedText from '../../components/bits/DecryptedText';
 import ShinyText from '../../components/bits/ShinyText';
-import CountUp from '../../components/bits/CountUp';
 import FadeContent from '../../components/bits/FadeContent';
 import RotatingEquiv from '../../components/bits/RotatingEquiv';
 import ApiEndpoints from '../../components/ApiEndpoints';
@@ -21,7 +21,6 @@ export default function TerminalHome() {
   const { site } = useSite();
   const { fmtCNY } = useCurrency();
   const { enabledModels, visiblePackages } = useHomeData();
-  const previewModels = enabledModels.slice(0, 7);
   const homeContent = getHomeContent(site, t);
 
   return (
@@ -64,10 +63,10 @@ export default function TerminalHome() {
               </Link>
             </div>
 
-            <div className="mt-10 grid max-w-xl grid-cols-3 gap-3">
-              <Metric value={enabledModels.length || 50} suffix="+" label={t('home.aiModels')} />
-              <Metric value={99.9} suffix="%" label={t('home.uptime')} />
-              <Metric value={50} prefix="<" suffix="ms" label={t('home.latency')} />
+            <div className="mt-10 flex max-w-xl flex-wrap gap-x-7 gap-y-3 border-t border-emerald-400/20 pt-5 font-mono">
+              <HeroFact value={enabledModels.length} label={t('home.aiModels')} />
+              <HeroFact value={visiblePackages.length} label={t('home.plansPackages')} />
+              <HeroFact value={PUBLIC_API_ENDPOINT_COUNT} label={t('home.apiEndpointsTitle')} />
             </div>
           </div>
         </FadeContent>
@@ -76,7 +75,7 @@ export default function TerminalHome() {
           {homeContent.heroImage ? (
             <HomeHeroImage src={homeContent.heroImage} alt={site?.name} variant="dark" className="aspect-[4/3]" />
           ) : (
-            <RouteConsole models={previewModels} t={t} />
+            <TerminalModelIndex models={enabledModels} t={t} />
           )}
         </FadeContent>
       </section>
@@ -111,13 +110,9 @@ export default function TerminalHome() {
             <SectionTitle title={t('home.availableModels')} desc={t('home.availableModelsDesc', { count: enabledModels.length })} />
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
               {enabledModels.slice(0, 8).map((model, index) => (
-                <div key={model.id || index} className="rounded-lg border border-emerald-400/15 bg-[#07110d] p-4 font-mono transition-colors hover:border-emerald-400/35">
-                  <div className="mb-3 flex items-center justify-between">
-                    <Cpu className="h-4 w-4 text-emerald-300" />
-                    <span className="text-[10px] font-black text-emerald-400">{t('home.ready')}</span>
-                  </div>
-                  <p className="truncate text-sm font-bold text-emerald-50">{model.display_name || model.model_name}</p>
-                  <p className="mt-2 text-xs text-emerald-100/45">route.auto=true</p>
+                <div key={model.id || index} className="flex min-w-0 items-center gap-3 rounded-lg border border-emerald-400/15 bg-[#07110d] p-4 font-mono transition-colors hover:border-emerald-400/35">
+                  <span className="w-6 shrink-0 text-xs text-emerald-400/70">{String(index + 1).padStart(2, '0')}</span>
+                  <p className="min-w-0 truncate text-sm font-bold text-emerald-50">{model.display_name || model.model_name}</p>
                 </div>
               ))}
             </div>
@@ -160,11 +155,11 @@ function TerminalButton({ to, children }) {
   );
 }
 
-function Metric({ value, label, prefix = '', suffix = '' }) {
+function HeroFact({ value, label }) {
   return (
-    <div className="rounded-lg border border-emerald-400/15 bg-black/25 p-4 font-mono">
-      <div className="text-xl font-black text-emerald-200">{prefix}<CountUp from={0} to={value} duration={2} />{suffix}</div>
-      <p className="mt-1 truncate text-xs font-bold text-emerald-100/45">{label}</p>
+    <div className="flex items-baseline gap-2">
+      <span className="text-lg font-black text-emerald-200">{value}</span>
+      <span className="text-xs font-bold text-emerald-100/45">{label}</span>
     </div>
   );
 }
@@ -178,46 +173,35 @@ function SectionTitle({ title, desc }) {
   );
 }
 
-function RouteConsole({ models, t }) {
-  const rows = models.slice(0, 3);
+function TerminalModelIndex({ models, t }) {
+  const rows = models.slice(0, 6);
   return (
-    <div className="rounded-xl border border-emerald-400/20 bg-[#030504] shadow-2xl shadow-emerald-950/60">
-      <div className="flex items-center justify-between border-b border-emerald-400/15 px-4 py-3 font-mono">
-        <div className="flex items-center gap-2 text-xs font-black text-emerald-300">
-          <RadioTower className="h-4 w-4" />
-          api-relay-live
+    <div className="mx-auto w-full max-w-xl border-y border-emerald-400/25 py-6 font-mono">
+      <div className="flex items-start justify-between gap-5">
+        <div>
+          <p className="text-base font-black text-emerald-50">{t('home.availableModels')}</p>
+          <p className="mt-2 max-w-md text-sm leading-6 text-emerald-100/55">
+            {t('home.availableModelsDesc', { count: models.length })}
+          </p>
         </div>
-        <span className="text-xs text-emerald-100/45">200 OK</span>
+        <Cpu className="mt-1 h-5 w-5 shrink-0 text-emerald-300" />
       </div>
-      <div className="grid gap-0 lg:grid-cols-[1fr_0.92fr]">
-        <div className="border-b border-emerald-400/15 p-5 lg:border-b-0 lg:border-r">
-          <div className="mb-4 flex items-center gap-2 font-mono text-sm font-black text-emerald-50">
-            <KeyRound className="h-4 w-4 text-emerald-300" />
-            {t('nav.apiKeys')}
+
+      <div className="mt-6 grid gap-x-6 sm:grid-cols-2">
+        {rows.map((model, index) => (
+          <div key={model.id || index} className="flex min-w-0 items-center gap-3 border-t border-emerald-400/15 py-3">
+            <span className="w-6 shrink-0 text-xs text-emerald-400/60">{String(index + 1).padStart(2, '0')}</span>
+            <span className="min-w-0 truncate text-sm font-bold text-emerald-100">
+              {model.display_name || model.model_name}
+            </span>
           </div>
-          <pre className="whitespace-pre-wrap break-all rounded-lg border border-emerald-400/10 bg-emerald-400/[0.04] p-4 font-mono text-xs leading-6 text-emerald-100/72">
-{`$ curl /v1/chat/completions
-> model=${rows[0]?.display_name || rows[0]?.model_name}
-> strategy=latency_first
-< routed=true
-< fallback=armed`}
-          </pre>
-        </div>
-        <div className="p-5">
-          <div className="mb-4 flex items-center gap-2 font-mono text-sm font-black text-emerald-50">
-            <CheckCircle2 className="h-4 w-4 text-emerald-300" />
-            {t('home.availableModels')}
-          </div>
-          <div className="space-y-2">
-            {rows.slice(0, 5).map((model, index) => (
-              <div key={model.id || index} className="flex items-center justify-between rounded-lg border border-emerald-400/10 bg-emerald-400/[0.035] px-3 py-2 font-mono">
-                <span className="min-w-0 truncate text-xs text-emerald-100">{model.display_name || model.model_name}</span>
-                <span className="ml-3 shrink-0 text-[10px] font-black text-emerald-400">{t('officialChannels.online')}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        ))}
       </div>
+
+      <Link to="/pricing" className="mt-5 inline-flex items-center gap-2 text-sm font-black text-emerald-300 hover:text-emerald-100">
+        {t('home.viewAllModels', { count: models.length })}
+        <ArrowRight className="h-4 w-4" />
+      </Link>
     </div>
   );
 }
