@@ -1,5 +1,7 @@
 .modal-overlay {
-  background-color: #08080c !important;
+  /* Keep the page visually recessed without turning the overlay into glass. */
+  z-index: 1000 !important;
+  background-color: rgba(0, 0, 0, 0.55) !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
