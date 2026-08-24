@@ -1,0 +1,11 @@
+.modal-overlay {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.modal-overlay .glass,
+.modal-overlay .glass-sm {
+  background: var(--page-bg);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}

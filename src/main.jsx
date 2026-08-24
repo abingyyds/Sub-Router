@@ -7,6 +7,7 @@ import { AuthProvider } from './context/AuthContext';
 import { SiteProvider } from './context/SiteContext';
 import './i18n';
 import './index.css';
+import './modal.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
