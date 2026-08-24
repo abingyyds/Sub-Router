@@ -666,7 +666,7 @@ export default function Pricing() {
                 >
                   <div className="flex items-start justify-between gap-3 px-4 py-4">
                     <div className="min-w-0">
-                      <h2 className="break-all font-mono text-sm font-semibold leading-5 text-page">
+                      <h2 className="break-words font-mono text-sm font-semibold leading-5 text-page">
                         {m.display_name || m.model_name}
                       </h2>
                       <div className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -683,7 +683,7 @@ export default function Pricing() {
                       </div>
                     </div>
                     <span
-                      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs ${
+                      className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-0.5 text-xs ${
                         m.status === "healthy"
                           ? "border-green-500/20 bg-green-500/10 text-page-success"
                           : "border-page-divider bg-page-surface text-page-secondary"
@@ -698,7 +698,7 @@ export default function Pricing() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-4 border-t border-page-divider bg-page-surface/40 px-4 py-4">
+                  <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-x-4 gap-y-4 border-t border-page-divider bg-page-surface/40 px-4 py-4">
                     {hasOfficialVideoPricing ? (
                       <div className="col-span-2 min-w-0 text-page-label">
                         <div className="mb-1 text-[11px] font-medium leading-4 text-page-secondary">
@@ -710,15 +710,15 @@ export default function Pricing() {
                       <>
                         <div className="min-w-0">
                           <div className="text-[11px] font-medium leading-4 text-page-secondary">
-                            {t("pricing.inputPrice")}
+                            {t("pricing.inputPriceShort")}
                           </div>
                           <div className="mt-1 break-words font-mono text-sm font-semibold text-page-label">
                             {renderPrimaryPrice(m)}
                           </div>
                         </div>
-                        <div className="min-w-0 text-right">
+                        <div className="min-w-0 min-[420px]:text-right">
                           <div className="text-[11px] font-medium leading-4 text-page-secondary">
-                            {t("pricing.outputPrice")}
+                            {t("pricing.outputPriceShort")}
                           </div>
                           <div className="mt-1 break-words font-mono text-sm font-semibold text-page-label">
                             {renderSecondaryPrice(m, "output")}
@@ -730,7 +730,7 @@ export default function Pricing() {
                     {showTokenPrices && hasCacheRead && (
                       <div className="min-w-0">
                         <div className="text-[11px] font-medium leading-4 text-page-secondary">
-                          {t("pricing.cacheReadPrice")}
+                          {t("pricing.cacheReadShort")}
                         </div>
                         <div className="mt-1 break-words font-mono text-sm font-semibold text-page-label">
                           {renderSecondaryPrice(m, "cache_read")}
@@ -738,9 +738,9 @@ export default function Pricing() {
                       </div>
                     )}
                     {showTokenPrices && hasCacheCreation && (
-                      <div className="min-w-0 text-right">
+                      <div className="min-w-0 min-[420px]:text-right">
                         <div className="text-[11px] font-medium leading-4 text-page-secondary">
-                          {t("pricing.cacheCreationPrice")}
+                          {t("pricing.cacheCreationShort")}
                         </div>
                         <div className="mt-1 break-words font-mono text-sm font-semibold text-page-label">
                           {renderSecondaryPrice(m, "cache_creation")}
@@ -840,7 +840,7 @@ export default function Pricing() {
                               )}
                             </div>
                           </div>
-                          <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-page-divider pt-3">
+                          <div className="mt-3 grid grid-cols-1 min-[420px]:grid-cols-2 gap-x-4 gap-y-3 border-t border-page-divider pt-3">
                             {[
                               [
                                 t("pricing.inputPriceShort"),
@@ -865,7 +865,7 @@ export default function Pricing() {
                             ].map(([label, value], priceIndex) => (
                               <div
                                 key={`${label}-${priceIndex}`}
-                                className={`min-w-0 ${priceIndex % 2 ? "text-right" : ""}`}
+                                className={`min-w-0 ${priceIndex % 2 ? "min-[420px]:text-right" : ""}`}
                               >
                                 <div className="text-[11px] text-page-secondary">
                                   {label}
@@ -886,22 +886,22 @@ export default function Pricing() {
           </div>
 
           <div className="glass-sm hidden overflow-x-auto rounded-xl lg:block">
-          <table className="w-full text-sm">
+          <table className="min-w-[1320px] w-full text-sm">
             <thead>
               <tr className="border-b border-page-divider">
-                <th className="text-left px-5 py-3.5 font-medium text-page-secondary">
+                <th className="whitespace-nowrap text-left px-5 py-3.5 font-medium text-page-secondary">
                   {t("pricing.model")}
                 </th>
-                <th className="text-right px-5 py-3.5 font-medium text-page-secondary">
+                <th className="whitespace-nowrap text-right px-5 py-3.5 font-medium text-page-secondary">
                   {t("pricing.inputPrice")}
                 </th>
-                <th className="text-right px-5 py-3.5 font-medium text-page-secondary">
+                <th className="whitespace-nowrap text-right px-5 py-3.5 font-medium text-page-secondary">
                   {t("pricing.outputPrice")}
                 </th>
-                <th className="text-right px-5 py-3.5 font-medium text-page-secondary">
+                <th className="whitespace-nowrap text-right px-5 py-3.5 font-medium text-page-secondary">
                   {t("pricing.cacheReadPrice")}
                 </th>
-                <th className="text-right px-5 py-3.5 font-medium text-page-secondary">
+                <th className="whitespace-nowrap text-right px-5 py-3.5 font-medium text-page-secondary">
                   {t("pricing.cacheCreationPrice")}
                 </th>
                 <th className="text-right px-5 py-3.5 font-medium text-page-secondary whitespace-nowrap">
@@ -910,7 +910,7 @@ export default function Pricing() {
                 <th className="text-right px-5 py-3.5 font-medium text-page-secondary whitespace-nowrap">
                   {t("pricing.savings")}
                 </th>
-                <th className="text-center px-5 py-3.5 font-medium text-page-secondary">
+                <th className="whitespace-nowrap text-center px-5 py-3.5 font-medium text-page-secondary">
                   {t("pricing.status")}
                 </th>
               </tr>
@@ -930,7 +930,7 @@ export default function Pricing() {
                   <React.Fragment key={modelKey}>
                     <tr className="border-b border-page-divider last:border-0 hover:bg-page-surface transition-colors">
                       <td className="px-5 py-3.5">
-                        <div className="flex min-w-[220px] items-center gap-2">
+                        <div className="flex min-w-[260px] items-center gap-2">
                           <button
                             type="button"
                             onClick={() => canExpand && toggleModel(modelKey)}
@@ -953,7 +953,7 @@ export default function Pricing() {
                             )}
                           </button>
                           <div className="min-w-0">
-                            <span className="block truncate font-mono text-page">
+                            <span className="block whitespace-nowrap font-mono text-page">
                               {m.display_name || m.model_name}
                             </span>
                             {canExpand && (
@@ -972,19 +972,19 @@ export default function Pricing() {
                       {hasOfficialVideoPricing ? (
                         <td
                           colSpan={4}
-                          className="px-5 py-3.5 text-right text-page-label"
+                          className="whitespace-nowrap px-5 py-3.5 text-right text-page-label"
                         >
                           {renderPrimaryPrice(m)}
                         </td>
                       ) : (
                         <>
-                          <td className="px-5 py-3.5 text-right font-mono text-page-label">
+                          <td className="whitespace-nowrap px-5 py-3.5 text-right font-mono text-page-label">
                             {renderPrimaryPrice(m)}
                           </td>
-                          <td className="px-5 py-3.5 text-right font-mono text-page-label">
+                          <td className="whitespace-nowrap px-5 py-3.5 text-right font-mono text-page-label">
                             {renderSecondaryPrice(m, "output")}
                           </td>
-                          <td className="px-5 py-3.5 text-right font-mono text-page-label">
+                          <td className="whitespace-nowrap px-5 py-3.5 text-right font-mono text-page-label">
                             {renderSecondaryPrice(m, "cache_read")}
                           </td>
                           <td className="px-5 py-3.5 text-right font-mono text-page-label whitespace-nowrap">
@@ -1030,23 +1030,23 @@ export default function Pricing() {
                     {expanded && canExpand && (
                       <tr className="border-b border-page-divider bg-page-surface">
                         <td colSpan={8} className="px-5 py-4">
-                          <div className="overflow-hidden rounded-lg border border-page-divider bg-page-inset">
-                            <table className="w-full text-xs">
+                          <div className="overflow-x-auto rounded-lg border border-page-divider bg-page-inset">
+                            <table className="min-w-[780px] w-full text-xs">
                               <thead>
                                 <tr className="border-b border-page-divider text-page-secondary">
-                                  <th className="px-4 py-2.5 text-left font-medium">
+                                  <th className="whitespace-nowrap px-4 py-2.5 text-left font-medium">
                                     {t("pricing.channel")}
                                   </th>
-                                  <th className="px-4 py-2.5 text-right font-medium">
+                                  <th className="whitespace-nowrap px-4 py-2.5 text-right font-medium">
                                     {t("pricing.inputPriceShort")}
                                   </th>
-                                  <th className="px-4 py-2.5 text-right font-medium">
+                                  <th className="whitespace-nowrap px-4 py-2.5 text-right font-medium">
                                     {t("pricing.outputPriceShort")}
                                   </th>
-                                  <th className="px-4 py-2.5 text-right font-medium">
+                                  <th className="whitespace-nowrap px-4 py-2.5 text-right font-medium">
                                     {t("pricing.cacheReadShort")}
                                   </th>
-                                  <th className="px-4 py-2.5 text-right font-medium">
+                                  <th className="whitespace-nowrap px-4 py-2.5 text-right font-medium">
                                     {t("pricing.cacheCreationShort")}
                                   </th>
                                 </tr>
@@ -1059,7 +1059,7 @@ export default function Pricing() {
                                       className="border-b border-page-divider last:border-0"
                                     >
                                       <td className="px-4 py-3">
-                                        <div className="flex min-w-[220px] items-center gap-2">
+                                        <div className="flex min-w-[260px] items-center gap-2">
                                           {channel.provider_logo ? (
                                             <img
                                               src={channel.provider_logo}
@@ -1082,7 +1082,7 @@ export default function Pricing() {
                                                   }
                                                   target="_blank"
                                                   rel="noreferrer"
-                                                  className="truncate font-medium text-page hover:text-brand-500"
+                                                  className="whitespace-nowrap font-medium text-page hover:text-brand-500"
                                                 >
                                                   {getChannelLabel(
                                                     channel,
@@ -1090,7 +1090,7 @@ export default function Pricing() {
                                                   )}
                                                 </a>
                                               ) : (
-                                                <span className="truncate font-medium text-page">
+                                                <span className="whitespace-nowrap font-medium text-page">
                                                   {getChannelLabel(
                                                     channel,
                                                     channelIndex,
@@ -1105,23 +1105,23 @@ export default function Pricing() {
                                               )}
                                             </div>
                                             {channel.provider_description && (
-                                              <p className="mt-0.5 max-w-lg truncate text-[11px] text-page-muted">
+                                              <p className="mt-0.5 max-w-lg break-words text-[11px] leading-4 text-page-muted">
                                                 {channel.provider_description}
                                               </p>
                                             )}
                                           </div>
                                         </div>
                                       </td>
-                                      <td className="px-4 py-3 text-right font-mono text-page-label">
+                                      <td className="whitespace-nowrap px-4 py-3 text-right font-mono text-page-label">
                                         {renderPrimaryPrice(channel)}
                                       </td>
-                                      <td className="px-4 py-3 text-right font-mono text-page-label">
+                                      <td className="whitespace-nowrap px-4 py-3 text-right font-mono text-page-label">
                                         {renderSecondaryPrice(
                                           channel,
                                           "output",
                                         )}
                                       </td>
-                                      <td className="px-4 py-3 text-right font-mono text-page-label">
+                                      <td className="whitespace-nowrap px-4 py-3 text-right font-mono text-page-label">
                                         {renderSecondaryPrice(
                                           channel,
                                           "cache_read",
