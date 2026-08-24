@@ -917,7 +917,7 @@ export default function SharedSubscriptions() {
       />
 
       {generatedToken && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
             className="w-full max-w-lg rounded-lg border border-page-divider p-5 shadow-xl"
             style={{ background: "var(--page-bg)" }}
@@ -1001,7 +1001,7 @@ function ModalShell({ open, title, description, onClose, children, footer }) {
   if (!open) return null;
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4"
+      className="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
       role="presentation"
     >
       <section

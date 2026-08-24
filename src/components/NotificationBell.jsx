@@ -32,7 +32,7 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/55 px-4 py-6 backdrop-blur-sm sm:items-center" onClick={() => setOpen(false)}>
+        <div className="modal-overlay fixed inset-0 z-[90] flex items-end justify-center px-4 py-6 sm:items-center" onClick={() => setOpen(false)}>
           <div
             className="w-full max-w-lg overflow-hidden rounded-3xl border border-page-card-border bg-[var(--page-bg)] shadow-2xl"
             onClick={(e) => e.stopPropagation()}

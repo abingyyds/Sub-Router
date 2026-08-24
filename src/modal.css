@@ -1,4 +1,5 @@
 .modal-overlay {
+  background-color: #08080c !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
