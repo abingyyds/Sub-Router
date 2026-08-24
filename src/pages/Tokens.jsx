@@ -439,14 +439,14 @@ export default function Tokens() {
 		t,
 		createType === 'normal',
 		fullMode && createType === 'normal',
-		fullMode && createType === 'normal' && sharedSubscriptionsEnabled,
+		createType === 'normal' && sharedSubscriptionsEnabled,
 	  );
       if (!controlPayload) {
         setCreating(false);
         return;
       }
 		Object.assign(payload, controlPayload);
-		if (fullMode && createType === 'normal' && sharedSubscriptionsEnabled && !isValidSharedSubscriptionMaxDiscount(createControls.shared_subscription_max_discount)) {
+		if (createType === 'normal' && sharedSubscriptionsEnabled && !isValidSharedSubscriptionMaxDiscount(createControls.shared_subscription_max_discount)) {
 		  toast.error(t('tokens.invalidSharedSubscriptionMaxDiscount'));
 		  setCreating(false);
 		  return;
@@ -553,11 +553,11 @@ export default function Tokens() {
 	  t,
 	  !isOfficialToken && !isSharedToken,
 	  fullMode && !isOfficialToken && !isSharedToken,
-	  fullMode && !isOfficialToken && !isSharedToken && sharedSubscriptionsEnabled,
+		!isOfficialToken && !isSharedToken && sharedSubscriptionsEnabled,
 	);
 	if (!payload) return;
 	payload.name = String(editForm.name || '').trim();
-	if (fullMode && !isOfficialToken && !isSharedToken && sharedSubscriptionsEnabled && !isValidSharedSubscriptionMaxDiscount(editForm.shared_subscription_max_discount)) {
+	if (!isOfficialToken && !isSharedToken && sharedSubscriptionsEnabled && !isValidSharedSubscriptionMaxDiscount(editForm.shared_subscription_max_discount)) {
 	  toast.error(t('tokens.invalidSharedSubscriptionMaxDiscount'));
 	  return;
 	}
@@ -899,7 +899,7 @@ export default function Tokens() {
                     t={t}
                   />
                 )}
-                {createType === 'normal' && fullMode && sharedSubscriptionsEnabled && (
+                {createType === 'normal' && sharedSubscriptionsEnabled && (
                   <SharedSubscriptionRoutingFields
                     form={createControls}
                     onChange={(field, value) => setCreateControls((prev) => ({ ...prev, [field]: value }))}
@@ -975,7 +975,7 @@ export default function Tokens() {
                     t={t}
                   />
                 )}
-                {editingToken.type !== 'shared' && !(editingToken.type === 'official' || editingToken.group === 'dist_official') && fullMode && sharedSubscriptionsEnabled && (
+                {editingToken.type !== 'shared' && !(editingToken.type === 'official' || editingToken.group === 'dist_official') && sharedSubscriptionsEnabled && (
                   <SharedSubscriptionRoutingFields
                     form={editForm}
                     onChange={(field, value) => setEditForm((prev) => ({ ...prev, [field]: value }))}

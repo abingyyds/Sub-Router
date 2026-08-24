@@ -1,9 +1,23 @@
 .modal-overlay {
-  /* Keep the page visually recessed without turning the overlay into glass. */
+  /* Escape the isolated page shell and keep dialogs clear of the sticky header. */
   z-index: 1000 !important;
+  align-items: flex-start !important;
+  overflow-y: auto !important;
+  padding: clamp(4.75rem, 10vh, 6.5rem) 1rem 1rem !important;
   background-color: rgba(0, 0, 0, 0.55) !important;
   -webkit-backdrop-filter: blur(4px) !important;
   backdrop-filter: blur(4px) !important;
+}
+
+/* .theme-page-shell is isolated, so raise that stacking context above the header. */
+body:has(.modal-overlay) .theme-page-shell {
+  position: relative;
+  z-index: 60;
+}
+
+.modal-overlay > .glass,
+.modal-overlay > .glass-sm {
+  max-height: min(82vh, calc(100dvh - 7rem)) !important;
 }
 
 .modal-overlay .glass,

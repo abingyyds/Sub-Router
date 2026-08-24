@@ -494,8 +494,8 @@ export default function Tasks() {
       )}
 
       {preview && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4" onClick={closePreview}>
-          <div className="relative max-h-[90vh] max-w-[92vw]" onClick={(event) => event.stopPropagation()}>
+        <div className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4" onClick={closePreview}>
+          <div className="relative max-h-[calc(100dvh-7rem)] max-w-[92vw]" onClick={(event) => event.stopPropagation()}>
             <button type="button" className="absolute -right-3 -top-3 z-10 rounded-full bg-white p-2 text-slate-900 shadow-lg" onClick={closePreview}>
               <X className="h-4 w-4" />
             </button>
@@ -511,7 +511,7 @@ export default function Tasks() {
                     src={toAbsoluteUrl(preview.url)}
                     controls
                     autoPlay
-                    className="max-h-[76vh] w-full bg-black object-contain"
+                    className="max-h-[calc(100dvh-13rem)] w-full bg-black object-contain"
                     onError={() => setPreviewVideoError(true)}
                   />
                 )}
@@ -532,7 +532,7 @@ export default function Tasks() {
               </div>
             )}
             {preview.type === 'image' && (
-              <img src={preview.url} alt={t('tasks.previewImage')} className="max-h-[88vh] max-w-[90vw] rounded-2xl object-contain shadow-2xl" onClick={() => window.open(preview.url, '_blank')} />
+              <img src={preview.url} alt={t('tasks.previewImage')} className="max-h-[calc(100dvh-7rem)] max-w-[90vw] rounded-2xl object-contain shadow-2xl" onClick={() => window.open(preview.url, '_blank')} />
             )}
             {preview.type === 'text' && (
               <div className="max-h-[70vh] w-[min(760px,90vw)] overflow-auto rounded-2xl bg-white p-5 text-sm text-slate-800 shadow-2xl">
