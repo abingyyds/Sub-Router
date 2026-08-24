@@ -15,8 +15,7 @@ body:has(.modal-overlay) .theme-page-shell {
   z-index: 60;
 }
 
-.modal-overlay > .glass,
-.modal-overlay > .glass-sm {
+.modal-overlay > * {
   max-height: min(82vh, calc(100dvh - 7rem)) !important;
 }
 
