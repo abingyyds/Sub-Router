@@ -704,7 +704,7 @@ const siteTranslations = {
     '只有账号实际承担且成功计费的请求才会生成收益记录。':
       'Yalnızca hesabın gerçekten işlediği ve başarıyla faturalandırılan istekler kazanç kaydı oluşturur.',
     可提现收益: 'Çekilebilir kazançlar',
-    可用: 'kullanılabilir',
+    可用: 'Kullanılabilir',
     可用度: 'Erişilebilirlik',
     可用度加载失败: 'Kullanılabilirlik verileri yüklenemedi',
     可用收益: 'Kullanılabilir kazançlar',
@@ -713,7 +713,7 @@ const siteTranslations = {
       'Platform bakiyesine aktarılabilir veya para çekme talebi oluşturabilirsiniz',
     '可随时暂停、恢复或移除账号，暂停后不再承接新请求。':
       'Hesabı istediğiniz zaman duraklatabilir, yeniden etkinleştirebilir veya kaldırabilirsiniz. Duraklatılan hesap yeni istek almaz.',
-    号池实时状态: 'Live account havuzu statüsü',
+    号池实时状态: 'Canlı hesap havuzu durumu',
     同步于: 'Senkronizasyon:',
     商家: 'Sağlayıcı',
     '商家不存在或未被本站准入。':
@@ -726,7 +726,7 @@ const siteTranslations = {
       'Bu alt sitede paylaşılan planları kullanabilen API Key’leri oluşturun ve yönetin.',
     在浏览器中完成授权: 'Yetkilendirmeyi tarayıcınızda tamamlayın',
     在线容量: 'Çevrimiçi kapasite',
-    复制: 'Kopya',
+    复制: 'Kopyala',
     复制授权链接: 'Yetkilendirme bağlantısını kopyala',
     '完整回调链接，例如 {{value1}} 或仅输入 code 参数值':
       'Tam geri çağrı URL’sini (ör. {{value1}}) veya yalnızca code parametresinin değerini girin',

@@ -137,6 +137,7 @@
     "pricing.regionRestricted": "Cette catégorie/ce modèle est réservé aux utilisateurs hors Chine continentale.",
     "pricing.noModels": "Aucun modèle disponible",
     "pricing.model": "Modèle",
+    "pricing.modelType": "Type de modèle",
     "pricing.savings": "Économiser",
     "pricing.perCall": "Facturation par appel",
     "pricing.perCallUnit": "appel(s)",

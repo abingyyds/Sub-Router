@@ -148,6 +148,7 @@
     "pricing.regionRestricted": "Danh mục/mô hình này chỉ mở cho người dùng ở nước ngoài.",
     "pricing.noModels": "Không có mô hình khả dụng",
     "pricing.model": "Mô hình",
+    "pricing.modelType": "Loại mô hình",
     "pricing.savings": "Tiết kiệm",
     "pricing.perCall": "Tính phí theo lượt gọi",
     "pricing.perCallUnit": "lần",

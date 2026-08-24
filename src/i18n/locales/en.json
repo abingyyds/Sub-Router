@@ -613,6 +613,7 @@
     "pricing.regionNoModels": "No models are currently available for mainland China.",
     "pricing.noModels": "No models available",
     "pricing.model": "Model",
+    "pricing.modelType": "Model type",
     "pricing.inputPrice": "Input / 1M tokens",
     "pricing.outputPrice": "Output / 1M tokens",
     "pricing.cacheReadPrice": "Cache read / 1M tokens",

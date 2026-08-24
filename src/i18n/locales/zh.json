@@ -613,6 +613,7 @@
     "pricing.regionNoModels": "当前地区暂无可用模型",
     "pricing.noModels": "暂无可用模型",
     "pricing.model": "模型",
+    "pricing.modelType": "模型类型",
     "pricing.inputPrice": "输入 / 百万 token",
     "pricing.outputPrice": "输出 / 百万 token",
     "pricing.cacheReadPrice": "缓存读取 / 百万 token",

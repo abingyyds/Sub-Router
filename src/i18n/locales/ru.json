@@ -147,6 +147,7 @@
     "pricing.regionRestricted": "Эта категория/модель доступна только зарубежным пользователям.",
     "pricing.noModels": "Нет доступных моделей",
     "pricing.model": "Модель",
+    "pricing.modelType": "Тип модели",
     "pricing.savings": "Экономия",
     "pricing.perCall": "Тарификация за вызов",
     "pricing.perCallUnit": "раз",

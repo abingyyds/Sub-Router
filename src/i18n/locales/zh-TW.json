@@ -608,6 +608,7 @@
     "pricing.regionNoModels": "目前地區暫無可用模型",
     "pricing.noModels": "暫無可用模型",
     "pricing.model": "模型",
+    "pricing.modelType": "模型類型",
     "pricing.inputPrice": "輸入 / 百萬 token",
     "pricing.outputPrice": "輸出 / 百萬 token",
     "pricing.cacheReadPrice": "快取讀取 / 百萬 token",

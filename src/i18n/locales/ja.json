@@ -136,6 +136,7 @@
     "pricing.regionRestricted": "このカテゴリ/モデルは海外ユーザーのみ利用できます。",
     "pricing.noModels": "利用可能なモデルがありません",
     "pricing.model": "モデル",
+    "pricing.modelType": "モデルの種類",
     "pricing.savings": "節約",
     "pricing.perCall": "リクエスト課金",
     "pricing.perCallUnit": "回",

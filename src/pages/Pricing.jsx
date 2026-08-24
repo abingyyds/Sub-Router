@@ -27,6 +27,16 @@ const MODEL_TYPE_OPTIONS = [
 const MODEL_TYPE_SET = new Set(
   MODEL_TYPE_OPTIONS.map((item) => item.value).filter(Boolean),
 );
+const TURKISH_VENDOR_LABELS = {
+  阿里巴巴: "Alibaba",
+  阿里云: "Alibaba Cloud",
+  百度: "Baidu",
+  火山引擎: "Volcengine",
+  腾讯: "Tencent",
+  通义千问: "Qwen",
+  智谱: "Zhipu AI",
+  月之暗面: "Moonshot",
+};
 const PARAM_NAME_SET = new Set([
   "size",
   "resolution",
@@ -254,7 +264,7 @@ function VideoPriceStack({ rows, label, tone = "default" }) {
 }
 
 export default function Pricing() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { site } = useSite();
   const { symbol, rate, code, usdRate } = useCurrency();
   const [models, setModels] = useState([]);
@@ -270,6 +280,8 @@ export default function Pricing() {
     site?.can_view_providers === true ||
     site?.full_mode === true ||
     site?.display_mode === "full";
+  const getVendorLabel = (name) =>
+    i18n.resolvedLanguage === "tr" ? TURKISH_VENDOR_LABELS[name] || name : name;
 
   useEffect(() => {
     getSiteModels({ include_official_channels: true })
@@ -513,7 +525,7 @@ export default function Pricing() {
   };
 
   const getChannelLabel = (channel, index) =>
-    channel.provider_name ||
+    (channel.provider_name && getVendorLabel(channel.provider_name)) ||
     t("pricing.channelFallback", {
       number: channel.channel_index || index + 1,
     });
@@ -539,49 +551,65 @@ export default function Pricing() {
 
       {/* Vendor Filter */}
       {availableVendors.length > 0 && (
-        <div className="flex flex-wrap justify-center gap-2 mb-6">
-          <button
-            onClick={() => setVendor("")}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium transition-all ${
-              !vendor
-                ? "bg-brand-500 text-white shadow-lg shadow-brand-500/25"
-                : "glass-sm text-page-secondary hover:text-page hover:bg-page-surface-hover"
-            }`}
+        <section aria-labelledby="pricing-vendor-filter" className="mb-6">
+          <h2
+            id="pricing-vendor-filter"
+            className="mb-2 text-center text-xs font-semibold uppercase tracking-wide text-page-muted"
           >
-            {t("pricing.allVendors")}
-          </button>
-          {availableVendors.map((v) => (
+            {t("pricing.vendor")}
+          </h2>
+          <div className="flex flex-wrap justify-center gap-2">
             <button
-              key={v.id}
-              onClick={() => setVendor(v.name)}
+              onClick={() => setVendor("")}
               className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium transition-all ${
-                vendor === v.name
+                !vendor
                   ? "bg-brand-500 text-white shadow-lg shadow-brand-500/25"
                   : "glass-sm text-page-secondary hover:text-page hover:bg-page-surface-hover"
               }`}
             >
-              {v.name}
+              {t("pricing.allVendors")}
             </button>
-          ))}
-        </div>
+            {availableVendors.map((v) => (
+              <button
+                key={v.id}
+                onClick={() => setVendor(v.name)}
+                className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium transition-all ${
+                  vendor === v.name
+                    ? "bg-brand-500 text-white shadow-lg shadow-brand-500/25"
+                    : "glass-sm text-page-secondary hover:text-page hover:bg-page-surface-hover"
+                }`}
+              >
+                {getVendorLabel(v.name)}
+              </button>
+            ))}
+          </div>
+        </section>
       )}
 
       {/* Model Type Filter */}
-      <div className="flex flex-wrap justify-center gap-2 mb-6">
-        {MODEL_TYPE_OPTIONS.map((option) => (
-          <button
-            key={option.value || "all"}
-            onClick={() => setModelType(option.value)}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium transition-all ${
-              modelType === option.value
-                ? "bg-brand-500 text-white shadow-lg shadow-brand-500/25"
-                : "glass-sm text-page-secondary hover:text-page hover:bg-page-surface-hover"
-            }`}
-          >
-            {t(option.labelKey)}
-          </button>
-        ))}
-      </div>
+      <section aria-labelledby="pricing-type-filter" className="mb-6">
+        <h2
+          id="pricing-type-filter"
+          className="mb-2 text-center text-xs font-semibold uppercase tracking-wide text-page-muted"
+        >
+          {t("pricing.modelType")}
+        </h2>
+        <div className="flex flex-wrap justify-center gap-2">
+          {MODEL_TYPE_OPTIONS.map((option) => (
+            <button
+              key={option.value || "all"}
+              onClick={() => setModelType(option.value)}
+              className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium transition-all ${
+                modelType === option.value
+                  ? "bg-brand-500 text-white shadow-lg shadow-brand-500/25"
+                  : "glass-sm text-page-secondary hover:text-page hover:bg-page-surface-hover"
+              }`}
+            >
+              {t(option.labelKey)}
+            </button>
+          ))}
+        </div>
+      </section>
 
       {/* Search */}
       <div className="max-w-md mx-auto mb-8">
