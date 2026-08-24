@@ -270,10 +270,7 @@ export default function BrandLayout({ variant }) {
             )}
           </div>
 
-          <nav
-            aria-label={t('nav.main', { defaultValue: 'Main navigation' })}
-            className={cfg.navWrap}
-          >
+          <nav aria-label={t('nav.main')} className={cfg.navWrap}>
             {headerNavItems.map((n) => (
               <Link
                 key={n.to}
@@ -326,8 +323,8 @@ export default function BrandLayout({ variant }) {
         {mobileMenuOpen && (
           <div className="border-t border-current/10 bg-inherit shadow-lg shadow-black/[0.03] min-[1600px]:hidden">
             <nav
-              aria-label={t('nav.main', { defaultValue: 'Main navigation' })}
-              className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-3 sm:px-6"
+              aria-label={t('nav.main')}
+              className='mx-auto flex max-w-7xl flex-col gap-1 px-4 py-3 sm:px-6'
             >
               {mobileNavItems.map((n) => (
                 <Link

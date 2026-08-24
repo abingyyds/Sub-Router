@@ -1447,22 +1447,22 @@ function TokenControlSummary({ token, currency, t }) {
         <span className="px-2 py-0.5 rounded-full text-[11px] bg-page-surface text-page-secondary">
           {t('tokens.ipLimited')}
         </span>
-	  )}
-	  {token.subrouter_route_preference && (
-		<span className="px-2 py-0.5 rounded-full text-[11px] bg-page-surface text-page-secondary">
-		  {token.subrouter_route_preference}
-		</span>
-	  )}
-	  {token.include_shared_subscriptions && (
-		<span className="px-2 py-0.5 rounded-full text-[11px] bg-cyan-500/10 text-cyan-600">
-		  订阅共享
-		</span>
-	  )}
-	  {token.include_provider_self && (
-		<span className="px-2 py-0.5 rounded-full text-[11px] bg-emerald-500/10 text-emerald-600">
-		  {t('tokens.includeProviderSelfBadge')}
-		</span>
-	  )}
+      )}
+      {token.subrouter_route_preference && (
+        <span className='px-2 py-0.5 rounded-full text-[11px] bg-page-surface text-page-secondary'>
+          {token.subrouter_route_preference}
+        </span>
+      )}
+      {token.include_shared_subscriptions && (
+        <span className='px-2 py-0.5 rounded-full text-[11px] bg-cyan-500/10 text-cyan-600'>
+          {t('shared.subscription')}
+        </span>
+      )}
+      {token.include_provider_self && (
+        <span className='px-2 py-0.5 rounded-full text-[11px] bg-emerald-500/10 text-emerald-600'>
+          {t('tokens.includeProviderSelfBadge')}
+        </span>
+      )}
     </div>
   );
 }
@@ -1578,52 +1578,154 @@ function TokenControlFields({
         />
       </label>
 
-	  {showSortMode && (
-		<div className="grid min-w-0 gap-4 md:grid-cols-2">
-		  <div className="min-w-0">
-		  <label className="block text-sm font-medium text-page-label mb-1.5">{t('tokens.routeSortMode')}</label>
-          <select
-            className="input"
-            value={form.subrouter_sort_mode || 'token_price_first'}
-            onChange={(e) => onChange('subrouter_sort_mode', e.target.value)}
-          >
-            <option value="token_price_first">{t('tokens.tokenPriceFirst')}</option>
-            <option value="per_call_price_first">{t('tokens.perCallPriceFirst')}</option>
-		  </select>
-		  </div>
-		  {fullMode && (
-			<div className="min-w-0">
-			  <label className="block text-sm font-medium text-page-label mb-1.5">路由偏好</label>
-			  <select className="input" value={form.subrouter_route_preference} onChange={(event) => onChange('subrouter_route_preference', event.target.value)}>
-				<option value={DEFAULT_SUBROUTER_ROUTE_PREFERENCE}>综合路由</option>
-				<option value="first_token_first">首 Token 延迟优先</option>
-				<option value="stability_first">稳定性优先</option>
-				<option value="authenticity_first">真实性优先</option>
-				<option value="price_first">价格优先</option>
-			  </select>
-			</div>
-		  )}
-		</div>
-	  )}
+      {showSortMode && (
+        <div className='grid min-w-0 gap-4 md:grid-cols-2'>
+          <div className='min-w-0'>
+            <label className='block text-sm font-medium text-page-label mb-1.5'>
+              {t('tokens.routeSortMode')}
+            </label>
+            <select
+              className='input'
+              value={form.subrouter_sort_mode || 'token_price_first'}
+              onChange={(e) => onChange('subrouter_sort_mode', e.target.value)}
+            >
+              <option value='token_price_first'>
+                {t('tokens.tokenPriceFirst')}
+              </option>
+              <option value='per_call_price_first'>
+                {t('tokens.perCallPriceFirst')}
+              </option>
+            </select>
+          </div>
+          {fullMode && (
+            <div className='min-w-0'>
+              <label className='block text-sm font-medium text-page-label mb-1.5'>
+                {t('tokens.routePreference')}
+              </label>
+              <select
+                className='input'
+                value={form.subrouter_route_preference}
+                onChange={(event) =>
+                  onChange('subrouter_route_preference', event.target.value)
+                }
+              >
+                <option value={DEFAULT_SUBROUTER_ROUTE_PREFERENCE}>
+                  {t('tokens.routePreferenceBalanced')}
+                </option>
+                <option value='first_token_first'>
+                  {t('tokens.routePreferenceLatency')}
+                </option>
+                <option value='stability_first'>
+                  {t('tokens.stabilityFirst')}
+                </option>
+                <option value='authenticity_first'>
+                  {t('tokens.authenticityFirst')}
+                </option>
+                <option value='price_first'>{t('tokens.priceFirst')}</option>
+              </select>
+            </div>
+          )}
+        </div>
+      )}
 
-	  {fullMode && (
-		<>
-		  <div className="min-w-0 rounded-xl border border-page-divider bg-page-surface p-4">
-			<div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="text-sm font-medium text-page">普通商家范围</p><p className="mt-1 break-words text-xs text-page-secondary">未单独选择时使用全部本站准入商家。</p></div><span className="shrink-0 text-xs text-page-muted">{selectedProviders.length > 0 ? `${selectedProviders.length}/${providerOptions.length}` : '全部'}</span></div>
-			<div className="mt-3 grid max-h-44 gap-2 overflow-y-auto sm:grid-cols-2">
-			  {providerOptions.map((provider) => <label key={provider.id} className="flex cursor-pointer items-center gap-2 rounded-lg border border-page-divider px-3 py-2 text-sm text-page"><input type="checkbox" checked={selectedProviders.includes(provider.slug)} onChange={() => toggleProvider(provider.slug)} /> <span className="truncate">{provider.company_name}</span></label>)}
-			</div>
-			{firstToken && <label className="mt-3 flex items-center gap-2 text-sm text-page"><input type="checkbox" checked={Boolean(form.auto_subscribe_new)} onChange={(event) => onChange('auto_subscribe_new', event.target.checked)} />以后自动订阅本站新准入商家</label>}
-		  </div>
-		  <div className="min-w-0 rounded-xl border border-page-divider bg-page-surface p-4">
-			<label className="flex items-start justify-between gap-4"><span className="min-w-0"><span className="block text-sm font-medium text-page">{t('tokens.includeProviderSelf')}</span><span className="mt-1 block break-words text-xs text-page-secondary">{t('tokens.includeProviderSelfDesc')}</span></span><input type="checkbox" className="mt-0.5 h-4 w-4 shrink-0" checked={Boolean(form.include_provider_self)} onChange={(event) => onChange('include_provider_self', event.target.checked)} /></label>
-		  </div>
-		  <div className="grid min-w-0 gap-4 md:grid-cols-2">
-			<label className="min-w-0"><span className="mb-1.5 block text-sm font-medium text-page-label">模型商家来源过滤</span><textarea rows={4} className="input max-w-full resize-y break-all font-mono text-xs" value={form.subrouter_model_providers} onChange={(event) => onChange('subrouter_model_providers', event.target.value)} placeholder={'{"gpt-5":["provider-slug"]}'} /></label>
-			<label className="min-w-0"><span className="mb-1.5 block text-sm font-medium text-page-label">模型价格上限</span><textarea rows={4} className="input max-w-full resize-y break-all font-mono text-xs" value={form.subrouter_model_price_limits} onChange={(event) => onChange('subrouter_model_price_limits', event.target.value)} placeholder={'{"gpt-5":{"input":1,"output":5}}'} /></label>
-		  </div>
-		</>
-	  )}
+      {fullMode && (
+        <>
+          <div className='min-w-0 rounded-xl border border-page-divider bg-page-surface p-4'>
+            <div className='flex items-start justify-between gap-3'>
+              <div className='min-w-0'>
+                <p className='text-sm font-medium text-page'>
+                  {t('tokens.standardProviderScope')}
+                </p>
+                <p className='mt-1 break-words text-xs text-page-secondary'>
+                  {t('tokens.standardProviderScopeDesc')}
+                </p>
+              </div>
+              <span className='shrink-0 text-xs text-page-muted'>
+                {selectedProviders.length > 0
+                  ? `${selectedProviders.length}/${providerOptions.length}`
+                  : t('common.all')}
+              </span>
+            </div>
+            <div className='mt-3 grid max-h-44 gap-2 overflow-y-auto sm:grid-cols-2'>
+              {providerOptions.map((provider) => (
+                <label
+                  key={provider.id}
+                  className='flex cursor-pointer items-center gap-2 rounded-lg border border-page-divider px-3 py-2 text-sm text-page'
+                >
+                  <input
+                    type='checkbox'
+                    checked={selectedProviders.includes(provider.slug)}
+                    onChange={() => toggleProvider(provider.slug)}
+                  />{' '}
+                  <span className='truncate'>{provider.company_name}</span>
+                </label>
+              ))}
+            </div>
+            {firstToken && (
+              <label className='mt-3 flex items-center gap-2 text-sm text-page'>
+                <input
+                  type='checkbox'
+                  checked={Boolean(form.auto_subscribe_new)}
+                  onChange={(event) =>
+                    onChange('auto_subscribe_new', event.target.checked)
+                  }
+                />
+                {t('tokens.autoSubscribeNewProviders')}
+              </label>
+            )}
+          </div>
+          <div className='min-w-0 rounded-xl border border-page-divider bg-page-surface p-4'>
+            <label className='flex items-start justify-between gap-4'>
+              <span className='min-w-0'>
+                <span className='block text-sm font-medium text-page'>
+                  {t('tokens.includeProviderSelf')}
+                </span>
+                <span className='mt-1 block break-words text-xs text-page-secondary'>
+                  {t('tokens.includeProviderSelfDesc')}
+                </span>
+              </span>
+              <input
+                type='checkbox'
+                className='mt-0.5 h-4 w-4 shrink-0'
+                checked={Boolean(form.include_provider_self)}
+                onChange={(event) =>
+                  onChange('include_provider_self', event.target.checked)
+                }
+              />
+            </label>
+          </div>
+          <div className='grid min-w-0 gap-4 md:grid-cols-2'>
+            <label className='min-w-0'>
+              <span className='mb-1.5 block text-sm font-medium text-page-label'>
+                {t('tokens.modelProviderFilter')}
+              </span>
+              <textarea
+                rows={4}
+                className='input max-w-full resize-y break-all font-mono text-xs'
+                value={form.subrouter_model_providers}
+                onChange={(event) =>
+                  onChange('subrouter_model_providers', event.target.value)
+                }
+                placeholder={'{"gpt-5":["provider-slug"]}'}
+              />
+            </label>
+            <label className='min-w-0'>
+              <span className='mb-1.5 block text-sm font-medium text-page-label'>
+                {t('tokens.modelPriceLimit')}
+              </span>
+              <textarea
+                rows={4}
+                className='input max-w-full resize-y break-all font-mono text-xs'
+                value={form.subrouter_model_price_limits}
+                onChange={(event) =>
+                  onChange('subrouter_model_price_limits', event.target.value)
+                }
+                placeholder={'{"gpt-5":{"input":1,"output":5}}'}
+              />
+            </label>
+          </div>
+        </>
+      )}
 
       {canLimitModels && (
         <div>

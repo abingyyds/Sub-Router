@@ -1,4 +1,5 @@
-import { parseSharedProxyInput } from "./sharedProxy.js";
+import { parseSharedProxyInput } from './sharedProxy.js';
+import i18n from '../i18n';
 
 export const MAX_SHARED_OAUTH_BATCH_SIZE = 200;
 
@@ -236,7 +237,11 @@ const normalizeOAuthAccount = (account, index, proxyLookup) => {
   );
   const proxy = accountProxy(record, proxyLookup);
   const normalized = {
-    name: String(record.name || record.email || `共享账号 ${index + 1}`).trim(),
+    name: String(
+      record.name ||
+        record.email ||
+        i18n.t('shared.defaultAccountName', { index: index + 1 }),
+    ).trim(),
     platform: String(
       record.platform || record.provider || record.vendor || "",
     ).trim(),
@@ -260,11 +265,11 @@ export const parseSharedAccountBackup = (content) => {
   try {
     parsed = JSON.parse(String(content || ""));
   } catch {
-    throw new Error("账号备份文件不是有效的 JSON");
+    throw new Error(i18n.t('shared.invalidBackupJson'));
   }
   const accounts = accountCollection(parsed);
   if (!accounts?.length) {
-    throw new Error("账号备份文件中没有可识别的账号");
+    throw new Error(i18n.t('shared.noRecognizableAccounts'));
   }
   const proxyLookup = buildProxyLookup(proxyCollection(parsed));
   const normalized = accounts.map((account, index) =>
@@ -275,7 +280,9 @@ export const parseSharedAccountBackup = (content) => {
   );
   if (oauthAccounts.length > MAX_SHARED_OAUTH_BATCH_SIZE) {
     throw new Error(
-      `单次最多导入 ${MAX_SHARED_OAUTH_BATCH_SIZE} 个 OAuth 账号`,
+      i18n.t('shared.maxOauthAccounts', {
+        count: MAX_SHARED_OAUTH_BATCH_SIZE,
+      }),
     );
   }
   return {

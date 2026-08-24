@@ -3,6 +3,7 @@ import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import en from './locales/en.json';
 import zh from './locales/zh.json';
+import siteTranslations from './siteTranslations';
 import {
   APP_LANGUAGE_CODES,
   DIST_SITE_LANGUAGE_STORAGE_KEY,
@@ -28,7 +29,12 @@ const localeBackend = {
       return;
     }
     loader()
-      .then((module) => callback(null, module.default.translation))
+      .then((module) =>
+        callback(null, {
+          ...module.default.translation,
+          ...(siteTranslations[normalizedLanguage] || siteTranslations.en),
+        }),
+      )
       .catch((error) => callback(error, false));
   },
 };
@@ -42,8 +48,18 @@ i18n
     supportedLngs: APP_LANGUAGE_CODES,
     nonExplicitSupportedLngs: true,
     resources: {
-      zh,
-      en,
+      zh: {
+        translation: {
+          ...zh.translation,
+          ...siteTranslations.zh,
+        },
+      },
+      en: {
+        translation: {
+          ...en.translation,
+          ...siteTranslations.en,
+        },
+      },
     },
     partialBundledLanguages: true,
     fallbackLng: 'en',

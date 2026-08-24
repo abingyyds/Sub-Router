@@ -11,16 +11,18 @@ import {
   saveMarketplaceQuickStart,
   subscribeMarketplaceProvider,
   unsubscribeMarketplaceProvider,
-} from "../api";
-import { useAuth } from "../context/AuthContext";
-import { useCurrency } from "../context/SiteContext";
-
+} from '../api';
+import { useAuth } from '../context/AuthContext';
+import { useCurrency } from '../context/SiteContext';
+import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
+const translate = (key, options) => i18n.t(key, options);
 const listData = (response) =>
   response?.data?.data?.items || response?.data?.data || [];
 
 const modelPrice = (item, fmt) => {
   const fixed = Number(item?.fixed_price || item?.final_fixed_price || 0);
-  if (fixed > 0) return `${fmt(fixed, 6)} / call`;
+  if (fixed > 0) return `${fmt(fixed, 6)} / ${translate('common.call')}`;
   const input = Number(item?.input_price || item?.final_input_price || 0);
   const output = Number(item?.output_price || item?.final_output_price || 0);
   if (input <= 0 && output <= 0) return "-";
@@ -28,6 +30,7 @@ const modelPrice = (item, fmt) => {
 };
 
 export default function Marketplace() {
+  useTranslation();
   const { user } = useAuth();
   const { fmt } = useCurrency();
   const [tab, setTab] = useState("models");
@@ -96,7 +99,7 @@ export default function Marketplace() {
 
   const toggleSubscription = async (provider) => {
     if (!user) {
-      toast.error("请先登录");
+      toast.error(translate('请先登录'));
       return;
     }
     const subscribed = Boolean(
@@ -130,7 +133,7 @@ export default function Marketplace() {
         auto_subscribe_new: autoSubscribe,
       });
       if (res.data.success) {
-        toast.success("智能路由商家范围已保存");
+        toast.success(translate('智能路由商家范围已保存'));
         setQuickStart(null);
         await load();
       }
@@ -143,9 +146,11 @@ export default function Marketplace() {
     <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
       <div className="flex flex-col gap-4 border-b border-page-divider pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-page sm:text-3xl">模型市场</h1>
-          <p className="mt-1 text-sm text-page-secondary">
-            本站准入商家、最终售价和实时可用模型。
+          <h1 className='text-2xl font-bold text-page sm:text-3xl'>
+            {translate('模型市场')}
+          </h1>
+          <p className='mt-1 text-sm text-page-secondary'>
+            {translate('本站准入商家、最终售价和实时可用模型。')}
           </p>
         </div>
         <div className="flex gap-2">
@@ -155,14 +160,14 @@ export default function Marketplace() {
               onClick={openQuickStart}
               className="btn-primary"
             >
-              智能路由快速开始
+              {translate('智能路由快速开始')}
             </button>
           )}
           <button
             type="button"
             onClick={load}
-            className="btn-secondary"
-            title="刷新"
+            className='btn-secondary'
+            title={translate('刷新')}
           >
             <RefreshCw size={16} />
           </button>
@@ -172,9 +177,9 @@ export default function Marketplace() {
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="inline-flex rounded-lg border border-page-divider bg-page-surface p-1">
           {[
-            ["models", "模型"],
-            ["rankings", "排行"],
-            ["providers", "商家"],
+            ['models', translate('模型')],
+            ['rankings', translate('排行')],
+            ['providers', translate('商家')],
           ].map(([value, label]) => (
             <button
               key={value}
@@ -191,8 +196,8 @@ export default function Marketplace() {
           <input
             value={keyword}
             onChange={(event) => setKeyword(event.target.value)}
-            className="input pl-9"
-            placeholder="搜索模型或商家"
+            className='input pl-9'
+            placeholder={translate('搜索模型或商家')}
           />
         </label>
       </div>
@@ -213,8 +218,10 @@ export default function Marketplace() {
                   <p className="truncate font-mono text-sm font-semibold text-page">
                     {item.model_name || item.name}
                   </p>
-                  <p className="mt-1 text-xs text-page-muted">
-                    {item.provider_name || item.provider_slug || "智能路由"}
+                  <p className='mt-1 text-xs text-page-muted'>
+                    {item.provider_name ||
+                      item.provider_slug ||
+                      translate('智能路由')}
                   </p>
                 </div>
                 <Boxes size={18} className="shrink-0 text-page-link" />
@@ -222,9 +229,10 @@ export default function Marketplace() {
               <p className="mt-4 text-sm font-semibold text-page">
                 {modelPrice(item, fmt)}
               </p>
-              <p className="mt-1 text-xs text-page-secondary">
-                {item.category || "AI model"} ·{" "}
-                {Number(item.context_length || 0).toLocaleString()} context
+              <p className='mt-1 text-xs text-page-secondary'>
+                {item.category || translate('marketplace.aiModel')} ·{' '}
+                {Number(item.context_length || 0).toLocaleString()}{' '}
+                {translate('marketplace.context')}
               </p>
             </div>
           ))}
@@ -247,8 +255,9 @@ export default function Marketplace() {
                   {item.provider_name || item.provider_slug}
                 </p>
               </div>
-              <div className="text-sm text-page-secondary">
-                {Number(item.total_tokens || 0).toLocaleString()} tokens
+              <div className='text-sm text-page-secondary'>
+                {Number(item.total_tokens || 0).toLocaleString()}{' '}
+                {translate('marketplace.tokens')}
               </div>
               <div className="text-sm font-semibold text-page">
                 {modelPrice(item, fmt)}
@@ -291,9 +300,17 @@ export default function Marketplace() {
                     </p>
                   </div>
                 </div>
-                <div className="mt-4 flex items-center justify-between text-xs text-page-muted">
-                  <span>{provider.model_count || 0} models</span>
-                  <span>{Number(provider.rating || 0).toFixed(1)} rating</span>
+                <div className='mt-4 flex items-center justify-between text-xs text-page-muted'>
+                  <span>
+                    {translate('marketplace.modelCount', {
+                      count: provider.model_count || 0,
+                    })}
+                  </span>
+                  <span>
+                    {translate('marketplace.ratingValue', {
+                      value: Number(provider.rating || 0).toFixed(1),
+                    })}
+                  </span>
                 </div>
                 <button
                   type="button"
@@ -306,11 +323,11 @@ export default function Marketplace() {
                 >
                   {subscribed ? (
                     <>
-                      <Check size={15} className="mr-1.5" />
-                      已订阅
+                      <Check size={15} className='mr-1.5' />
+                      {translate('已订阅')}
                     </>
                   ) : (
-                    "订阅商家"
+                    translate('订阅商家')
                   )}
                 </button>
               </div>
@@ -328,9 +345,9 @@ export default function Marketplace() {
             className="flex max-h-[calc(100dvh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-lg bg-page-surface shadow-xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="border-b border-page-divider px-5 py-4">
-              <h2 className="text-lg font-semibold text-page">
-                选择智能路由商家
+            <div className='border-b border-page-divider px-5 py-4'>
+              <h2 className='text-lg font-semibold text-page'>
+                {translate('选择智能路由商家')}
               </h2>
             </div>
             <div className="min-h-0 max-h-[55vh] flex-1 space-y-2 overflow-y-auto p-5">
@@ -370,7 +387,7 @@ export default function Marketplace() {
                   checked={autoSubscribe}
                   onChange={(event) => setAutoSubscribe(event.target.checked)}
                 />
-                以后自动订阅本站新准入商家
+                {translate('以后自动订阅本站新准入商家')}
               </label>
             </div>
             <div className="flex justify-end gap-3 border-t border-page-divider px-5 py-4">
@@ -379,7 +396,7 @@ export default function Marketplace() {
                 className="btn-secondary"
                 onClick={() => setQuickStart(null)}
               >
-                取消
+                {translate('取消')}
               </button>
               <button
                 type="button"
@@ -387,7 +404,7 @@ export default function Marketplace() {
                 disabled={savingQuickStart}
                 onClick={saveQuickStart}
               >
-                {savingQuickStart ? "保存中" : "保存范围"}
+                {savingQuickStart ? translate('保存中') : translate('保存范围')}
               </button>
             </div>
           </div>

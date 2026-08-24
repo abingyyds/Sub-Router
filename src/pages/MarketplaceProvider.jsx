@@ -25,11 +25,14 @@ import {
   subscribeMarketplaceProvider,
   unsubscribeMarketplaceProvider,
   updateMarketplaceReview,
-} from "../api";
-import { useAuth } from "../context/AuthContext";
-import { useCurrency } from "../context/SiteContext";
-
+} from '../api';
+import { useAuth } from '../context/AuthContext';
+import { useCurrency } from '../context/SiteContext';
+import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
+const translate = (key, options) => i18n.t(key, options);
 export default function MarketplaceProvider() {
+  useTranslation();
   const { slug } = useParams();
   const { user } = useAuth();
   const { fmt } = useCurrency();
@@ -126,7 +129,7 @@ export default function MarketplaceProvider() {
   }, [slug, user]);
 
   const toggle = async () => {
-    if (!user) return toast.error("请先登录");
+    if (!user) return toast.error(translate('请先登录'));
     const res = subscribed
       ? await unsubscribeMarketplaceProvider(provider.id)
       : await subscribeMarketplaceProvider(provider.id);
@@ -135,7 +138,7 @@ export default function MarketplaceProvider() {
 
   const submitReview = async () => {
     if (!provider || rating < 1 || rating > 5) {
-      toast.error("请选择 1-5 星评分");
+      toast.error(translate('请选择 1-5 星评分'));
       return;
     }
     setSubmittingReview(true);
@@ -154,7 +157,7 @@ export default function MarketplaceProvider() {
         : await createMarketplaceReview(payload);
       if (res.data.success) {
         setMyReview(res.data.data || myReview);
-        toast.success(res.data.message || "评价已保存");
+        toast.success(res.data.message || translate('评价已保存'));
         await loadReviews(provider.id);
       }
     } finally {
@@ -170,8 +173,8 @@ export default function MarketplaceProvider() {
       if (res.data.success) {
         setMyReview(null);
         setRating(0);
-        setContent("");
-        toast.success(res.data.message || "评价已删除");
+        setContent('');
+        toast.success(res.data.message || translate('评价已删除'));
         await loadReviews(provider.id);
       }
     } finally {
@@ -187,8 +190,8 @@ export default function MarketplaceProvider() {
     );
   if (!provider)
     return (
-      <div className="mx-auto max-w-5xl px-4 py-12 text-page">
-        商家不存在或未被本站准入。
+      <div className='mx-auto max-w-5xl px-4 py-12 text-page'>
+        {translate('商家不存在或未被本站准入。')}
       </div>
     );
 
@@ -198,8 +201,8 @@ export default function MarketplaceProvider() {
         to="/marketplace"
         className="mb-5 inline-flex items-center text-sm text-page-secondary hover:text-page"
       >
-        <ArrowLeft size={16} className="mr-2" />
-        返回市场
+        <ArrowLeft size={16} className='mr-2' />
+        {translate('返回市场')}
       </Link>
       <section className="border-b border-page-divider pb-6">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
@@ -230,45 +233,50 @@ export default function MarketplaceProvider() {
             onClick={toggle}
             className={subscribed ? "btn-secondary" : "btn-primary"}
           >
-            {subscribed && <Check size={15} className="mr-1.5" />}
-            {subscribed ? "已订阅" : "订阅商家"}
+            {subscribed && <Check size={15} className='mr-1.5' />}
+            {subscribed ? translate('已订阅') : translate('订阅商家')}
           </button>
         </div>
       </section>
       <section className="grid border-b border-page-divider py-6 sm:grid-cols-3">
         <HealthMetric
           icon={Activity}
-          label="24 小时成功率"
+          label={translate('24 小时成功率')}
           value={
             probeSummary.successRate === null
-              ? "暂无数据"
+              ? translate('暂无数据')
               : `${probeSummary.successRate.toFixed(2)}%`
           }
         />
         <HealthMetric
           icon={Clock3}
-          label="成功请求平均延迟"
+          label={translate('成功请求平均延迟')}
           value={
             probeSummary.averageLatency === null
-              ? "暂无数据"
+              ? translate('暂无数据')
               : `${Math.round(probeSummary.averageLatency)} ms`
           }
         />
         <HealthMetric
           icon={Store}
-          label="24 小时探测请求"
+          label={translate('24 小时探测请求')}
           value={
             probeSummary.total > 0
-              ? `${probeSummary.total.toLocaleString()} 次 / ${probeSummary.modelCount} 个模型`
-              : "暂无数据"
+              ? translate('{{value1}} 次 / {{value2}} 个模型', {
+                  value1: probeSummary.total.toLocaleString(),
+                  value2: probeSummary.modelCount,
+                })
+              : translate('暂无数据')
           }
         />
       </section>
       {announcements.length > 0 && (
-        <section className="border-b border-page-divider py-7">
-          <div className="flex items-center gap-2">
-            <Megaphone size={18} className="text-page-link" />
-            <h2 className="text-lg font-semibold text-page">商家公告</h2>
+        <section className='border-b border-page-divider py-7'>
+          <div className='flex items-center gap-2'>
+            <Megaphone size={18} className='text-page-link' />
+            <h2 className='text-lg font-semibold text-page'>
+              {translate('商家公告')}
+            </h2>
           </div>
           <div className="mt-4 divide-y divide-page-divider border-y border-page-divider">
             {announcements.map((announcement) => (
@@ -288,16 +296,18 @@ export default function MarketplaceProvider() {
           </div>
         </section>
       )}
-      <section className="py-7">
-        <h2 className="text-lg font-semibold text-page">可用模型</h2>
-        <div className="mt-4 overflow-x-auto rounded-lg border border-page-divider">
-          <table className="w-full min-w-[680px] text-sm">
-            <thead className="bg-page-inset text-left text-page-muted">
+      <section className='py-7'>
+        <h2 className='text-lg font-semibold text-page'>
+          {translate('可用模型')}
+        </h2>
+        <div className='mt-4 overflow-x-auto rounded-lg border border-page-divider'>
+          <table className='w-full min-w-[680px] text-sm'>
+            <thead className='bg-page-inset text-left text-page-muted'>
               <tr>
-                <th className="px-4 py-3">模型</th>
-                <th className="px-4 py-3">类型</th>
-                <th className="px-4 py-3">上下文</th>
-                <th className="px-4 py-3">本站最终价格</th>
+                <th className='px-4 py-3'>{translate('模型')}</th>
+                <th className='px-4 py-3'>{translate('类型')}</th>
+                <th className='px-4 py-3'>{translate('上下文')}</th>
+                <th className='px-4 py-3'>{translate('本站最终价格')}</th>
               </tr>
             </thead>
             <tbody>
@@ -313,7 +323,7 @@ export default function MarketplaceProvider() {
                   </td>
                   <td className="px-4 py-3">
                     {Number(model.fixed_price || 0) > 0
-                      ? `${fmt(model.fixed_price, 6)} / call`
+                      ? `${fmt(model.fixed_price, 6)} / ${translate('common.call')}`
                       : `${fmt(model.input_price || 0, 6)} / ${fmt(model.output_price || 0, 6)} / M`}
                   </td>
                 </tr>
@@ -322,8 +332,10 @@ export default function MarketplaceProvider() {
           </table>
         </div>
       </section>
-      <section className="border-t border-page-divider py-7">
-        <h2 className="text-lg font-semibold text-page">用户评价</h2>
+      <section className='border-t border-page-divider py-7'>
+        <h2 className='text-lg font-semibold text-page'>
+          {translate('用户评价')}
+        </h2>
         {user && (
           <div className="mt-4 border-b border-page-divider pb-5">
             <div className="flex items-center gap-1">
@@ -332,8 +344,10 @@ export default function MarketplaceProvider() {
                   key={value}
                   type="button"
                   onClick={() => setRating(value)}
-                  className="rounded p-1"
-                  aria-label={`${value} 星`}
+                  className='rounded p-1'
+                  aria-label={translate('{{value1}} 星', {
+                    value1: value,
+                  })}
                 >
                   <Star
                     size={20}
@@ -351,7 +365,7 @@ export default function MarketplaceProvider() {
               onChange={(event) => setContent(event.target.value)}
               className="input mt-3 min-h-24 resize-y"
               maxLength={2000}
-              placeholder="分享实际使用体验"
+              placeholder={translate('分享实际使用体验')}
             />
             <div className="mt-3 flex justify-end gap-2">
               {myReview && (
@@ -361,8 +375,8 @@ export default function MarketplaceProvider() {
                   disabled={submittingReview}
                   onClick={removeReview}
                 >
-                  <Trash2 size={15} className="mr-1.5" />
-                  删除
+                  <Trash2 size={15} className='mr-1.5' />
+                  {translate('删除')}
                 </button>
               )}
               <button
@@ -376,14 +390,14 @@ export default function MarketplaceProvider() {
                 ) : (
                   <Save size={15} className="mr-1.5" />
                 )}
-                {myReview ? "更新评价" : "提交评价"}
+                {myReview ? translate('更新评价') : translate('提交评价')}
               </button>
             </div>
           </div>
         )}
         <div className="mt-4 space-y-3">
           {reviews.length === 0 ? (
-            <p className="text-sm text-page-muted">暂无评价</p>
+            <p className='text-sm text-page-muted'>{translate('暂无评价')}</p>
           ) : (
             reviews.map((review) => (
               <div

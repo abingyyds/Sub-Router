@@ -48,9 +48,11 @@ import { useCurrency, useSite } from "../context/SiteContext";
 import {
   SHARED_ACCOUNT_IMPORT_EXAMPLE,
   parseSharedAccountBackup,
-} from "../utils/sharedAccountBatchImport";
-import { parseSharedProxyInput } from "../utils/sharedProxy";
-
+} from '../utils/sharedAccountBatchImport';
+import { parseSharedProxyInput } from '../utils/sharedProxy';
+import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
+const translate = (key, options) => i18n.t(key, options);
 const dataOf = (response) => response?.data?.data || {};
 
 const downloadJSONExample = (filename, value) => {
@@ -81,6 +83,7 @@ const providerStateFromURL = (url) => {
 };
 
 export default function SharedSubscriptions() {
+  useTranslation();
   const { fmt } = useCurrency();
   const { site } = useSite();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -163,21 +166,23 @@ export default function SharedSubscriptions() {
   const createPlanKey = async (entry, smart = false) => {
     if (!entry?.plan?.id) return;
     try {
-      const suffix = smart ? "智能路由" : "固定";
+      const suffix = smart ? translate('智能路由') : translate('固定');
       const response = await createSharedPlanToken(
         entry.plan.id,
         `${entry.plan.title} ${suffix} Key`,
         smart,
       );
       if (!response.data.success) {
-        throw new Error(response.data.message || "生成 Key 失败");
+        throw new Error(response.data.message || translate('生成 Key 失败'));
       }
       setGeneratedToken(response.data.data);
-      toast.success("Key 已生成");
+      toast.success(translate('Key 已生成'));
       await load();
     } catch (error) {
       toast.error(
-        error.response?.data?.message || error.message || "生成 Key 失败",
+        error.response?.data?.message ||
+          error.message ||
+          translate('生成 Key 失败'),
       );
     }
   };
@@ -193,7 +198,9 @@ export default function SharedSubscriptions() {
       setProbeData(dataOf(response));
     } catch (error) {
       toast.error(
-        error.response?.data?.message || error.message || "可用度加载失败",
+        error.response?.data?.message ||
+          error.message ||
+          translate('可用度加载失败'),
       );
       setProbeData(null);
     } finally {
@@ -204,8 +211,8 @@ export default function SharedSubscriptions() {
   const saveProfile = async () => {
     const response = await saveSharedPaymentProfile(paymentForm);
     if (response.data.success) {
-      toast.success("收款资料已保存");
-      setPaymentForm((previous) => ({ ...previous, details: "" }));
+      toast.success(translate('收款资料已保存'));
+      setPaymentForm((previous) => ({ ...previous, details: '' }));
       await load();
     }
   };
@@ -214,22 +221,22 @@ export default function SharedSubscriptions() {
 
   const transfer = async () => {
     if (amountQuota() <= 0) {
-      toast.error("请输入金额");
+      toast.error(translate('请输入金额'));
       return;
     }
     const response = await transferSharedEarnings({
       amount_quota: amountQuota(),
     });
     if (response.data.success) {
-      toast.success("已转入账户余额");
-      setAmount("");
+      toast.success(translate('已转入账户余额'));
+      setAmount('');
       await load();
     }
   };
 
   const payout = async () => {
     if (amountQuota() <= 0) {
-      toast.error("请输入金额");
+      toast.error(translate('请输入金额'));
       return;
     }
     const method = profile?.method || paymentForm.method;
@@ -239,8 +246,8 @@ export default function SharedSubscriptions() {
       note: "",
     });
     if (response.data.success) {
-      toast.success("提现申请已提交");
-      setAmount("");
+      toast.success(translate('提现申请已提交'));
+      setAmount('');
       await load();
     }
   };
@@ -263,27 +270,29 @@ export default function SharedSubscriptions() {
   );
   const metrics = [
     {
-      label: "可用收益",
+      label: translate('可用收益'),
       value: fmt(Number(earnings.wallet?.available_quota || 0) / Q, 2),
-      note: "可转入平台余额或申请提现",
+      note: translate('可转入平台余额或申请提现'),
       icon: Wallet,
     },
     {
-      label: "待释放收益",
+      label: translate('待释放收益'),
       value: fmt(Number(earnings.wallet?.pending_quota || 0) / Q, 2),
-      note: "调用后 7 天自动释放",
+      note: translate('调用后 7 天自动释放'),
       icon: Clock3,
     },
     {
-      label: "累计收益",
+      label: translate('累计收益'),
       value: fmt(Number(earnings.wallet?.lifetime_quota || 0) / Q, 2),
-      note: `近 30 天 ${fmt(Number(earnings.last_30_days_quota || 0) / Q, 2)}`,
+      note: translate('近 30 天 {{value1}}', {
+        value1: fmt(Number(earnings.last_30_days_quota || 0) / Q, 2),
+      }),
       icon: HandCoins,
     },
     {
-      label: "在线容量",
+      label: translate('在线容量'),
       value: `${onlineAccounts} / ${hostedAccounts.length}`,
-      note: "已启用账号 / 全部账号",
+      note: translate('已启用账号 / 全部账号'),
       icon: UsersRound,
     },
   ];
@@ -300,9 +309,11 @@ export default function SharedSubscriptions() {
     <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
       <div className="flex flex-col gap-4 border-b border-page-divider pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-page sm:text-3xl">订阅共享</h1>
-          <p className="mt-1 text-sm text-page-secondary">
-            使用站长已进货上架的共享套餐、贡献账号并管理收益
+          <h1 className='text-2xl font-bold text-page sm:text-3xl'>
+            {translate('订阅共享')}
+          </h1>
+          <p className='mt-1 text-sm text-page-secondary'>
+            {translate('使用站长已进货上架的共享套餐、贡献账号并管理收益')}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -314,8 +325,8 @@ export default function SharedSubscriptions() {
               setBatchOpen(true);
             }}
           >
-            <FileUp size={16} className="mr-2" />
-            批量导入
+            <FileUp size={16} className='mr-2' />
+            {translate('批量导入')}
           </button>
           <button
             type="button"
@@ -326,15 +337,15 @@ export default function SharedSubscriptions() {
               setImportOpen(true);
             }}
           >
-            <UserRoundPlus size={16} className="mr-2" />
-            添加托管账号
+            <UserRoundPlus size={16} className='mr-2' />
+            {translate('添加托管账号')}
           </button>
           <button
             type="button"
             className="btn-secondary"
             onClick={load}
-            title="刷新"
-            aria-label="刷新"
+            title={translate('刷新')}
+            aria-label={translate('刷新')}
           >
             <RefreshCw size={16} />
           </button>
@@ -365,11 +376,11 @@ export default function SharedSubscriptions() {
 
       <div className="mt-5 flex max-w-full overflow-x-auto border-b border-page-divider">
         {[
-          ["market", "共享市场"],
-          ["hosting", "托管账号"],
-          ["earnings", "收益明细"],
-          ["settlement", "结算"],
-          ["rules", "规则与费率"],
+          ['market', translate('共享市场')],
+          ['hosting', translate('托管账号')],
+          ['earnings', translate('收益明细')],
+          ['settlement', translate('结算')],
+          ['rules', translate('规则与费率')],
         ].map(([value, label]) => (
           <button
             key={value}
@@ -390,8 +401,8 @@ export default function SharedSubscriptions() {
         <div className="mt-6 space-y-6">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {plans.length === 0 ? (
-              <div className="col-span-full rounded-lg border border-dashed border-page-divider px-5 py-12 text-center text-sm text-page-muted">
-                "当前没有已上架且健康可调度的共享套餐"
+              <div className='col-span-full rounded-lg border border-dashed border-page-divider px-5 py-12 text-center text-sm text-page-muted'>
+                {translate('当前没有已上架且健康可调度的共享套餐')}
               </div>
             ) : (
               plans.map((entry) => (
@@ -408,8 +419,8 @@ export default function SharedSubscriptions() {
                         <h2 className="truncate font-semibold text-page">
                           {entry.plan.title}
                         </h2>
-                        <span className="rounded border border-page-divider px-1.5 py-0.5 text-[10px] font-medium text-page-link">
-                          平台官方
+                        <span className='rounded border border-page-divider px-1.5 py-0.5 text-[10px] font-medium text-page-link'>
+                          {translate('平台官方')}
                         </span>
                       </div>
                       <p className="mt-0.5 truncate text-xs text-page-muted">
@@ -421,14 +432,16 @@ export default function SharedSubscriptions() {
 
                   <p className="mt-3 min-h-10 text-sm leading-5 text-page-secondary">
                     {entry.plan.description ||
-                      `平台官方运营的 ${entry.plan.title} 订阅共享池`}
+                      translate('平台官方运营的 {{value1}} 订阅共享池', {
+                        value1: entry.plan.title,
+                      })}
                   </p>
 
                   {entry.pool_status?.total_accounts > 0 && (
-                    <div className="mt-3 border-y border-page-divider py-3">
-                      <div className="flex items-center justify-between gap-3 text-xs">
-                        <span className="font-medium text-page">
-                          号池实时状态
+                    <div className='mt-3 border-y border-page-divider py-3'>
+                      <div className='flex items-center justify-between gap-3 text-xs'>
+                        <span className='font-medium text-page'>
+                          {translate('号池实时状态')}
                         </span>
                         <span
                           className={
@@ -438,7 +451,8 @@ export default function SharedSubscriptions() {
                           }
                         >
                           {entry.pool_status.available_accounts}/
-                          {entry.pool_status.total_accounts} 可用
+                          {entry.pool_status.total_accounts}
+                          {translate('可用')}
                         </span>
                       </div>
                       <div className="mt-2 grid grid-cols-3 gap-2 text-center">
@@ -447,16 +461,16 @@ export default function SharedSubscriptions() {
                             {entry.pool_status.available_concurrency}/
                             {entry.pool_status.total_concurrency}
                           </div>
-                          <div className="text-[11px] text-page-muted">
-                            并发容量
+                          <div className='text-[11px] text-page-muted'>
+                            {translate('并发容量')}
                           </div>
                         </div>
                         <div>
                           <div className="font-semibold tabular-nums text-amber-600 dark:text-amber-400">
                             {entry.pool_status.rate_limited_accounts || 0}
                           </div>
-                          <div className="text-[11px] text-page-muted">
-                            限流账号
+                          <div className='text-[11px] text-page-muted'>
+                            {translate('限流账号')}
                           </div>
                         </div>
                         <div>
@@ -471,8 +485,8 @@ export default function SharedSubscriptions() {
                                 ),
                             )}
                           </div>
-                          <div className="text-[11px] text-page-muted">
-                            其他不可用
+                          <div className='text-[11px] text-page-muted'>
+                            {translate('其他不可用')}
                           </div>
                         </div>
                       </div>
@@ -482,7 +496,7 @@ export default function SharedSubscriptions() {
                           {entry.pool_status.next_recovery_at && (
                             <span className="inline-flex items-center gap-1">
                               <Clock3 size={11} />
-                              最近恢复{" "}
+                              {translate('最近恢复')}{' '}
                               {new Date(
                                 entry.pool_status.next_recovery_at,
                               ).toLocaleString()}
@@ -490,7 +504,7 @@ export default function SharedSubscriptions() {
                           )}
                           {entry.pool_status.last_synced_at && (
                             <span>
-                              同步于{" "}
+                              {translate('同步于')}{' '}
                               {new Date(
                                 entry.pool_status.last_synced_at,
                               ).toLocaleString()}
@@ -506,13 +520,17 @@ export default function SharedSubscriptions() {
                       <div className="text-sm font-semibold text-page">
                         {entry.models?.length || 0}
                       </div>
-                      <div className="text-[11px] text-page-muted">模型</div>
+                      <div className='text-[11px] text-page-muted'>
+                        {translate('模型')}
+                      </div>
                     </div>
                     <div>
                       <div className="text-sm font-semibold text-page">
                         {entry.subscription_count || 0}
                       </div>
-                      <div className="text-[11px] text-page-muted">订阅</div>
+                      <div className='text-[11px] text-page-muted'>
+                        {translate('订阅')}
+                      </div>
                     </div>
                     <div>
                       <div className="text-sm font-semibold text-page">
@@ -520,7 +538,9 @@ export default function SharedSubscriptions() {
                           ? `${Number(entry.availability).toFixed(1)}%`
                           : "--"}
                       </div>
-                      <div className="text-[11px] text-page-muted">可用度</div>
+                      <div className='text-[11px] text-page-muted'>
+                        {translate('可用度')}
+                      </div>
                     </div>
                   </div>
 
@@ -539,8 +559,10 @@ export default function SharedSubscriptions() {
                       </div>
                     ))}
                     {(entry.models || []).length > 4 && (
-                      <p className="text-xs text-page-muted">
-                        另有 {(entry.models || []).length - 4} 个模型
+                      <p className='text-xs text-page-muted'>
+                        {translate('另有 {{count}} 个模型', {
+                          count: (entry.models || []).length - 4,
+                        })}
                       </p>
                     )}
                   </div>
@@ -551,16 +573,16 @@ export default function SharedSubscriptions() {
                       className="btn-primary"
                       onClick={() => createPlanKey(entry, false)}
                     >
-                      <KeyRound size={15} className="mr-1.5" />
-                      生成固定 Key
+                      <KeyRound size={15} className='mr-1.5' />
+                      {translate('生成固定 Key')}
                     </button>
                     <button
                       type="button"
                       className="btn-secondary"
                       onClick={() => loadPlanProbes(entry)}
                     >
-                      <ShieldCheck size={15} className="mr-1.5" />
-                      查看可用度
+                      <ShieldCheck size={15} className='mr-1.5' />
+                      {translate('查看可用度')}
                     </button>
                     {fullMode && (
                       <button
@@ -568,8 +590,8 @@ export default function SharedSubscriptions() {
                         className="btn-secondary"
                         onClick={() => createPlanKey(entry, true)}
                       >
-                        <KeyRound size={15} className="mr-1.5" />
-                        智能路由 Key
+                        <KeyRound size={15} className='mr-1.5' />
+                        {translate('智能路由 Key')}
                       </button>
                     )}
                     <button
@@ -581,8 +603,8 @@ export default function SharedSubscriptions() {
                         setImportOpen(true);
                       }}
                     >
-                      <Upload size={15} className="mr-1.5" />
-                      接入账号
+                      <Upload size={15} className='mr-1.5' />
+                      {translate('接入账号')}
                     </button>
                   </div>
                 </article>
@@ -593,7 +615,14 @@ export default function SharedSubscriptions() {
           <SharedKeyManager
             tokens={sharedTokens}
             onDelete={async (token) => {
-              if (!window.confirm(`确认删除 Key「${token.name}」？`)) return;
+              if (
+                !window.confirm(
+                  translate('确认删除 Key「{{value1}}」？', {
+                    value1: token.name,
+                  }),
+                )
+              )
+                return;
               await deleteToken(token.id);
               await load();
             }}
@@ -627,33 +656,41 @@ export default function SharedSubscriptions() {
             await load();
           }}
           onDelete={async (account) => {
-            if (!window.confirm("确认删除这个共享账号？")) return;
+            if (!window.confirm(translate('确认删除这个共享账号？'))) return;
             await deleteSharedAccount(account.id);
-            toast.success("已删除");
+            toast.success(translate('已删除'));
             await load();
           }}
         />
       )}
 
-      {tab === "earnings" && (
-        <section className="mt-6">
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold text-page">收益明细</h2>
-            <p className="mt-1 text-sm text-page-muted">
-              每笔收益对应真实用量，并按调用发生时保存的分成比例计算。
+      {tab === 'earnings' && (
+        <section className='mt-6'>
+          <div className='mb-4'>
+            <h2 className='text-lg font-semibold text-page'>
+              {translate('收益明细')}
+            </h2>
+            <p className='mt-1 text-sm text-page-muted'>
+              {translate(
+                '每笔收益对应真实用量，并按调用发生时保存的分成比例计算。',
+              )}
             </p>
           </div>
           <div className="overflow-x-auto rounded-lg border border-page-divider">
             <table className="w-full min-w-[840px] text-sm">
               <thead className="bg-page-inset text-left text-page-muted">
                 <tr>
-                  <th className="px-4 py-3">调用时间</th>
-                  <th className="px-4 py-3">托管账号</th>
-                  <th className="px-4 py-3">模型</th>
-                  <th className="px-4 py-3 text-right">计费金额</th>
-                  <th className="px-4 py-3 text-right">分成比例</th>
-                  <th className="px-4 py-3 text-right">收益</th>
-                  <th className="px-4 py-3">释放状态</th>
+                  <th className='px-4 py-3'>{translate('调用时间')}</th>
+                  <th className='px-4 py-3'>{translate('托管账号')}</th>
+                  <th className='px-4 py-3'>{translate('模型')}</th>
+                  <th className='px-4 py-3 text-right'>
+                    {translate('计费金额')}
+                  </th>
+                  <th className='px-4 py-3 text-right'>
+                    {translate('分成比例')}
+                  </th>
+                  <th className='px-4 py-3 text-right'>{translate('收益')}</th>
+                  <th className='px-4 py-3'>{translate('释放状态')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -663,7 +700,7 @@ export default function SharedSubscriptions() {
                       colSpan={7}
                       className="px-4 py-12 text-center text-page-muted"
                     >
-                      暂无收益记录
+                      {translate('暂无收益记录')}
                     </td>
                   </tr>
                 ) : (
@@ -680,7 +717,9 @@ export default function SharedSubscriptions() {
                       <td className="px-4 py-3">
                         {item.account_name ||
                           item.plan_title ||
-                          `Supply #${item.supply_id}`}
+                          translate('shared.supplyNumber', {
+                            id: item.supply_id,
+                          })}
                       </td>
                       <td className="px-4 py-3 font-mono text-xs">
                         {item.model_name || "-"}
@@ -694,8 +733,10 @@ export default function SharedSubscriptions() {
                       <td className="px-4 py-3 text-right">
                         {fmt(Number(item.amount_quota || 0) / Q, 6)}
                       </td>
-                      <td className="px-4 py-3">
-                        {item.released_at ? "已释放" : "待释放"}
+                      <td className='px-4 py-3'>
+                        {item.released_at
+                          ? translate('已释放')
+                          : translate('待释放')}
                       </td>
                     </tr>
                   ))
@@ -709,10 +750,13 @@ export default function SharedSubscriptions() {
       {tab === "rules" && (
         <section className="mt-6 space-y-5">
           <div>
-            <h2 className="text-lg font-semibold text-page">托管规则与分成</h2>
-            <p className="mt-1 text-sm text-page-muted">
-              贡献者分成遵循平台套餐配置；分站订单剩余抽成由站长与主平台各获得
-              50%。
+            <h2 className='text-lg font-semibold text-page'>
+              {translate('托管规则与分成')}
+            </h2>
+            <p className='mt-1 text-sm text-page-muted'>
+              {translate(
+                '贡献者分成遵循平台套餐配置；分站订单剩余抽成由站长与主平台各获得 50%。',
+              )}
             </p>
           </div>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
@@ -721,9 +765,11 @@ export default function SharedSubscriptions() {
                 key={plan.id}
                 className="rounded-lg border border-page-divider bg-page-surface p-4"
               >
-                <p className="font-medium text-page">{plan.title}</p>
-                <p className="mt-3 text-xs text-page-muted">贡献者分成</p>
-                <p className="mt-1 text-xl font-semibold text-page">
+                <p className='font-medium text-page'>{plan.title}</p>
+                <p className='mt-3 text-xs text-page-muted'>
+                  {translate('贡献者分成')}
+                </p>
+                <p className='mt-1 text-xl font-semibold text-page'>
                   {(Number(plan.contributor_revenue_bps || 0) / 100).toFixed(1)}
                   %
                 </p>
@@ -733,29 +779,33 @@ export default function SharedSubscriptions() {
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
             {[
               [
-                "01",
-                "即时上线与套餐检测",
-                "OAuth 账号导入并通过测试后立即进入调度，套餐和模型自动识别。",
+                '01',
+                translate('即时上线与套餐检测'),
+                translate(
+                  'OAuth 账号导入并通过测试后立即进入调度，套餐和模型自动识别。',
+                ),
               ],
               [
-                "02",
-                "按真实用量计费",
-                "只有账号实际承担且成功计费的请求才会生成收益记录。",
+                '02',
+                translate('按真实用量计费'),
+                translate('只有账号实际承担且成功计费的请求才会生成收益记录。'),
               ],
               [
-                "03",
-                "7 天收益成熟期",
-                "新收益先进入待释放状态，成熟后转为可用收益。",
+                '03',
+                translate('7 天收益成熟期'),
+                translate('新收益先进入待释放状态，成熟后转为可用收益。'),
               ],
               [
-                "04",
-                "账号自主控制",
-                "可随时暂停、恢复或移除账号，暂停后不再承接新请求。",
+                '04',
+                translate('账号自主控制'),
+                translate('可随时暂停、恢复或移除账号，暂停后不再承接新请求。'),
               ],
               [
-                "05",
-                "分站抽成结算",
-                "贡献者分成后的抽成，50% 进入站长收益，50% 留给主平台。",
+                '05',
+                translate('分站抽成结算'),
+                translate(
+                  '贡献者分成后的抽成，50% 进入站长收益，50% 留给主平台。',
+                ),
               ],
             ].map(([index, title, description]) => (
               <article
@@ -782,23 +832,25 @@ export default function SharedSubscriptions() {
           <div className="grid gap-3 sm:grid-cols-3">
             <Metric
               icon={Wallet}
-              label="可提现收益"
+              label={translate('可提现收益')}
               value={fmt(Number(earnings.wallet?.available_quota || 0) / Q, 4)}
             />
             <Metric
               icon={CircleDollarSign}
-              label="待释放收益"
+              label={translate('待释放收益')}
               value={fmt(Number(earnings.wallet?.pending_quota || 0) / Q, 4)}
             />
             <Metric
               icon={Wallet}
-              label="累计已提现"
+              label={translate('累计已提现')}
               value={fmt(Number(earnings.wallet?.withdrawn_quota || 0) / Q, 4)}
             />
           </div>
-          <div className="grid gap-6 lg:grid-cols-2">
-            <section className="rounded-lg border border-page-divider bg-page-surface p-5">
-              <h2 className="font-semibold text-page">收款资料</h2>
+          <div className='grid gap-6 lg:grid-cols-2'>
+            <section className='rounded-lg border border-page-divider bg-page-surface p-5'>
+              <h2 className='font-semibold text-page'>
+                {translate('收款资料')}
+              </h2>
               {profile && (
                 <p className="mt-2 text-sm text-page-secondary">
                   {profile.method} · {profile.details_masked}
@@ -814,7 +866,7 @@ export default function SharedSubscriptions() {
                       method: event.target.value,
                     }))
                   }
-                  placeholder="收款方式"
+                  placeholder={translate('收款方式')}
                 />
                 <input
                   className="input"
@@ -825,7 +877,7 @@ export default function SharedSubscriptions() {
                       details: event.target.value,
                     }))
                   }
-                  placeholder="收款账号"
+                  placeholder={translate('收款账号')}
                 />
               </div>
               <button
@@ -833,11 +885,13 @@ export default function SharedSubscriptions() {
                 className="btn-secondary mt-3"
                 onClick={saveProfile}
               >
-                保存资料
+                {translate('保存资料')}
               </button>
             </section>
-            <section className="rounded-lg border border-page-divider bg-page-surface p-5">
-              <h2 className="font-semibold text-page">收益操作</h2>
+            <section className='rounded-lg border border-page-divider bg-page-surface p-5'>
+              <h2 className='font-semibold text-page'>
+                {translate('收益操作')}
+              </h2>
               <input
                 type="number"
                 min="0"
@@ -845,7 +899,7 @@ export default function SharedSubscriptions() {
                 className="input mt-4"
                 value={amount}
                 onChange={(event) => setAmount(event.target.value)}
-                placeholder="USD 金额"
+                placeholder={translate('USD 金额')}
               />
               <div className="mt-3 flex gap-3">
                 <button
@@ -853,21 +907,23 @@ export default function SharedSubscriptions() {
                   className="btn-secondary flex-1"
                   onClick={transfer}
                 >
-                  转入余额
+                  {translate('转入余额')}
                 </button>
                 <button
                   type="button"
                   className="btn-primary flex-1"
                   onClick={payout}
                 >
-                  申请提现
+                  {translate('申请提现')}
                 </button>
               </div>
             </section>
           </div>
           <section>
-            <h2 className="text-lg font-semibold text-page">提现记录</h2>
-            <div className="mt-3 space-y-2">
+            <h2 className='text-lg font-semibold text-page'>
+              {translate('提现记录')}
+            </h2>
+            <div className='mt-3 space-y-2'>
               {payouts.map((item) => (
                 <div
                   key={item.id}
@@ -877,7 +933,11 @@ export default function SharedSubscriptions() {
                     <span className="font-medium text-page">
                       {fmt(Number(item.amount_quota || 0) / Q, 4)}
                     </span>
-                    <span className="ml-3 text-page-muted">{item.status}</span>
+                    <span className='ml-3 text-page-muted'>
+                      {translate(`shared.status.${item.status}`, {
+                        defaultValue: item.status,
+                      })}
+                    </span>
                   </div>
                   {item.status === "pending" && (
                     <button
@@ -888,7 +948,7 @@ export default function SharedSubscriptions() {
                         await load();
                       }}
                     >
-                      取消
+                      {translate('取消')}
                     </button>
                   )}
                 </div>
@@ -922,13 +982,13 @@ export default function SharedSubscriptions() {
             className="max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-lg border border-page-divider p-5 shadow-xl"
             style={{ background: "var(--page-bg)" }}
           >
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <h2 className="break-words text-lg font-semibold text-page">
-                  共享订阅 Key 已生成
+            <div className='flex items-start justify-between gap-4'>
+              <div className='min-w-0'>
+                <h2 className='break-words text-lg font-semibold text-page'>
+                  {translate('共享订阅 Key 已生成')}
                 </h2>
-                <p className="mt-1 break-words text-sm text-page-muted">
-                  Key 只显示在当前窗口，请妥善保管。
+                <p className='mt-1 break-words text-sm text-page-muted'>
+                  {translate('Key 只显示在当前窗口，请妥善保管。')}
                 </p>
               </div>
               <button
@@ -936,7 +996,7 @@ export default function SharedSubscriptions() {
                 className="text-page-muted"
                 onClick={() => setGeneratedToken(null)}
               >
-                关闭
+                {translate('关闭')}
               </button>
             </div>
             <div className="mt-4 flex items-center gap-2 rounded-lg border border-page-divider bg-page-inset p-3">
@@ -950,11 +1010,11 @@ export default function SharedSubscriptions() {
                   await navigator.clipboard.writeText(
                     `sk-${generatedToken.key}`,
                   );
-                  toast.success("已复制");
+                  toast.success(translate('已复制'));
                 }}
               >
-                <Copy size={15} className="mr-1.5" />
-                复制
+                <Copy size={15} className='mr-1.5' />
+                {translate('复制')}
               </button>
             </div>
           </div>
@@ -1022,8 +1082,8 @@ function ModalShell({ open, title, description, onClose, children, footer }) {
             type="button"
             className="rounded p-1.5 text-page-muted hover:bg-page-inset hover:text-page"
             onClick={onClose}
-            title="关闭"
-            aria-label="关闭"
+            title={translate('关闭')}
+            aria-label={translate('关闭')}
           >
             <X size={18} />
           </button>
@@ -1121,7 +1181,7 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
       password: proxyPassword,
     };
     if (!proxy.host || proxy.port <= 0 || proxy.port > 65535) {
-      throw new Error("请输入有效的公网代理主机和端口");
+      throw new Error(translate('请输入有效的公网代理主机和端口'));
     }
     return proxy;
   };
@@ -1129,7 +1189,7 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
   const applyProxyString = (value) => {
     const parsed = parseSharedProxyInput(value, proxyProtocol);
     if (!parsed) {
-      toast.error("无法识别代理格式，请检查主机、端口和认证信息");
+      toast.error(translate('无法识别代理格式，请检查主机、端口和认证信息'));
       return false;
     }
     setProxyProtocol(parsed.protocol);
@@ -1137,7 +1197,7 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
     setProxyPort(parsed.port);
     setProxyUsername(parsed.username);
     setProxyPassword(parsed.password);
-    toast.success("已自动识别代理信息");
+    toast.success(translate('已自动识别代理信息'));
     return true;
   };
 
@@ -1146,7 +1206,7 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
       const value = await navigator.clipboard.readText();
       applyProxyString(value);
     } catch {
-      toast.error("无法读取剪贴板，请直接粘贴到主机输入框");
+      toast.error(translate('无法读取剪贴板，请直接粘贴到主机输入框'));
     }
   };
 
@@ -1166,7 +1226,7 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
         oauth_type: oauthType,
       });
       if (!response.data?.success) {
-        throw new Error(response.data?.message || "OAuth 启动失败");
+        throw new Error(response.data?.message || translate('OAuth 启动失败'));
       }
       const session = dataOf(response);
       setAuthURL(session.auth_url || "");
@@ -1175,7 +1235,9 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
       setAuthInput("");
     } catch (error) {
       toast.error(
-        error.response?.data?.message || error.message || "OAuth 启动失败",
+        error.response?.data?.message ||
+          error.message ||
+          translate('OAuth 启动失败'),
       );
     } finally {
       setGenerating(false);
@@ -1184,11 +1246,11 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
 
   const completeOAuth = async () => {
     if (!authState) {
-      toast.error("请先生成授权链接");
+      toast.error(translate('请先生成授权链接'));
       return;
     }
     if (!authInput.trim()) {
-      toast.error("请输入授权链接或 Code");
+      toast.error(translate('请输入授权链接或 Code'));
       return;
     }
     setSubmitting(true);
@@ -1202,12 +1264,14 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
         proxy: proxyPayload(),
       });
       if (!response.data?.success) {
-        throw new Error(response.data?.message || "接入失败");
+        throw new Error(response.data?.message || translate('接入失败'));
       }
-      toast.success("账号已接入，套餐已自动识别");
+      toast.success(translate('账号已接入，套餐已自动识别'));
       await onDone();
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message || "接入失败");
+      toast.error(
+        error.response?.data?.message || error.message || translate('接入失败'),
+      );
     } finally {
       setSubmitting(false);
     }
@@ -1217,7 +1281,7 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
     let credentials;
     if (accountType === "bedrock") {
       if (!awsAccessKeyID.trim() || !awsSecretAccessKey.trim()) {
-        toast.error("请输入 AWS SigV4 凭证");
+        toast.error(translate('请输入 AWS SigV4 凭证'));
         return;
       }
       credentials = {
@@ -1231,13 +1295,13 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
       }
     } else {
       if (!serviceAccountJSON.trim()) {
-        toast.error("请输入 Service Account JSON");
+        toast.error(translate('请输入 Service Account JSON'));
         return;
       }
       try {
         JSON.parse(serviceAccountJSON);
       } catch {
-        toast.error("Service Account JSON 格式无效");
+        toast.error(translate('Service Account JSON 格式无效'));
         return;
       }
       credentials = {
@@ -1262,13 +1326,15 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
         throw new Error(
           response.data?.message ||
             response.data?.data?.items?.[0]?.message ||
-            "接入失败",
+            translate('接入失败'),
         );
       }
-      toast.success("账号已接入，套餐已自动识别");
+      toast.success(translate('账号已接入，套餐已自动识别'));
       await onDone();
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message || "接入失败");
+      toast.error(
+        error.response?.data?.message || error.message || translate('接入失败'),
+      );
     } finally {
       setSubmitting(false);
     }
@@ -1282,13 +1348,15 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
   return (
     <ModalShell
       open={open}
-      title="添加共享账号"
-      description="选择平台和账号类型后授权，系统会自动识别套餐并归入对应共享池。"
+      title={translate('添加共享账号')}
+      description={translate(
+        '选择平台和账号类型后授权，系统会自动识别套餐并归入对应共享池。',
+      )}
       onClose={onClose}
       footer={
         <>
-          <button type="button" className="btn-secondary" onClick={onClose}>
-            取消
+          <button type='button' className='btn-secondary' onClick={onClose}>
+            {translate('取消')}
           </button>
           <button
             type="button"
@@ -1296,19 +1364,21 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
             onClick={oauthAccount ? completeOAuth : submitDirectAccount}
             disabled={submitting || generating}
           >
-            {submitting && <Loader2 size={15} className="mr-2 animate-spin" />}
-            {submitting ? "正在验证账号" : "提交"}
+            {submitting && <Loader2 size={15} className='mr-2 animate-spin' />}
+            {submitting ? translate('正在验证账号') : translate('提交')}
           </button>
         </>
       }
     >
       <div className="space-y-5">
         <section>
-          <div className="text-sm font-medium text-page-label">选择平台</div>
+          <div className='text-sm font-medium text-page-label'>
+            {translate('选择平台')}
+          </div>
           <div
-            className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5"
-            role="radiogroup"
-            aria-label="选择平台"
+            className='mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5'
+            role='radiogroup'
+            aria-label={translate('选择平台')}
           >
             {Object.entries(platformLabels).map(([value, label]) => {
               const selected = platform === value;
@@ -1356,12 +1426,15 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
             <span className="flex h-5 min-w-5 items-center justify-center rounded border border-page-divider bg-page-inset px-1 text-[9px] font-bold text-page">
               {platformInitials[platform]}
             </span>
-            {platformLabels[platform]} 账号类型
+            {platformLabels[platform]}
+            {translate('账号类型')}
           </div>
           <div
-            className="mt-3 grid gap-2 sm:grid-cols-2"
-            role="radiogroup"
-            aria-label={`${platformLabels[platform]} 账号类型`}
+            className='mt-3 grid gap-2 sm:grid-cols-2'
+            role='radiogroup'
+            aria-label={translate('{{value1}} 账号类型', {
+              value1: platformLabels[platform],
+            })}
           >
             {sharedAccountTypes[platform].map(([value, label, typeLabel]) => {
               const selected = accountType === value;
@@ -1403,14 +1476,16 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
 
         <section className="border-t border-page-divider pt-4">
           <div>
-            <div className="text-sm font-medium text-page-label">
-              绑定专属代理（必填）
+            <div className='text-sm font-medium text-page-label'>
+              {translate('绑定专属代理（必填）')}
             </div>
-            <p className="mt-1 text-xs leading-5 text-page-muted">
-              代理仅绑定当前托管账号，提交前会测试连通性；支持公网 IP 或域名。
+            <p className='mt-1 text-xs leading-5 text-page-muted'>
+              {translate(
+                '代理仅绑定当前托管账号，提交前会测试连通性；支持公网 IP 或域名。',
+              )}
             </p>
-            <p className="mt-1 text-xs font-medium leading-5 text-amber-600 dark:text-amber-400">
-              为提高账号存活率，建议购买并使用静态住宅 IP。
+            <p className='mt-1 text-xs font-medium leading-5 text-amber-600 dark:text-amber-400'>
+              {translate('为提高账号存活率，建议购买并使用静态住宅 IP。')}
             </p>
           </div>
           <div className="mt-4 grid gap-4 sm:grid-cols-3">
@@ -1420,15 +1495,15 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
                 className="btn-secondary"
                 onClick={pasteProxyString}
               >
-                <ClipboardPaste size={14} className="mr-2" />
-                粘贴并自动识别
+                <ClipboardPaste size={14} className='mr-2' />
+                {translate('粘贴并自动识别')}
               </button>
-              <span className="text-xs text-page-muted">
-                支持 URL、主机:端口:用户名:密码等常见格式
+              <span className='text-xs text-page-muted'>
+                {translate('支持 URL、主机:端口:用户名:密码等常见格式')}
               </span>
             </div>
-            <label className="text-sm font-medium text-page-label">
-              协议
+            <label className='text-sm font-medium text-page-label'>
+              {translate('协议')}
               <select
                 className="input mt-2"
                 value={proxyProtocol}
@@ -1440,20 +1515,20 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
                 <option value="socks5h">SOCKS5H</option>
               </select>
             </label>
-            <label className="text-sm font-medium text-page-label sm:col-span-2">
-              公网 IP / 域名
+            <label className='text-sm font-medium text-page-label sm:col-span-2'>
+              {translate('公网 IP / 域名')}
               <input
                 className="input mt-2 font-mono"
                 value={proxyHost}
                 onChange={(event) => setProxyHost(event.target.value)}
                 onPaste={handleProxyFieldPaste}
-                placeholder="48.45.22.14 或 proxy.example.com"
+                placeholder={translate('48.45.22.14 或 proxy.example.com')}
                 required
                 aria-required="true"
               />
             </label>
-            <label className="text-sm font-medium text-page-label">
-              端口
+            <label className='text-sm font-medium text-page-label'>
+              {translate('端口')}
               <input
                 className="input mt-2"
                 type="number"
@@ -1466,8 +1541,8 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
                 aria-required="true"
               />
             </label>
-            <label className="text-sm font-medium text-page-label">
-              用户名（可选）
+            <label className='text-sm font-medium text-page-label'>
+              {translate('用户名（可选）')}
               <input
                 className="input mt-2"
                 value={proxyUsername}
@@ -1475,8 +1550,8 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
                 autoComplete="off"
               />
             </label>
-            <label className="text-sm font-medium text-page-label">
-              密码（可选）
+            <label className='text-sm font-medium text-page-label'>
+              {translate('密码（可选）')}
               <input
                 className="input mt-2"
                 type="password"
@@ -1489,8 +1564,8 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
         </section>
 
         {oauthAccount ? (
-          <section className="space-y-5 border-t border-page-divider pt-4">
-            <Step number="1" title="生成授权链接">
+          <section className='space-y-5 border-t border-page-divider pt-4'>
+            <Step number='1' title={translate('生成授权链接')}>
               <button
                 type="button"
                 className="btn-primary mt-3"
@@ -1500,7 +1575,7 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
                 {generating && (
                   <Loader2 size={14} className="mr-2 animate-spin" />
                 )}
-                {authURL ? "重新生成" : "生成授权链接"}
+                {authURL ? translate('重新生成') : translate('生成授权链接')}
               </button>
             </Step>
             {authURL && (
@@ -1515,18 +1590,20 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
                   className="btn-secondary shrink-0"
                   onClick={async () => {
                     await navigator.clipboard.writeText(authURL);
-                    toast.success("已复制");
+                    toast.success(translate('已复制'));
                   }}
-                  title="复制授权链接"
-                  aria-label="复制授权链接"
+                  title={translate('复制授权链接')}
+                  aria-label={translate('复制授权链接')}
                 >
                   <Copy size={15} />
                 </button>
               </div>
             )}
-            <Step number="2" title="在浏览器中完成授权">
-              <p className="mt-1 text-sm text-page-muted">
-                登录您的 {platformLabels[platform]} 账户并完成授权。
+            <Step number='2' title={translate('在浏览器中完成授权')}>
+              <p className='mt-1 text-sm text-page-muted'>
+                {translate('登录您的 {{platform}} 账户并完成授权。', {
+                  platform: platformLabels[platform],
+                })}
               </p>
               {authURL && (
                 <button
@@ -1534,22 +1611,27 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
                   className="btn-secondary mt-3"
                   onClick={() => openAuthorizationWindow(authURL)}
                 >
-                  <ExternalLink size={14} className="mr-2" />
-                  打开授权链接
+                  <ExternalLink size={14} className='mr-2' />
+                  {translate('打开授权链接')}
                 </button>
               )}
             </Step>
-            <Step number="3" title="输入授权链接或 Code">
+            <Step number='3' title={translate('输入授权链接或 Code')}>
               <textarea
                 value={authInput}
                 onChange={(event) => setAuthInput(event.target.value)}
                 rows={4}
                 spellCheck={false}
-                className="input mt-3 min-h-24 resize-y font-mono text-xs"
-                placeholder={`完整回调链接，例如\n${callbackExample}\n\n或仅输入 code 参数值`}
+                className='input mt-3 min-h-24 resize-y font-mono text-xs'
+                placeholder={translate(
+                  '完整回调链接，例如 {{value1}} 或仅输入 code 参数值',
+                  {
+                    value1: callbackExample,
+                  },
+                )}
               />
-              <p className="mt-2 text-xs text-page-muted">
-                支持完整 callback URL、查询字符串或裸 code。
+              <p className='mt-2 text-xs text-page-muted'>
+                {translate('支持完整 callback URL、查询字符串或裸 code。')}
               </p>
             </Step>
           </section>
@@ -1572,7 +1654,7 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
               onChange={setAWSRegion}
             />
             <CredentialInput
-              label="AWS Session Token（可选）"
+              label={translate('AWS Session Token（可选）')}
               value={awsSessionToken}
               onChange={setAWSSessionToken}
               secret
@@ -1646,31 +1728,38 @@ function BatchImportDialog({ open, onClose, onDone }) {
     setBackup(null);
     setResult(null);
     try {
-      if (!file.name.toLowerCase().endsWith(".json")) {
-        throw new Error("请选择 JSON (.json) 文件");
+      if (!file.name.toLowerCase().endsWith('.json')) {
+        throw new Error(translate('请选择 JSON (.json) 文件'));
       }
       const parsed = parseSharedAccountBackup(await file.text());
       setBackup(parsed);
       if (!parsed.oauthAccounts.length) {
-        toast.error("文件中没有可导入的 OAuth 账号");
+        toast.error(translate('文件中没有可导入的 OAuth 账号'));
       } else if (parsed.missingProxy > 0) {
         toast.error(
-          `有 ${parsed.missingProxy} 个 OAuth 账号未绑定代理，请补充 proxy、proxy_url 或 proxy_id`,
+          translate(
+            '有 {{value1}} 个 OAuth 账号未绑定代理，请补充 proxy、proxy_url 或 proxy_id',
+            {
+              value1: parsed.missingProxy,
+            },
+          ),
         );
       }
     } catch (error) {
-      toast.error(error.message || "账号备份文件解析失败");
+      toast.error(error.message || translate('账号备份文件解析失败'));
     }
   };
 
   const importAccounts = async () => {
     if (!backup?.oauthAccounts?.length) {
-      toast.error("请先选择包含 OAuth 账号的 JSON 备份文件");
+      toast.error(translate('请先选择包含 OAuth 账号的 JSON 备份文件'));
       return;
     }
     if (backup.missingProxy > 0) {
       toast.error(
-        `有 ${backup.missingProxy} 个 OAuth 账号未绑定专属代理，暂不能导入`,
+        translate('有 {{value1}} 个 OAuth 账号未绑定专属代理，暂不能导入', {
+          value1: backup.missingProxy,
+        }),
       );
       return;
     }
@@ -1678,7 +1767,7 @@ function BatchImportDialog({ open, onClose, onDone }) {
     try {
       const response = await importSharedAccounts(backup.oauthAccounts, true);
       if (!response.data?.success) {
-        throw new Error(response.data?.message || "批量导入失败");
+        throw new Error(response.data?.message || translate('批量导入失败'));
       }
       const data = response.data?.data || {};
       const nextResult = {
@@ -1687,7 +1776,14 @@ function BatchImportDialog({ open, onClose, onDone }) {
         skipped: Number(data.skipped || 0) + Number(backup.skipped || 0),
       };
       setResult(nextResult);
-      const message = `已导入 ${nextResult.succeeded} 个，跳过 ${nextResult.skipped} 个，失败 ${nextResult.failed} 个`;
+      const message = translate(
+        '已导入 {{value1}} 个，跳过 {{value2}} 个，失败 {{value3}} 个',
+        {
+          value1: nextResult.succeeded,
+          value2: nextResult.skipped,
+          value3: nextResult.failed,
+        },
+      );
       if (nextResult.failed > 0 || nextResult.succeeded === 0) {
         toast.error(message);
       } else {
@@ -1696,7 +1792,9 @@ function BatchImportDialog({ open, onClose, onDone }) {
       if (nextResult.succeeded > 0) await onDone();
     } catch (error) {
       toast.error(
-        error.response?.data?.message || error.message || "批量导入失败",
+        error.response?.data?.message ||
+          error.message ||
+          translate('批量导入失败'),
       );
     } finally {
       setImporting(false);
@@ -1706,13 +1804,15 @@ function BatchImportDialog({ open, onClose, onDone }) {
   return (
     <ModalShell
       open={open}
-      title="批量导入托管账号"
-      description="支持 sub2api 账号备份格式，一次最多导入 200 个 OAuth 账号；每个账号必须绑定专属代理。"
+      title={translate('批量导入托管账号')}
+      description={translate(
+        '支持 sub2api 账号备份格式，一次最多导入 200 个 OAuth 账号；每个账号必须绑定专属代理。',
+      )}
       onClose={onClose}
       footer={
         <>
-          <button type="button" className="btn-secondary" onClick={onClose}>
-            取消
+          <button type='button' className='btn-secondary' onClick={onClose}>
+            {translate('取消')}
           </button>
           <button
             type="button"
@@ -1724,17 +1824,18 @@ function BatchImportDialog({ open, onClose, onDone }) {
               backup?.missingProxy > 0
             }
           >
-            {importing && <Loader2 size={15} className="mr-2 animate-spin" />}
-            开始导入
+            {importing && <Loader2 size={15} className='mr-2 animate-spin' />}
+            {translate('开始导入')}
           </button>
         </>
       }
     >
-      <div className="space-y-4">
-        <div className="flex items-start justify-between gap-3">
-          <p className="text-sm leading-6 text-page-muted">
-            支持内联 proxy、proxy_url，或顶层 proxies 配合账号
-            proxy_id。系统会逐个测试代理和账号。
+      <div className='space-y-4'>
+        <div className='flex items-start justify-between gap-3'>
+          <p className='text-sm leading-6 text-page-muted'>
+            {translate(
+              '支持内联 proxy、proxy_url，或顶层 proxies 配合账号 proxy_id。系统会逐个测试代理和账号。',
+            )}
           </p>
           <button
             type="button"
@@ -1746,8 +1847,8 @@ function BatchImportDialog({ open, onClose, onDone }) {
               )
             }
           >
-            <Download size={14} className="mr-2" />
-            格式示例
+            <Download size={14} className='mr-2' />
+            {translate('格式示例')}
           </button>
         </div>
         <button
@@ -1755,13 +1856,15 @@ function BatchImportDialog({ open, onClose, onDone }) {
           className="flex w-full items-center gap-3 rounded-lg border border-dashed border-page-divider bg-page-inset px-4 py-5 text-left"
           onClick={() => fileInputRef.current?.click()}
         >
-          <FileUp size={20} className="shrink-0 text-page-link" />
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-medium text-page">
-              {fileName || "选择 JSON 文件"}
+          <FileUp size={20} className='shrink-0 text-page-link' />
+          <span className='min-w-0 flex-1'>
+            <span className='block truncate text-sm font-medium text-page'>
+              {fileName || translate('选择 JSON 文件')}
             </span>
-            <span className="mt-1 block text-xs text-page-muted">
-              仅导入已绑定专属代理的 OAuth 账号，其他认证类型会跳过
+            <span className='mt-1 block text-xs text-page-muted'>
+              {translate(
+                '仅导入已绑定专属代理的 OAuth 账号，其他认证类型会跳过',
+              )}
             </span>
           </span>
         </button>
@@ -1773,28 +1876,36 @@ function BatchImportDialog({ open, onClose, onDone }) {
           onChange={selectFile}
         />
         {backup && (
-          <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-5">
-            <ImportCount label="文件账号" value={backup.total} />
+          <div className='grid grid-cols-2 gap-3 text-sm sm:grid-cols-5'>
+            <ImportCount label={translate('文件账号')} value={backup.total} />
             <ImportCount
-              label="OAuth 账号"
+              label={translate('OAuth 账号')}
               value={backup.oauthAccounts.length}
             />
-            <ImportCount label="已绑定代理" value={backup.proxyBound} />
-            <ImportCount label="缺少代理" value={backup.missingProxy} />
-            <ImportCount label="跳过" value={backup.skipped} />
+            <ImportCount
+              label={translate('已绑定代理')}
+              value={backup.proxyBound}
+            />
+            <ImportCount
+              label={translate('缺少代理')}
+              value={backup.missingProxy}
+            />
+            <ImportCount label={translate('跳过')} value={backup.skipped} />
           </div>
         )}
         {backup?.missingProxy > 0 && (
-          <p className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
-            每个 OAuth
-            账号都必须配置可连通的公网代理。为提高账号存活率，建议使用静态住宅
-            IP。
+          <p className='rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300'>
+            {translate(
+              '每个 OAuth 账号都必须配置可连通的公网代理。为提高账号存活率，建议使用静态住宅 IP。',
+            )}
           </p>
         )}
         {result && (
-          <p className="text-sm text-page-muted">
-            成功 {result.succeeded} 个，跳过 {result.skipped} 个，失败{" "}
-            {result.failed} 个。
+          <p className='text-sm text-page-muted'>
+            {translate(
+              '成功 {{succeeded}} 个，跳过 {{skipped}} 个，失败 {{failed}} 个。',
+              result,
+            )}
           </p>
         )}
       </div>
@@ -1816,23 +1927,30 @@ function HostedAccounts({ rows, onAdd, onToggle, onDelete }) {
     <section className="mt-6 overflow-hidden rounded-lg border border-page-divider bg-page-surface">
       <div className="flex flex-col gap-3 border-b border-page-divider px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="font-semibold text-page">我的托管账号</h2>
-          <p className="mt-1 text-sm text-page-muted">
-            账号导入并通过测试后立即进入调度，模型和销售价格会自动同步。
+          <h2 className='font-semibold text-page'>
+            {translate('我的托管账号')}
+          </h2>
+          <p className='mt-1 text-sm text-page-muted'>
+            {translate(
+              '账号导入并通过测试后立即进入调度，模型和销售价格会自动同步。',
+            )}
           </p>
         </div>
-        <button type="button" className="btn-primary shrink-0" onClick={onAdd}>
-          <UserRoundPlus size={15} className="mr-2" />
-          添加托管账号
+        <button type='button' className='btn-primary shrink-0' onClick={onAdd}>
+          <UserRoundPlus size={15} className='mr-2' />
+          {translate('添加托管账号')}
         </button>
       </div>
       {rows.length === 0 ? (
-        <div className="px-5 py-14 text-center">
-          <UsersRound size={28} className="mx-auto text-page-muted" />
-          <h3 className="mt-3 font-medium text-page">还没有托管账号</h3>
-          <p className="mt-1 text-sm text-page-muted">
-            添加 Anthropic、OpenAI、Gemini、Antigravity 或 Grok
-            账号，完成后立即贡献容量。
+        <div className='px-5 py-14 text-center'>
+          <UsersRound size={28} className='mx-auto text-page-muted' />
+          <h3 className='mt-3 font-medium text-page'>
+            {translate('还没有托管账号')}
+          </h3>
+          <p className='mt-1 text-sm text-page-muted'>
+            {translate(
+              '添加 Anthropic、OpenAI、Gemini、Antigravity 或 Grok 账号，完成后立即贡献容量。',
+            )}
           </p>
         </div>
       ) : (
@@ -1840,12 +1958,22 @@ function HostedAccounts({ rows, onAdd, onToggle, onDelete }) {
           <table className="w-full min-w-[780px] text-left text-sm">
             <thead className="bg-page-inset text-xs text-page-muted">
               <tr>
-                <th className="px-5 py-3 font-medium">托管账号</th>
-                <th className="px-5 py-3 font-medium">厂商与套餐</th>
-                <th className="px-5 py-3 font-medium">可用模型</th>
-                <th className="px-5 py-3 font-medium">健康状态</th>
-                <th className="px-5 py-3 text-right font-medium">进入调度</th>
-                <th className="w-14 px-5 py-3" />
+                <th className='px-5 py-3 font-medium'>
+                  {translate('托管账号')}
+                </th>
+                <th className='px-5 py-3 font-medium'>
+                  {translate('厂商与套餐')}
+                </th>
+                <th className='px-5 py-3 font-medium'>
+                  {translate('可用模型')}
+                </th>
+                <th className='px-5 py-3 font-medium'>
+                  {translate('健康状态')}
+                </th>
+                <th className='px-5 py-3 text-right font-medium'>
+                  {translate('进入调度')}
+                </th>
+                <th className='w-14 px-5 py-3' />
               </tr>
             </thead>
             <tbody className="divide-y divide-page-divider">
@@ -1869,8 +1997,8 @@ function HostedAccounts({ rows, onAdd, onToggle, onDelete }) {
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-page-muted">
                         <span>{account.account_type || "oauth"}</span>
                         {account.proxy_bound && (
-                          <span className="rounded border border-page-divider px-1.5 py-0.5 text-[10px]">
-                            专属代理
+                          <span className='rounded border border-page-divider px-1.5 py-0.5 text-[10px]'>
+                            {translate('专属代理')}
                           </span>
                         )}
                       </div>
@@ -1892,7 +2020,11 @@ function HostedAccounts({ rows, onAdd, onToggle, onDelete }) {
                           healthy ? "text-page-success" : "text-page-danger"
                         }
                       >
-                        {String(health || "-").replaceAll("_", " ")}
+                        {health
+                          ? translate(`shared.status.${health}`, {
+                              defaultValue: String(health).replaceAll('_', ' '),
+                            })
+                          : '-'}
                       </span>
                     </td>
                     <td className="px-5 py-4 text-right">
@@ -1900,7 +2032,7 @@ function HostedAccounts({ rows, onAdd, onToggle, onDelete }) {
                         type="button"
                         role="switch"
                         aria-checked={Boolean(account.schedulable)}
-                        aria-label="进入调度"
+                        aria-label={translate('进入调度')}
                         className={`relative h-6 w-11 rounded-full transition-colors ${
                           account.schedulable
                             ? "bg-page-link"
@@ -1922,8 +2054,8 @@ function HostedAccounts({ rows, onAdd, onToggle, onDelete }) {
                         type="button"
                         className="rounded p-2 text-page-danger hover:bg-page-inset"
                         onClick={() => onDelete(account)}
-                        title="删除账号"
-                        aria-label="删除账号"
+                        title={translate('删除账号')}
+                        aria-label={translate('删除账号')}
                       >
                         <Trash2 size={16} />
                       </button>
@@ -1955,7 +2087,10 @@ function AvailabilityStrip({ windows = [] }) {
   const normalized = Array.isArray(windows) ? windows.slice(-3) : [];
   while (normalized.length < 3) normalized.unshift({ availability: -1 });
   return (
-    <span className="flex shrink-0 gap-1" title="最近 3 个可用度窗口">
+    <span
+      className='flex shrink-0 gap-1'
+      title={translate('最近 3 个可用度窗口')}
+    >
       {normalized.map((window, index) => {
         const availability = Number(window?.availability ?? -1);
         const tone =
@@ -1979,16 +2114,16 @@ function AvailabilityStrip({ windows = [] }) {
 
 function SharedKeyManager({ tokens, onDelete }) {
   return (
-    <section className="rounded-lg border border-page-divider bg-page-surface">
-      <div className="border-b border-page-divider px-5 py-4">
-        <h2 className="font-semibold text-page">共享订阅 Key</h2>
-        <p className="mt-1 text-xs text-page-muted">
-          在当前分站生成并管理可调用共享套餐的 API Key。
+    <section className='rounded-lg border border-page-divider bg-page-surface'>
+      <div className='border-b border-page-divider px-5 py-4'>
+        <h2 className='font-semibold text-page'>{translate('共享订阅 Key')}</h2>
+        <p className='mt-1 text-xs text-page-muted'>
+          {translate('在当前分站生成并管理可调用共享套餐的 API Key。')}
         </p>
       </div>
       {tokens.length === 0 ? (
-        <p className="px-5 py-10 text-center text-sm text-page-muted">
-          尚未生成共享订阅 Key
+        <p className='px-5 py-10 text-center text-sm text-page-muted'>
+          {translate('尚未生成共享订阅 Key')}
         </p>
       ) : (
         <div className="divide-y divide-page-divider">
@@ -2009,19 +2144,19 @@ function SharedKeyManager({ tokens, onDelete }) {
                   className="btn-secondary"
                   onClick={async () => {
                     await navigator.clipboard.writeText(`sk-${token.key}`);
-                    toast.success("已复制");
+                    toast.success(translate('已复制'));
                   }}
                 >
-                  <Copy size={15} className="mr-1.5" />
-                  复制
+                  <Copy size={15} className='mr-1.5' />
+                  {translate('复制')}
                 </button>
                 <button
                   type="button"
                   className="btn-secondary text-page-danger"
                   onClick={() => onDelete(token)}
                 >
-                  <Trash2 size={15} className="mr-1.5" />
-                  删除
+                  <Trash2 size={15} className='mr-1.5' />
+                  {translate('删除')}
                 </button>
               </div>
             </div>
@@ -2053,14 +2188,15 @@ function PlanAvailabilityPanel({
     <section className="rounded-lg border border-page-divider bg-page-surface p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="font-semibold text-page">
-            {entry.plan.title} 服务状态
+          <h2 className='font-semibold text-page'>
+            {entry.plan.title}
+            {translate('服务状态')}
           </h2>
-          <p className="mt-1 text-xs text-page-muted">
-            总可用度{" "}
+          <p className='mt-1 text-xs text-page-muted'>
+            {translate('总可用度')}{' '}
             {Number(data?.availability) >= 0
               ? `${Number(data.availability).toFixed(1)}%`
-              : "暂无数据"}
+              : translate('暂无数据')}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -2071,11 +2207,11 @@ function PlanAvailabilityPanel({
               className={period === value ? "btn-primary" : "btn-secondary"}
               onClick={() => onPeriodChange(value)}
             >
-              {value === "24h" ? "24 小时" : "7 天"}
+              {value === '24h' ? translate('24 小时') : translate('7 天')}
             </button>
           ))}
-          <button type="button" className="btn-secondary" onClick={onClose}>
-            关闭
+          <button type='button' className='btn-secondary' onClick={onClose}>
+            {translate('关闭')}
           </button>
         </div>
       </div>
@@ -2084,8 +2220,8 @@ function PlanAvailabilityPanel({
           <Loader2 className="animate-spin text-page-link" />
         </div>
       ) : buckets.length === 0 ? (
-        <p className="py-10 text-center text-sm text-page-muted">
-          暂无监控数据
+        <p className='py-10 text-center text-sm text-page-muted'>
+          {translate('暂无监控数据')}
         </p>
       ) : (
         <div className="mt-5 flex h-24 items-end gap-1 overflow-hidden">
@@ -2104,7 +2240,7 @@ function PlanAvailabilityPanel({
                 key={time}
                 className={`min-w-1 flex-1 rounded-sm ${availability < 0 ? "bg-page-divider" : tone}`}
                 style={{ height: `${height}%` }}
-                title={`${new Date(time * 1000).toLocaleString()} · ${availability < 0 ? "无数据" : `${availability.toFixed(1)}%`}`}
+                title={`${new Date(time * 1000).toLocaleString()} · ${availability < 0 ? translate('无数据') : `${availability.toFixed(1)}%`}`}
               />
             );
           })}
