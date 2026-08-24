@@ -966,19 +966,19 @@ export default function SharedSubscriptions() {
 
 const sharedAccountTypes = {
   anthropic: [
-    ["oauth", "Claude Code OAuth"],
-    ["setup-token", "Claude Code Setup Token"],
-    ["bedrock", "AWS Bedrock (SigV4)"],
-    ["service_account", "Vertex Service Account"],
+    ["oauth", "Claude Code OAuth", "OAuth"],
+    ["setup-token", "Claude Code Setup Token", "Setup Token"],
+    ["bedrock", "AWS Bedrock", "SigV4"],
+    ["service_account", "Vertex Service Account", "Service Account"],
   ],
-  openai: [["oauth", "ChatGPT OAuth"]],
+  openai: [["oauth", "ChatGPT OAuth", "OAuth"]],
   gemini: [
-    ["oauth:code_assist", "Gemini OAuth (Code Assist)"],
-    ["oauth:google_one", "Gemini OAuth (Google One)"],
-    ["service_account", "Vertex Service Account"],
+    ["oauth:code_assist", "Gemini OAuth (Code Assist)", "OAuth"],
+    ["oauth:google_one", "Gemini OAuth (Google One)", "OAuth"],
+    ["service_account", "Vertex Service Account", "Service Account"],
   ],
-  antigravity: [["oauth", "OAuth"]],
-  grok: [["oauth", "OAuth"]],
+  antigravity: [["oauth", "OAuth", "OAuth"]],
+  grok: [["oauth", "OAuth", "OAuth"]],
 };
 
 const platformLabels = {
@@ -987,6 +987,14 @@ const platformLabels = {
   gemini: "Gemini",
   antigravity: "Antigravity",
   grok: "Grok",
+};
+
+const platformInitials = {
+  anthropic: "A",
+  openai: "O",
+  gemini: "G",
+  antigravity: "AG",
+  grok: "X",
 };
 
 function ModalShell({ open, title, description, onClose, children, footer }) {
@@ -1096,6 +1104,11 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
   const selectPlatform = (value) => {
     setPlatform(value);
     setAccountType(sharedAccountTypes[value][0][0]);
+    resetAuthorization();
+  };
+
+  const selectAccountType = (value) => {
+    setAccountType(value);
     resetAuthorization();
   };
 
@@ -1290,39 +1303,103 @@ function SharedAccountImportDialog({ open, initialPlatform, onClose, onDone }) {
       }
     >
       <div className="space-y-5">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="text-sm font-medium text-page-label">
-            平台
-            <select
-              className="input mt-2"
-              value={platform}
-              onChange={(event) => selectPlatform(event.target.value)}
-            >
-              {Object.entries(platformLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="text-sm font-medium text-page-label">
-            账号类型
-            <select
-              className="input mt-2"
-              value={accountType}
-              onChange={(event) => {
-                setAccountType(event.target.value);
-                resetAuthorization();
-              }}
-            >
-              {sharedAccountTypes[platform].map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+        <section>
+          <div className="text-sm font-medium text-page-label">选择平台</div>
+          <div
+            className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5"
+            role="radiogroup"
+            aria-label="选择平台"
+          >
+            {Object.entries(platformLabels).map(([value, label]) => {
+              const selected = platform === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => selectPlatform(value)}
+                  className={`relative flex min-h-[92px] min-w-0 flex-col items-center justify-center gap-2 rounded-lg border px-2 py-3 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 ${
+                    selected
+                      ? "border-brand-500 bg-brand-500/[0.08] shadow-sm"
+                      : "border-page-divider bg-page-surface hover:border-brand-500/45 hover:bg-page-surface-hover"
+                  }`}
+                >
+                  <span
+                    className={`absolute right-2 top-2 flex h-3.5 w-3.5 items-center justify-center rounded-full border ${
+                      selected
+                        ? "border-brand-500 bg-brand-500"
+                        : "border-page-divider"
+                    }`}
+                  >
+                    {selected && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+                  </span>
+                  <span className="flex h-9 min-w-9 items-center justify-center rounded-md border border-page-divider bg-page-inset px-1 text-xs font-bold text-page">
+                    {platformInitials[value]}
+                  </span>
+                  <span className="min-w-0 max-w-full">
+                    <span className="block truncate text-xs font-semibold text-page">
+                      {label}
+                    </span>
+                    <span className="mt-0.5 block text-[10px] text-page-muted">
+                      OAuth
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="border-t border-page-divider pt-4">
+          <div className="flex items-center gap-2 text-sm font-medium text-page-label">
+            <span className="flex h-5 min-w-5 items-center justify-center rounded border border-page-divider bg-page-inset px-1 text-[9px] font-bold text-page">
+              {platformInitials[platform]}
+            </span>
+            {platformLabels[platform]} 账号类型
+          </div>
+          <div
+            className="mt-3 grid gap-2 sm:grid-cols-2"
+            role="radiogroup"
+            aria-label={`${platformLabels[platform]} 账号类型`}
+          >
+            {sharedAccountTypes[platform].map(([value, label, typeLabel]) => {
+              const selected = accountType === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => selectAccountType(value)}
+                  className={`flex min-h-14 min-w-0 items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 ${
+                    selected
+                      ? "border-brand-500 bg-brand-500/[0.08]"
+                      : "border-page-divider bg-page-surface hover:border-brand-500/45 hover:bg-page-surface-hover"
+                  }`}
+                >
+                  <span
+                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+                      selected
+                        ? "border-brand-500 bg-brand-500"
+                        : "border-page-divider"
+                    }`}
+                  >
+                    {selected && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium text-page">
+                      {label}
+                    </span>
+                    <span className="mt-0.5 block text-[11px] text-page-muted">
+                      {typeLabel}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
 
         <section className="border-t border-page-divider pt-4">
           <div>
