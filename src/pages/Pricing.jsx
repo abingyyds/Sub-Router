@@ -527,7 +527,7 @@ export default function Pricing() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-10">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
       <div className="text-center mb-10">
         <h1 className="text-3xl font-heading font-bold text-page mb-3">
           {t("pricing.title")}
@@ -614,7 +614,250 @@ export default function Pricing() {
           {emptyMessage}
         </div>
       ) : (
-        <div className="glass-sm rounded-xl overflow-x-auto">
+        <>
+          <div className="space-y-3 lg:hidden">
+            {filtered.map((m, i) => {
+              const official = getOfficialPrice(m);
+              const savings = formatSavings(m, official);
+              const channels = Array.isArray(m.channels) ? m.channels : [];
+              const modelKey = `${m.model_name || "model"}-${m.id || i}`;
+              const expanded = expandedModels.has(modelKey);
+              const canExpand = canViewProviders && channels.length > 0;
+              const hasOfficialVideoPricing =
+                getOfficialVideoPriceRows(m).length > 0;
+              const hasCacheRead = Number(m.cache_read_price) > 0;
+              const hasCacheCreation =
+                Number(m.cache_creation_price) > 0 ||
+                Number(m.cache_creation_price_1h) > 0;
+              const showTokenPrices = !hasOfficialVideoPricing;
+
+              return (
+                <article
+                  key={modelKey}
+                  className="overflow-hidden rounded-lg border border-page-divider bg-page-inset shadow-sm"
+                >
+                  <div className="flex items-start justify-between gap-3 px-4 py-4">
+                    <div className="min-w-0">
+                      <h2 className="break-all font-mono text-sm font-semibold leading-5 text-page">
+                        {m.display_name || m.model_name}
+                      </h2>
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                        <span className="inline-flex rounded-full bg-brand-500/10 px-2 py-0.5 text-[11px] font-medium text-brand-600">
+                          {t(`pricing.type.${normalizeModelType(m)}`)}
+                        </span>
+                        {canExpand && (
+                          <span className="inline-flex rounded-full bg-page-surface px-2 py-0.5 text-[11px] font-medium text-page-secondary">
+                            {t("pricing.channelCount", {
+                              count: channels.length,
+                            })}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <span
+                      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs ${
+                        m.status === "healthy"
+                          ? "border-green-500/20 bg-green-500/10 text-page-success"
+                          : "border-page-divider bg-page-surface text-page-secondary"
+                      }`}
+                    >
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full ${m.status === "healthy" ? "bg-green-500" : "bg-neutral-500"}`}
+                      />
+                      {m.status === "healthy"
+                        ? t("pricing.online")
+                        : t("pricing.unknown")}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-4 border-t border-page-divider bg-page-surface/40 px-4 py-4">
+                    {hasOfficialVideoPricing ? (
+                      <div className="col-span-2 min-w-0 text-page-label">
+                        <div className="mb-1 text-[11px] font-medium leading-4 text-page-secondary">
+                          {t("officialChannels.finalPrice")}
+                        </div>
+                        {renderPrimaryPrice(m)}
+                      </div>
+                    ) : (
+                      <>
+                        <div className="min-w-0">
+                          <div className="text-[11px] font-medium leading-4 text-page-secondary">
+                            {t("pricing.inputPrice")}
+                          </div>
+                          <div className="mt-1 break-words font-mono text-sm font-semibold text-page-label">
+                            {renderPrimaryPrice(m)}
+                          </div>
+                        </div>
+                        <div className="min-w-0 text-right">
+                          <div className="text-[11px] font-medium leading-4 text-page-secondary">
+                            {t("pricing.outputPrice")}
+                          </div>
+                          <div className="mt-1 break-words font-mono text-sm font-semibold text-page-label">
+                            {renderSecondaryPrice(m, "output")}
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {showTokenPrices && hasCacheRead && (
+                      <div className="min-w-0">
+                        <div className="text-[11px] font-medium leading-4 text-page-secondary">
+                          {t("pricing.cacheReadPrice")}
+                        </div>
+                        <div className="mt-1 break-words font-mono text-sm font-semibold text-page-label">
+                          {renderSecondaryPrice(m, "cache_read")}
+                        </div>
+                      </div>
+                    )}
+                    {showTokenPrices && hasCacheCreation && (
+                      <div className="min-w-0 text-right">
+                        <div className="text-[11px] font-medium leading-4 text-page-secondary">
+                          {t("pricing.cacheCreationPrice")}
+                        </div>
+                        <div className="mt-1 break-words font-mono text-sm font-semibold text-page-label">
+                          {renderSecondaryPrice(m, "cache_creation")}
+                        </div>
+                      </div>
+                    )}
+
+                    {(official || hasOfficialVideoPricing) && (
+                      <div className="col-span-2 flex min-w-0 items-start justify-between gap-3 border-t border-page-divider pt-3">
+                        <span className="text-[11px] font-medium leading-4 text-page-secondary">
+                          {t("pricing.officialPrice")}
+                        </span>
+                        <span className="min-w-0 break-words text-right font-mono text-xs font-semibold text-page-label">
+                          {formatOfficialPrice(m, official)}
+                        </span>
+                      </div>
+                    )}
+                    {savings && (
+                      <div className="col-span-2 flex items-center justify-between gap-3">
+                        <span className="text-[11px] font-medium text-page-secondary">
+                          {t("pricing.savings")}
+                        </span>
+                        <span className="inline-flex rounded-full bg-green-500/10 px-2 py-0.5 font-mono text-xs font-semibold text-page-success">
+                          {savings}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {canExpand && (
+                    <button
+                      type="button"
+                      onClick={() => toggleModel(modelKey)}
+                      className="flex w-full items-center justify-between gap-3 border-t border-page-divider px-4 py-3 text-left text-sm font-medium text-page-secondary transition-colors hover:bg-page-surface-hover hover:text-page"
+                      aria-expanded={expanded}
+                    >
+                      <span>
+                        {expanded
+                          ? t("pricing.collapseChannels")
+                          : t("pricing.expandChannels")}
+                      </span>
+                      {expanded ? (
+                        <ChevronDown size={16} className="shrink-0" />
+                      ) : (
+                        <ChevronRight size={16} className="shrink-0" />
+                      )}
+                    </button>
+                  )}
+
+                  {expanded && canExpand && (
+                    <div className="border-t border-page-divider bg-page-surface">
+                      {channels.map((channel, channelIndex) => (
+                        <div
+                          key={`${modelKey}-mobile-channel-${channel.provider_slug || channelIndex}`}
+                          className="border-b border-page-divider px-4 py-4 last:border-0"
+                        >
+                          <div className="flex items-start gap-2.5">
+                            {channel.provider_logo ? (
+                              <img
+                                src={channel.provider_logo}
+                                alt=""
+                                className="h-7 w-7 shrink-0 rounded-md object-cover"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-brand-500/10 text-[10px] font-semibold text-brand-600">
+                                {channel.channel_index || channelIndex + 1}
+                              </span>
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <div className="flex min-w-0 items-center gap-1.5">
+                                {channel.provider_website ? (
+                                  <a
+                                    href={channel.provider_website}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="min-w-0 break-words font-medium text-page hover:text-brand-500"
+                                  >
+                                    {getChannelLabel(channel, channelIndex)}
+                                  </a>
+                                ) : (
+                                  <span className="min-w-0 break-words font-medium text-page">
+                                    {getChannelLabel(channel, channelIndex)}
+                                  </span>
+                                )}
+                                {channel.provider_website && (
+                                  <ExternalLink
+                                    size={12}
+                                    className="shrink-0 text-page-muted"
+                                  />
+                                )}
+                              </div>
+                              {channel.provider_description && (
+                                <p className="mt-1 break-words text-xs leading-5 text-page-muted">
+                                  {channel.provider_description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-page-divider pt-3">
+                            {[
+                              [
+                                t("pricing.inputPriceShort"),
+                                renderPrimaryPrice(channel),
+                              ],
+                              [
+                                t("pricing.outputPriceShort"),
+                                renderSecondaryPrice(channel, "output"),
+                              ],
+                              [
+                                t("pricing.cacheReadShort"),
+                                renderSecondaryPrice(channel, "cache_read"),
+                              ],
+                              [
+                                t("pricing.cacheCreationShort"),
+                                renderSecondaryPrice(
+                                  channel,
+                                  "cache_creation",
+                                  m.model_name,
+                                ),
+                              ],
+                            ].map(([label, value], priceIndex) => (
+                              <div
+                                key={`${label}-${priceIndex}`}
+                                className={`min-w-0 ${priceIndex % 2 ? "text-right" : ""}`}
+                              >
+                                <div className="text-[11px] text-page-secondary">
+                                  {label}
+                                </div>
+                                <div className="mt-0.5 break-words font-mono text-xs font-semibold text-page-label">
+                                  {value}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </article>
+              );
+            })}
+          </div>
+
+          <div className="glass-sm hidden overflow-x-auto rounded-xl lg:block">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-page-divider">
@@ -877,7 +1120,8 @@ export default function Pricing() {
               })}
             </tbody>
           </table>
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

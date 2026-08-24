@@ -105,12 +105,12 @@ export default function DarkHome() {
 
           <div className="space-y-0">
             {[
-              { title: t('home.lightningFast'), desc: t('home.lightningFastDesc'), accent: 'emerald' },
-              { title: t('home.securePrivate'), desc: t('home.securePrivateDesc'), accent: 'cyan' },
-              { title: t('home.payAsYouGo'), desc: t('home.payAsYouGoDesc'), accent: 'violet' },
+              { title: t('home.lightningFast'), desc: t('home.lightningFastDesc'), accent: 'text-emerald-500/60' },
+              { title: t('home.securePrivate'), desc: t('home.securePrivateDesc'), accent: 'text-cyan-500/60' },
+              { title: t('home.payAsYouGo'), desc: t('home.payAsYouGoDesc'), accent: 'text-violet-500/60' },
             ].map((f, i) => (
               <div key={i} className="flex gap-6 items-start py-6 border-b border-neutral-800/60 last:border-0 group">
-                <span className={`text-sm font-mono text-${f.accent}-500/60 mt-0.5`}>0{i + 1}</span>
+                <span className={`mt-0.5 font-mono text-sm ${f.accent}`}>0{i + 1}</span>
                 <div>
                   <h3 className="text-base font-semibold text-white mb-1 group-hover:text-neutral-300 transition-colors">{f.title}</h3>
                   <p className="text-sm text-neutral-500 leading-relaxed max-w-lg">{f.desc}</p>

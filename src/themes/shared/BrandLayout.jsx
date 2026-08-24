@@ -23,7 +23,7 @@ const configs = {
     announcement: 'border-b border-slate-200 bg-slate-950 px-4 py-2.5 text-center text-sm font-medium text-white',
     header: 'sticky top-0 z-50 border-b border-slate-200/80 bg-white/88 backdrop-blur-xl',
     logo: 'bg-slate-950 text-white shadow-lg shadow-slate-900/10',
-    navWrap: 'hidden items-center gap-1 rounded-xl border border-slate-200 bg-white/80 p-1 shadow-sm xl:flex',
+    navWrap: 'hidden items-center gap-1 rounded-xl border border-slate-200 bg-white/80 p-1 shadow-sm min-[1600px]:flex',
     navActive: 'bg-slate-950 text-white shadow-sm',
     navIdle: 'text-slate-600 hover:bg-slate-100 hover:text-slate-950',
     language: 'text-slate-500 hover:bg-slate-100 hover:text-slate-950',
@@ -40,7 +40,7 @@ const configs = {
     announcement: 'border-b border-blue-100 bg-blue-50 px-4 py-2.5 text-center text-sm font-medium text-blue-700',
     header: 'sticky top-0 z-50 border-b border-gray-100 bg-white/88 backdrop-blur-xl',
     logo: 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/15',
-    navWrap: 'hidden items-center gap-1 rounded-xl border border-gray-200 bg-gray-50/80 p-1 shadow-sm xl:flex',
+    navWrap: 'hidden items-center gap-1 rounded-xl border border-gray-200 bg-gray-50/80 p-1 shadow-sm min-[1600px]:flex',
     navActive: 'bg-blue-600 text-white shadow-sm',
     navIdle: 'text-gray-600 hover:bg-white hover:text-gray-950',
     language: 'text-gray-400 hover:bg-gray-50 hover:text-gray-700',
@@ -57,7 +57,7 @@ const configs = {
     announcement: 'border-b border-slate-800 bg-slate-900 px-4 py-2.5 text-center text-sm font-medium text-slate-200',
     header: 'sticky top-0 z-50 border-b border-slate-200 bg-white/92 backdrop-blur-xl',
     logo: 'bg-slate-900 text-white shadow-lg shadow-slate-900/10',
-    navWrap: 'hidden items-center gap-0.5 rounded-xl border border-slate-200 bg-slate-50/80 p-1 xl:flex',
+    navWrap: 'hidden items-center gap-0.5 rounded-xl border border-slate-200 bg-slate-50/80 p-1 min-[1600px]:flex',
     navActive: 'bg-slate-900 text-white shadow-sm',
     navIdle: 'text-slate-600 hover:bg-white hover:text-slate-950',
     language: 'text-slate-400 hover:bg-slate-50 hover:text-slate-700',
@@ -74,7 +74,7 @@ const configs = {
     announcement: 'border-b border-[#C4613F] bg-[#D97757] px-4 py-2.5 text-center text-sm font-medium text-white',
     header: 'sticky top-0 z-50 border-b border-[#E8DDD0] bg-[#FAF6F1]/88 backdrop-blur-xl',
     logo: 'bg-gradient-to-br from-[#D97757] to-[#C4613F] text-white shadow-lg shadow-orange-900/10',
-    navWrap: 'hidden items-center gap-1 rounded-xl border border-[#E8DDD0] bg-white/55 p-1 xl:flex',
+    navWrap: 'hidden items-center gap-1 rounded-xl border border-[#E8DDD0] bg-white/55 p-1 min-[1600px]:flex',
     navActive: 'bg-[#D97757]/10 text-[#D97757] shadow-sm',
     navIdle: 'text-[#6B5D4F] hover:bg-[#E8DDD0]/50 hover:text-[#3D3024]',
     language: 'text-[#8B7D6E] hover:bg-[#E8DDD0]/50 hover:text-[#3D3024]',
@@ -91,7 +91,7 @@ const configs = {
     announcement: 'border-b border-emerald-500/10 bg-emerald-500/[0.06] px-4 py-2.5 text-center font-mono text-sm text-emerald-300/80',
     header: 'sticky top-0 z-50 border-b border-emerald-500/[0.1] bg-[#030712]/88 backdrop-blur-xl',
     logo: 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 shadow-lg shadow-emerald-950/20',
-    navWrap: 'hidden items-center gap-1 rounded-xl border border-emerald-500/[0.12] bg-emerald-500/[0.035] p-1 xl:flex',
+    navWrap: 'hidden items-center gap-1 rounded-xl border border-emerald-500/[0.12] bg-emerald-500/[0.035] p-1 min-[1600px]:flex',
     navActive: 'bg-emerald-500/15 text-emerald-300 shadow-sm',
     navIdle: 'text-neutral-500 hover:bg-emerald-500/[0.08] hover:text-emerald-300',
     language: 'font-mono text-neutral-500 hover:bg-emerald-500/[0.08] hover:text-emerald-300',
@@ -108,7 +108,7 @@ const configs = {
     announcement: 'border-b border-neutral-800/70 bg-neutral-950 px-4 py-2.5 text-center text-sm text-neutral-400',
     header: 'sticky top-0 z-50 border-b border-neutral-800/60 bg-neutral-950/88 backdrop-blur-xl',
     logo: 'bg-white text-neutral-950 shadow-lg shadow-white/10',
-    navWrap: 'hidden items-center gap-1 rounded-xl border border-neutral-800/70 bg-neutral-900/70 p-1 xl:flex',
+    navWrap: 'hidden items-center gap-1 rounded-xl border border-neutral-800/70 bg-neutral-900/70 p-1 min-[1600px]:flex',
     navActive: 'bg-white text-neutral-950 shadow-sm',
     navIdle: 'text-neutral-500 hover:bg-neutral-800 hover:text-white',
     language: 'text-neutral-500 hover:bg-neutral-800 hover:text-white',
@@ -125,7 +125,7 @@ const configs = {
     announcement: 'border-b border-slate-800 bg-slate-950 px-4 py-2.5 text-center text-sm font-medium text-slate-100',
     header: 'sticky top-0 z-50 border-b border-slate-200 bg-[#f6f8fb]/88 backdrop-blur-xl',
     logo: 'bg-slate-950 text-white shadow-lg shadow-slate-900/10',
-    navWrap: 'hidden items-center gap-1 rounded-lg border border-slate-200 bg-white/80 p-1 shadow-sm xl:flex',
+    navWrap: 'hidden items-center gap-1 rounded-lg border border-slate-200 bg-white/80 p-1 shadow-sm min-[1600px]:flex',
     navActive: 'bg-slate-950 text-white shadow-sm',
     navIdle: 'text-slate-600 hover:bg-white hover:text-slate-950',
     language: 'text-slate-500 hover:bg-white/80 hover:text-slate-950',
@@ -142,7 +142,7 @@ const configs = {
     announcement: 'border-b border-emerald-400/20 bg-emerald-400/10 px-4 py-2.5 text-center font-mono text-sm text-emerald-200',
     header: 'sticky top-0 z-50 border-b border-emerald-400/15 bg-[#050807]/88 backdrop-blur-xl',
     logo: 'bg-emerald-400 text-black shadow-lg shadow-emerald-400/20',
-    navWrap: 'hidden items-center gap-1 rounded-lg border border-emerald-400/15 bg-emerald-400/[0.04] p-1 xl:flex',
+    navWrap: 'hidden items-center gap-1 rounded-lg border border-emerald-400/15 bg-emerald-400/[0.04] p-1 min-[1600px]:flex',
     navActive: 'bg-emerald-400 text-black shadow-sm',
     navIdle: 'text-emerald-200/70 hover:bg-emerald-400/10 hover:text-emerald-100',
     language: 'text-emerald-200/70 hover:bg-emerald-400/10 hover:text-emerald-100',
@@ -159,7 +159,7 @@ const configs = {
     announcement: 'border-b border-stone-800 bg-stone-950 px-4 py-2.5 text-center text-sm font-semibold text-stone-100',
     header: 'sticky top-0 z-50 border-b border-stone-200 bg-[#fbfaf7]/90 backdrop-blur-xl',
     logo: 'bg-stone-950 text-white shadow-lg shadow-stone-900/10',
-    navWrap: 'hidden items-center gap-1 rounded-lg border border-stone-200 bg-white/80 p-1 shadow-sm xl:flex',
+    navWrap: 'hidden items-center gap-1 rounded-lg border border-stone-200 bg-white/80 p-1 shadow-sm min-[1600px]:flex',
     navActive: 'bg-stone-950 text-white shadow-sm',
     navIdle: 'text-stone-600 hover:bg-white hover:text-stone-950',
     language: 'text-stone-500 hover:bg-white hover:text-stone-950',
@@ -176,7 +176,7 @@ const configs = {
     announcement: 'border-b border-[#1b2a5b]/10 bg-[#f7f9ff] px-4 py-2.5 text-center text-sm font-semibold text-[#1b2a5b]',
     header: 'sticky top-0 z-50 border-b border-slate-200/80 bg-white/88 backdrop-blur-xl',
     logo: 'bg-gradient-to-br from-[#0788ff] via-[#2248ff] to-[#ec4bff] text-white shadow-lg shadow-blue-500/20',
-    navWrap: 'hidden items-center gap-1 rounded-lg border border-slate-200 bg-white/82 p-1 shadow-sm xl:flex',
+    navWrap: 'hidden items-center gap-1 rounded-lg border border-slate-200 bg-white/82 p-1 shadow-sm min-[1600px]:flex',
     navActive: 'bg-gradient-to-r from-[#0788ff] to-[#b93dff] text-white shadow-sm',
     navIdle: 'text-slate-600 hover:bg-[#f4f7ff] hover:text-[#071337]',
     language: 'text-slate-500 hover:bg-[#f4f7ff] hover:text-[#071337]',
@@ -231,7 +231,7 @@ export default function BrandLayout({ variant }) {
       {site?.announcement && <div className={`${cfg.announcement} break-words`}>{site.announcement}</div>}
 
       <header className={cfg.header}>
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
+        <div className="mx-auto flex h-16 max-w-[1600px] items-center justify-between gap-3 px-4 sm:px-6">
           <div className="flex min-w-0 items-center gap-2">
             <Link to="/" className="group flex min-w-0 items-center gap-3">
               {site?.logo ? (
@@ -313,7 +313,7 @@ export default function BrandLayout({ variant }) {
             )}
             <button
               type="button"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors hover:bg-current/10 xl:hidden"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors hover:bg-current/10 min-[1600px]:hidden"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label={t('common.toggleMenu')}
               aria-expanded={mobileMenuOpen}
@@ -324,7 +324,7 @@ export default function BrandLayout({ variant }) {
         </div>
 
         {mobileMenuOpen && (
-          <div className="border-t border-current/10 bg-inherit shadow-lg shadow-black/[0.03] xl:hidden">
+          <div className="border-t border-current/10 bg-inherit shadow-lg shadow-black/[0.03] min-[1600px]:hidden">
             <nav
               aria-label={t('nav.main', { defaultValue: 'Main navigation' })}
               className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-3 sm:px-6"

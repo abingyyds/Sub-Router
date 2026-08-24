@@ -12,8 +12,25 @@ const FadeContent = ({
 }) => {
   const ref = useRef(null);
   const [visible, setVisible] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(() =>
+    typeof window !== 'undefined'
+      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      : false
+  );
 
   useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const handleChange = (event) => setReducedMotion(event.matches);
+    media.addEventListener?.('change', handleChange);
+    return () => media.removeEventListener?.('change', handleChange);
+  }, []);
+
+  useEffect(() => {
+    if (reducedMotion) {
+      setVisible(true);
+      return undefined;
+    }
+
     const el = ref.current;
     if (!el) return;
 
@@ -29,18 +46,23 @@ const FadeContent = ({
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, [threshold]);
+  }, [reducedMotion, threshold]);
+
+  const transitionDuration = Math.min(duration, 500);
+  const transitionDelay = Math.min(delay, 180);
 
   return (
     <div
       ref={ref}
       className={className}
       style={{
-        opacity: visible ? 1 : initialOpacity,
-        filter: blur ? (visible ? 'blur(0px)' : 'blur(10px)') : undefined,
-        transform: visible ? 'translateY(0)' : 'translateY(20px)',
-        transition: `opacity ${duration}ms ease-out ${delay}ms, filter ${duration}ms ease-out ${delay}ms, transform ${duration}ms ease-out ${delay}ms`,
-        willChange: 'opacity, filter, transform',
+        opacity: reducedMotion || visible ? 1 : initialOpacity,
+        filter: blur && !reducedMotion ? (visible ? 'blur(0px)' : 'blur(3px)') : undefined,
+        transform: reducedMotion || visible ? 'translateY(0)' : 'translateY(12px)',
+        transition: reducedMotion
+          ? 'none'
+          : `opacity ${transitionDuration}ms ease-out ${transitionDelay}ms, filter ${transitionDuration}ms ease-out ${transitionDelay}ms, transform ${transitionDuration}ms ease-out ${transitionDelay}ms`,
+        willChange: reducedMotion || visible ? 'auto' : 'opacity, filter, transform',
       }}
       {...props}
     >
