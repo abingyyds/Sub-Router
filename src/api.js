@@ -274,7 +274,9 @@ api.interceptors.response.use(
     return res;
   },
   (err) => {
-    const msg = err.response?.data?.message || err.message || "Request failed";
+    const msg =
+      err.response?.data?.message ||
+      i18n.t("common.requestFailed");
     if (err.response?.status === 401) {
       localStorage.removeItem("dist_user_id");
       // Emit event so AuthContext can clear React state

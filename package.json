@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "i18n:audit": "node scripts/audit-i18n.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
