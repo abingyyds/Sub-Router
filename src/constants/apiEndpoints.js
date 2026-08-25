@@ -43,4 +43,4 @@ export const SHARED_API_ENDPOINTS = [
   },
 ];
 
-export const PUBLIC_API_ENDPOINT_COUNT = SHARED_API_ENDPOINTS.length + 1;
+export const PUBLIC_API_ENDPOINT_COUNT = SHARED_API_ENDPOINTS.length;

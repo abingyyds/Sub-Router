@@ -97,7 +97,7 @@ export default function CorporateHome() {
         </FadeContent>
       </section>
 
-      <ApiEndpoints />
+      <ApiEndpoints variant="corporate" />
 
       {/* Features */}
       <section className="bg-slate-50 border-y border-slate-200">

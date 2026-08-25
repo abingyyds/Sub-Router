@@ -95,7 +95,7 @@ export default function CleanHome() {
         </FadeContent>
       </section>
 
-      <ApiEndpoints />
+      <ApiEndpoints variant="clean" />
 
       {/* Features */}
       <section className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:py-20">

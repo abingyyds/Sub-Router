@@ -90,7 +90,7 @@ export default function AuroraHome() {
         </div>
       </section>
 
-      <ApiEndpoints />
+      <ApiEndpoints variant="aurora" />
 
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
         <SectionTitle title={t('home.whyChooseUs')} desc={t('home.whyChooseUsDesc')} />

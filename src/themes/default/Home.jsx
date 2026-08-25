@@ -124,7 +124,7 @@ export default function DefaultHome() {
         </div>
       </section>
 
-      <ApiEndpoints />
+      <ApiEndpoints variant="default" />
 
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
         <FadeContent blur duration={700} delay={80}>

@@ -1,18 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Check, Copy, Globe2, Network, RadioTower } from 'lucide-react';
+import { Check, Copy, Network, RadioTower } from 'lucide-react';
 import { SHARED_API_ENDPOINTS } from '../constants/apiEndpoints';
-import { useSite } from '../context/SiteContext';
-
-const normalizeEndpoint = (value = '') => {
-  const raw = String(value || '').trim();
-  if (!raw) return '';
-  if (/^https?:\/\//i.test(raw)) {
-    return raw.replace(/\/+$/, '');
-  }
-  return `https://${raw.replace(/^\/+/, '').replace(/\/+$/, '')}`;
-};
 
 const copyToClipboard = async (text) => {
   try {
@@ -29,32 +19,17 @@ const copyToClipboard = async (text) => {
   }
 };
 
-export default function ApiEndpoints() {
+export default function ApiEndpoints({ variant = 'default' }) {
   const { t } = useTranslation();
-  const { site } = useSite();
   const [copiedId, setCopiedId] = useState('');
 
-  const siteEndpoint = useMemo(() => {
-    const currentOrigin =
-      typeof window !== 'undefined' ? window.location.origin : '';
-    return normalizeEndpoint(site?.domain || currentOrigin);
-  }, [site?.domain]);
-
-  const endpoints = useMemo(
-    () => [
-      {
-        id: 'site',
-        label: t('home.apiEndpointSite'),
-        url: siteEndpoint,
-      },
-      ...SHARED_API_ENDPOINTS.map((endpoint) => ({
-        ...endpoint,
-        label: t(endpoint.labelKey),
-        apiOnly: true,
-      })),
-    ].filter((endpoint) => endpoint.url),
-    [siteEndpoint, t],
-  );
+  const endpoints = useMemo(() => {
+    return SHARED_API_ENDPOINTS.map((endpoint) => ({
+      ...endpoint,
+      label: t(endpoint.labelKey),
+      apiOnly: true,
+    })).filter((endpoint) => endpoint.url);
+  }, [t]);
 
   const handleCopy = async (endpoint) => {
     await copyToClipboard(endpoint.url);
@@ -66,32 +41,35 @@ export default function ApiEndpoints() {
   };
 
   return (
-    <section className="api-endpoints-panel mx-auto max-w-7xl px-4 pb-12 sm:px-6">
-      <div className="api-endpoints-card glass rounded-xl p-4 sm:p-5 lg:p-6">
-        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <section className={`api-endpoints-panel api-endpoints-panel--${variant} mx-auto max-w-7xl px-4 pb-10 sm:px-6`}>
+      <div className="api-endpoints-card glass rounded-xl p-3.5 sm:p-4 lg:p-5">
+        <div className="api-endpoints-heading mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-bold text-page">
+            <p className="text-base font-bold text-page">
               {t('home.apiEndpointsTitle')}
             </p>
             <p className="mt-1 max-w-2xl text-xs leading-5 text-page-muted">
               {t('home.apiEndpointsDesc')}
             </p>
           </div>
-          <span className="shrink-0 text-[11px] font-medium text-page-muted">
+          <span className="api-endpoints-copy-hint shrink-0 text-[11px] font-medium text-page-muted">
             {t('home.apiEndpointClickToCopy')}
           </span>
         </div>
 
-        <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
-          {endpoints.map((endpoint) => (
+        <div className="api-endpoints-grid grid auto-rows-fr gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+          {endpoints.map((endpoint, index) => (
             <button
               key={endpoint.id}
               type="button"
               onClick={() => handleCopy(endpoint)}
               aria-label={`${t('home.apiEndpointClickToCopy')}: ${endpoint.label}`}
-              className="group min-w-0 rounded-lg border border-page-divider bg-page-inset/40 p-3.5 text-left transition-all hover:-translate-y-0.5 hover:border-brand-500/30 hover:bg-page-surface-hover focus-visible:translate-y-0"
+              className="api-endpoint-item group flex h-full min-w-0 flex-col justify-between rounded-lg border border-page-divider bg-page-inset/40 p-3 text-left transition-all hover:-translate-y-0.5 hover:border-brand-500/30 hover:bg-page-surface-hover focus-visible:translate-y-0"
             >
-              <div className="mb-2 flex min-w-0 items-center gap-2">
+              <div className="api-endpoint-item-top flex min-w-0 items-center gap-2">
+                <span className="api-endpoint-index shrink-0 font-mono text-[10px] font-bold text-page-muted">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
                 <span className="api-endpoint-icon flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-page-divider bg-page-surface text-page-link">
                   <EndpointIcon endpoint={endpoint} />
                 </span>
@@ -105,7 +83,7 @@ export default function ApiEndpoints() {
                   {copiedId === endpoint.id ? <Check className="h-4 w-4" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
                 </span>
               </div>
-              <code className="block break-all text-[11px] leading-5 text-page-secondary">
+              <code className="api-endpoint-url mt-2 block break-all text-[11px] leading-5 text-page-secondary">
                 {endpoint.url}
               </code>
             </button>
@@ -117,7 +95,6 @@ export default function ApiEndpoints() {
 }
 
 function EndpointIcon({ endpoint }) {
-  if (endpoint.id === 'site') return <Globe2 className="h-4 w-4" aria-hidden="true" />;
   if (endpoint.id.includes('official')) return <RadioTower className="h-4 w-4" aria-hidden="true" />;
   return <Network className="h-4 w-4" aria-hidden="true" />;
 }

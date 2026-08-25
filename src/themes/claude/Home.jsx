@@ -93,7 +93,7 @@ export default function ClaudeHome() {
         </FadeContent>
       </section>
 
-      <ApiEndpoints />
+      <ApiEndpoints variant="claude" />
 
       {/* Features */}
       <section className="bg-[#F5EEE6]">
