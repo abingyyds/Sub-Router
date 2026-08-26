@@ -19,6 +19,8 @@ const EXPLORERS = {
   tron: "https://tronscan.org/#/transaction/",
   eth: "https://etherscan.io/tx/",
   bsc: "https://bscscan.com/tx/",
+  polygon: "https://polygonscan.com/tx/",
+  solana: "https://solscan.io/tx/",
 };
 
 function shorten(value, head = 10, tail = 8) {
@@ -38,6 +40,9 @@ export default function CryptoTopupReconcileModal({
   record,
   onClose,
   onSuccess,
+  successToast,
+  successTitle,
+  successDescription,
 }) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
@@ -53,11 +58,11 @@ export default function CryptoTopupReconcileModal({
       setTimeLeft(Math.max(0, expiresAt - Math.floor(Date.now() / 1000)));
       if (data?.phase === "success" && !successNotified.current) {
         successNotified.current = true;
-        toast.success(t("topup.reconcileSuccess"));
+        toast.success(successToast || t("topup.reconcileSuccess"));
         await onSuccess?.();
       }
     },
-    [onSuccess, t],
+    [onSuccess, successToast, t],
   );
 
   const reconcile = useCallback(async () => {
@@ -192,10 +197,10 @@ export default function CryptoTopupReconcileModal({
           <div className="flex min-h-52 flex-col items-center justify-center text-center">
             <CheckCircle2 className="mb-3 text-page-success" size={44} />
             <h3 className="text-base font-semibold text-page">
-              {t("topup.reconcileSuccessTitle")}
+              {successTitle || t("topup.reconcileSuccessTitle")}
             </h3>
             <p className="mt-1 text-sm text-page-secondary">
-              {t("topup.reconcileCredited")}
+              {successDescription || t("topup.reconcileCredited")}
             </p>
           </div>
         ) : result?.phase === "challenge" ? (

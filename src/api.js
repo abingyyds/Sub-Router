@@ -631,7 +631,7 @@ export const createCreemOrder = (data) =>
 export const createCryptoOrder = (data) =>
   api.post("/api/dist/topup/crypto/pay", data);
 export const getCryptoOrderStatus = (tradeNo) =>
-  api.get(`/api/dist/topup/crypto/status?trade_no=${tradeNo}`);
+  api.get(`/api/dist/topup/crypto/status?trade_no=${encodeURIComponent(tradeNo)}`);
 export const reconcileCryptoOrder = (tradeNo) =>
   api.post("/api/dist/topup/crypto/reconcile", { trade_no: tradeNo });
 export const claimCryptoOrderTransfer = (tradeNo, txHash) =>
