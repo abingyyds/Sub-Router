@@ -4,7 +4,76 @@ import { Q } from "../api";
 
 const n = (value) => Number(value || 0).toLocaleString();
 
-function LogDetailsModal({ open, onClose, log, t, symbol, rate }) {
+const tierPriceVariables = [
+  { key: "p", label: "输入" },
+  { key: "c", label: "输出" },
+  { key: "cr", label: "缓存读取" },
+  { key: "cc", label: "缓存创建" },
+  { key: "cc1h", label: "缓存创建 (1h)" },
+  { key: "img", label: "图片输入" },
+  { key: "img_o", label: "图片输出" },
+  { key: "ai", label: "音频输入" },
+  { key: "ao", label: "音频输出" },
+];
+
+function decodeBase64Utf8(value) {
+  if (!value || typeof globalThis.atob !== "function") return "";
+  try {
+    const binary = globalThis.atob(value);
+    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+    if (typeof TextDecoder !== "undefined") {
+      return new TextDecoder().decode(bytes);
+    }
+    return String.fromCharCode(...bytes);
+  } catch (e) {
+    return "";
+  }
+}
+
+function parseTieredExpression(value) {
+  const expression = decodeBase64Utf8(value).replace(/^v\d+:/, "");
+  if (!expression) return [];
+
+  const tiers = [];
+  const marker = /tier\(\s*"([^"]*)"\s*,/g;
+  let match;
+  while ((match = marker.exec(expression)) !== null) {
+    let depth = 1;
+    let end = marker.lastIndex;
+    for (; end < expression.length; end += 1) {
+      if (expression[end] === "(") depth += 1;
+      if (expression[end] === ")") {
+        depth -= 1;
+        if (depth === 0) break;
+      }
+    }
+    if (depth !== 0) break;
+
+    const prices = {};
+    const pricePattern =
+      /\b(p|c|cr|cc|cc1h|img|img_o|ai|ao)\s*\*\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?)/gi;
+    let priceMatch;
+    const body = expression.slice(marker.lastIndex, end);
+    while ((priceMatch = pricePattern.exec(body)) !== null) {
+      const key = priceMatch[1].toLowerCase();
+      if (!(key in prices)) prices[key] = Number(priceMatch[2]);
+    }
+    tiers.push({ label: match[1], prices });
+    marker.lastIndex = end + 1;
+  }
+  return tiers;
+}
+
+function LogDetailsModal({
+  open,
+  onClose,
+  log,
+  t,
+  symbol,
+  rate,
+  currencyCode = "CNY",
+  usdRate = 7,
+}) {
   if (!open || !log) return null;
   let other = {};
   try {
@@ -53,6 +122,79 @@ function LogDetailsModal({ open, onClose, log, t, symbol, rate }) {
     : isPerCallBilling
       ? t("按次计费")
       : t("按 Token");
+  const billingSourceLabel = (() => {
+    if (other.billing_source === "subscription") {
+      if (other.subscription_source === "dist_package") return t("分站套餐");
+      if (other.subscription_source === "order") return t("主站订阅");
+      if (other.subscription_source === "admin") return t("后台订阅");
+      return t("订阅");
+    }
+    if (other.billing_source === "wallet") return t("钱包");
+    return "";
+  })();
+  const dynamicTier = (() => {
+    if (!isTieredBilling) return null;
+    const tiers = parseTieredExpression(other.expr_b64);
+    if (tiers.length === 0) return null;
+    const matched = String(other.matched_tier || "")
+      .trim()
+      .toLowerCase();
+    if (!matched) return null;
+    return (
+      tiers.find((tier) => tier.label.trim().toLowerCase() === matched) || null
+    );
+  })();
+  const formatDynamicPrice = (value) => {
+    const sourceCurrency = String(other.expr_currency || "USD").toUpperCase();
+    let displayValue = Number(value || 0);
+    if (sourceCurrency === "CNY") {
+      if (String(currencyCode || "CNY").toUpperCase() !== "CNY") {
+        displayValue =
+          (displayValue / Number(usdRate || 7)) * Number(rate || 1);
+      }
+    } else {
+      displayValue *= Number(rate || 1);
+    }
+    return `${symbol}${displayValue.toLocaleString(undefined, {
+      minimumFractionDigits: 4,
+      maximumFractionDigits: 6,
+    })}/M`;
+  };
+  const dynamicUsageParts = [
+    `${t("输入 Token")} ${n(log.prompt_tokens)}`,
+    `${t("输出 Token")} ${n(log.completion_tokens)}`,
+    cacheReadTokens > 0 && `${t("缓存读取")} ${n(cacheReadTokens)}`,
+    !hasSplitCacheWrites &&
+      cacheWriteTokens > 0 &&
+      `${t("缓存写入")} ${n(cacheWriteTokens)}`,
+    cacheWrite5mTokens > 0 && `${t("缓存写入 (5m)")} ${n(cacheWrite5mTokens)}`,
+    cacheWrite1hTokens > 0 && `${t("缓存写入 (1h)")} ${n(cacheWrite1hTokens)}`,
+  ].filter(Boolean);
+  const billingBasis = isTieredBilling
+    ? t("按真实用量计费")
+    : isPerCallBilling
+      ? t("按次计费")
+      : t("按实际 Token 和缓存用量计费");
+  const dynamicPricingRows = isTieredBilling
+    ? [
+        [t("结算依据"), billingBasis],
+        [t("计算维度"), dynamicUsageParts.join(" · ")],
+        ...(other.matched_tier ? [[t("命中档位"), other.matched_tier]] : []),
+        ...(other.expr_currency
+          ? [[t("定价币种"), String(other.expr_currency).toUpperCase()]]
+          : []),
+        ...(dynamicTier
+          ? tierPriceVariables
+              .filter(
+                (variable) => Number(dynamicTier.prices[variable.key]) > 0,
+              )
+              .map((variable) => [
+                t(variable.label),
+                formatDynamicPrice(dynamicTier.prices[variable.key]),
+              ])
+          : []),
+      ]
+    : [];
   const outputPrice =
     Number(other.site_output_price || 0) > 0
       ? Number(other.site_output_price)
@@ -106,6 +248,8 @@ function LogDetailsModal({ open, onClose, log, t, symbol, rate }) {
       ? [[t("缓存写入 (1h)"), n(cacheWrite1hTokens)]]
       : []),
     [t("计费模式"), billingMode],
+    ...(!isTieredBilling ? [[t("结算依据"), billingBasis]] : []),
+    ...dynamicPricingRows,
     ...(!isTieredBilling && !isPerCallBilling
       ? [
           [t("输入"), price(basePrice)],
@@ -124,13 +268,22 @@ function LogDetailsModal({ open, onClose, log, t, symbol, rate }) {
             : []),
         ]
       : []),
+    ...(isPerCallBilling && Number(other.site_fixed_price || 0) > 0
+      ? [
+          [
+            t("价格"),
+            `${money(Number(other.site_fixed_price) * Q)} / ${t("次")}`,
+          ],
+        ]
+      : []),
     [
       t("专属倍率"),
       Number.isFinite(Number(groupRatio))
         ? `${Number(groupRatio).toFixed(4)}x`
         : "-",
     ],
-    [t("总费用"), money(log.quota)],
+    [t("最终结算价格"), money(log.quota)],
+    [t("实际扣费来源"), billingSourceLabel],
   ];
   const providerPricing = (() => {
     if (other.provider_billing_mode === "per_call") {
