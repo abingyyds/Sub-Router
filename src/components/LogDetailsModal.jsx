@@ -233,11 +233,11 @@ function LogDetailsModal({ open, onClose, log, t, symbol, rate }) {
   );
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-center justify-center overflow-y-auto bg-black/60 p-4"
+      className="modal-overlay fixed inset-0 z-[1000] flex items-center justify-center overflow-y-auto p-4"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-xl border border-page-divider bg-page p-5 shadow-2xl"
+        className="glass mx-auto w-full max-w-3xl max-h-[min(82vh,calc(100dvh-7rem))] overflow-y-auto p-5 text-page shadow-2xl"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between gap-3">
