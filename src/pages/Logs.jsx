@@ -1,20 +1,27 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import { ChevronDown, ChevronRight, Download, RotateCcw, Search } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { exportUserLogs, getUserLogs, getUserLogsStat, Q } from '../api';
-import { useCurrency } from '../context/SiteContext';
-import LogSubnav from '../components/LogSubnav';
+import React, { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  ChevronDown,
+  ChevronRight,
+  Download,
+  RotateCcw,
+  Search,
+} from "lucide-react";
+import toast from "react-hot-toast";
+import { exportUserLogs, getUserLogs, getUserLogsStat, Q } from "../api";
+import { useCurrency } from "../context/SiteContext";
+import LogSubnav from "../components/LogSubnav";
+import LogDetailsModal from "../components/LogDetailsModal";
 
 function formatTime(unix) {
-  if (!unix) return '-';
+  if (!unix) return "-";
   const d = new Date(unix * 1000);
-  const pad = (n) => String(n).padStart(2, '0');
+  const pad = (n) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 
 function formatDateTimeLocal(date) {
-  const pad = (n) => String(n).padStart(2, '0');
+  const pad = (n) => String(n).padStart(2, "0");
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
@@ -44,7 +51,7 @@ function formatAmount(symbol, rate, amount) {
 
 function formatQuotaAmount(symbol, rate, quota, emptyZero = true) {
   const value = (Number(quota || 0) / Q) * rate;
-  if (value <= 0 && emptyZero) return '-';
+  if (value <= 0 && emptyZero) return "-";
   return `${symbol}${value.toLocaleString(undefined, {
     minimumFractionDigits: value > 0 && value < 0.01 ? 4 : 2,
     maximumFractionDigits: 6,
@@ -55,8 +62,17 @@ function formatTokens(value) {
   return Number(value || 0).toLocaleString();
 }
 
+function getCacheWriteTokens(other) {
+  const aggregate = Number(other?.cache_creation_tokens || 0);
+  if (aggregate > 0) return aggregate;
+  return (
+    Number(other?.cache_creation_tokens_5m || 0) +
+    Number(other?.cache_creation_tokens_1h || 0)
+  );
+}
+
 function getProviderSummary(other) {
-  if (!other?.provider_name) return '';
+  if (!other?.provider_name) return "";
   if (other.provider_description) {
     return `${other.provider_name}：${other.provider_description}`;
   }
@@ -64,57 +80,61 @@ function getProviderSummary(other) {
 }
 
 function getBillingSourceLabel(other, t) {
-  if (!other?.billing_source) return '';
-  if (other.billing_source === 'subscription') {
-    if (other.subscription_source === 'dist_package') return t('dashboard.packages');
-    if (other.subscription_source === 'order') return t('主站订阅');
-    if (other.subscription_source === 'admin') return t('后台订阅');
-    return t('订阅');
+  if (!other?.billing_source) return "";
+  if (other.billing_source === "subscription") {
+    if (other.subscription_source === "dist_package")
+      return t("dashboard.packages");
+    if (other.subscription_source === "order") return t("主站订阅");
+    if (other.subscription_source === "admin") return t("后台订阅");
+    return t("订阅");
   }
-  if (other.billing_source === 'wallet') {
-    return t('钱包');
+  if (other.billing_source === "wallet") {
+    return t("钱包");
   }
-  return '';
+  return "";
 }
 
 function getLogTypeLabel(type, t) {
   const labels = {
-    1: t('logs.typeTopup'),
-    2: t('logs.typeConsume'),
-    3: t('logs.typeManage'),
-    4: t('logs.typeSystem'),
-    5: t('logs.typeError'),
-    6: t('logs.typeRefund'),
+    1: t("logs.typeTopup"),
+    2: t("logs.typeConsume"),
+    3: t("logs.typeManage"),
+    4: t("logs.typeSystem"),
+    5: t("logs.typeError"),
+    6: t("logs.typeRefund"),
   };
-  return labels[type] || t('logs.typeUnknown');
+  return labels[type] || t("logs.typeUnknown");
 }
 
 function getSitePricingDetails(other, symbol, rate, t) {
   if (!other?.site_billing_mode) return [];
 
-  if (other.site_billing_mode === 'per_call') {
+  if (other.site_billing_mode === "per_call") {
     return [
-      { key: t('定价方式'), value: t('按次计费') },
-      { key: t('价格'), value: formatAmount(symbol, rate, other.site_fixed_price) },
+      { key: t("定价方式"), value: t("按次计费") },
+      {
+        key: t("价格"),
+        value: formatAmount(symbol, rate, other.site_fixed_price),
+      },
     ];
   }
 
-  const details = [{ key: t('定价方式'), value: t('按量计费') }];
+  const details = [{ key: t("定价方式"), value: t("按量计费") }];
   if (Number(other.site_input_price || 0) > 0) {
     details.push({
-      key: t('输入价格'),
+      key: t("输入价格"),
       value: `${formatAmount(symbol, rate, other.site_input_price)} / 1M tokens`,
     });
   }
   if (Number(other.site_output_price || 0) > 0) {
     details.push({
-      key: t('输出价格'),
+      key: t("输出价格"),
       value: `${formatAmount(symbol, rate, other.site_output_price)} / 1M tokens`,
     });
   }
   if (Number(other.site_cache_read_price || 0) > 0) {
     details.push({
-      key: t('缓存读取价格'),
+      key: t("缓存读取价格"),
       value: `${formatAmount(symbol, rate, other.site_cache_read_price)} / 1M tokens`,
     });
   }
@@ -131,12 +151,12 @@ function getSitePricingDetails(other, symbol, rate, t) {
       parts.push(`1h ${formatAmount(symbol, rate, cacheCreate1h)} / 1M tokens`);
     }
     details.push({
-      key: t('缓存创建价格'),
-      value: parts.join(' / '),
+      key: t("缓存创建价格"),
+      value: parts.join(" / "),
     });
   } else if (cacheCreate > 0) {
     details.push({
-      key: t('缓存创建价格'),
+      key: t("缓存创建价格"),
       value: `${formatAmount(symbol, rate, cacheCreate)} / 1M tokens`,
     });
   }
@@ -154,23 +174,32 @@ export default function Logs() {
   const [loadingStat, setLoadingStat] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [stat, setStat] = useState({ quota: 0, rpm: 0, tpm: 0, token: 0 });
-  const [modelFilter, setModelFilter] = useState('');
-  const [tokenFilter, setTokenFilter] = useState('');
-  const [requestIdFilter, setRequestIdFilter] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
-  const [logType, setLogType] = useState('0');
-  const [appliedFilters, setAppliedFilters] = useState({ type: '0' });
+  const [modelFilter, setModelFilter] = useState("");
+  const [tokenFilter, setTokenFilter] = useState("");
+  const [requestIdFilter, setRequestIdFilter] = useState("");
+  const [upstreamRequestIdFilter, setUpstreamRequestIdFilter] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
+  const [logType, setLogType] = useState("0");
+  const [appliedFilters, setAppliedFilters] = useState({ type: "0" });
   const [expandedRows, setExpandedRows] = useState({});
+  const [selectedLog, setSelectedLog] = useState(null);
   const pageSize = 20;
 
   const getAppliedParams = useCallback(() => {
-    const params = { type: appliedFilters.type || '0' };
-    if (appliedFilters.model_name) params.model_name = appliedFilters.model_name;
-    if (appliedFilters.token_name) params.token_name = appliedFilters.token_name;
-    if (appliedFilters.request_id) params.request_id = appliedFilters.request_id;
-    if (appliedFilters.start_timestamp) params.start_timestamp = appliedFilters.start_timestamp;
-    if (appliedFilters.end_timestamp) params.end_timestamp = appliedFilters.end_timestamp;
+    const params = { type: appliedFilters.type || "0" };
+    if (appliedFilters.model_name)
+      params.model_name = appliedFilters.model_name;
+    if (appliedFilters.token_name)
+      params.token_name = appliedFilters.token_name;
+    if (appliedFilters.request_id)
+      params.request_id = appliedFilters.request_id;
+    if (appliedFilters.upstream_request_id)
+      params.upstream_request_id = appliedFilters.upstream_request_id;
+    if (appliedFilters.start_timestamp)
+      params.start_timestamp = appliedFilters.start_timestamp;
+    if (appliedFilters.end_timestamp)
+      params.end_timestamp = appliedFilters.end_timestamp;
     return params;
   }, [appliedFilters]);
 
@@ -183,7 +212,9 @@ export default function Logs() {
         setLogs(res.data.data?.items || []);
         setTotal(res.data.data?.total || 0);
       }
-    } catch (e) { /* interceptor */ }
+    } catch (e) {
+      /* interceptor */
+    }
     setLoading(false);
   }, [getAppliedParams, page]);
 
@@ -194,12 +225,18 @@ export default function Logs() {
       if (res.data.success) {
         setStat(res.data.data || { quota: 0, rpm: 0, tpm: 0, token: 0 });
       }
-    } catch (e) { /* interceptor */ }
+    } catch (e) {
+      /* interceptor */
+    }
     setLoadingStat(false);
   }, [getAppliedParams]);
 
-  useEffect(() => { load(); }, [load]);
-  useEffect(() => { loadStat(); }, [loadStat]);
+  useEffect(() => {
+    load();
+  }, [load]);
+  useEffect(() => {
+    loadStat();
+  }, [loadStat]);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
@@ -211,21 +248,31 @@ export default function Logs() {
       model_name: modelFilter.trim(),
       token_name: tokenFilter.trim(),
       request_id: requestIdFilter.trim(),
+      upstream_request_id: upstreamRequestIdFilter.trim(),
       start_timestamp: parseDatetimeLocal(startTime),
       end_timestamp: parseDatetimeLocal(endTime),
     });
-  }, [endTime, logType, modelFilter, requestIdFilter, startTime, tokenFilter]);
+  }, [
+    endTime,
+    logType,
+    modelFilter,
+    requestIdFilter,
+    upstreamRequestIdFilter,
+    startTime,
+    tokenFilter,
+  ]);
 
   const resetFilters = useCallback(() => {
-    setModelFilter('');
-    setTokenFilter('');
-    setRequestIdFilter('');
-    setStartTime('');
-    setEndTime('');
-    setLogType('0');
+    setModelFilter("");
+    setTokenFilter("");
+    setRequestIdFilter("");
+    setUpstreamRequestIdFilter("");
+    setStartTime("");
+    setEndTime("");
+    setLogType("0");
     setExpandedRows({});
     setPage(1);
-    setAppliedFilters({ type: '0' });
+    setAppliedFilters({ type: "0" });
   }, []);
 
   const exportLogs = useCallback(async () => {
@@ -233,15 +280,15 @@ export default function Logs() {
     setExporting(true);
     try {
       const res = await exportUserLogs(getAppliedParams());
-      const contentType = res.headers?.['content-type'] || '';
-      if (contentType.includes('application/json')) {
-        throw new Error('export failed');
+      const contentType = res.headers?.["content-type"] || "";
+      if (contentType.includes("application/json")) {
+        throw new Error("export failed");
       }
-      const disposition = res.headers?.['content-disposition'] || '';
+      const disposition = res.headers?.["content-disposition"] || "";
       const filenameMatch = disposition.match(/filename="?([^";]+)"?/i);
       const filename = filenameMatch?.[1] || `usage-logs-${Date.now()}.csv`;
       const url = URL.createObjectURL(res.data);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
       link.download = filename;
       document.body.appendChild(link);
@@ -249,7 +296,7 @@ export default function Logs() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     } catch (error) {
-      toast.error(t('logs.exportFailed'));
+      toast.error(t("logs.exportFailed"));
     } finally {
       setExporting(false);
     }
@@ -268,98 +315,141 @@ export default function Logs() {
   }, []);
 
   const toggleRow = (logId) => {
-    setExpandedRows(prev => ({ ...prev, [logId]: !prev[logId] }));
+    setExpandedRows((prev) => ({ ...prev, [logId]: !prev[logId] }));
   };
 
-  const getExpandData = useCallback((log) => {
-    const other = getLogOther(log.other) || {};
+  const openLogDetails = (log) => setSelectedLog(log);
 
-    const data = [];
-    const billingSourceLabel = getBillingSourceLabel(other, t);
+  const getExpandData = useCallback(
+    (log) => {
+      const other = getLogOther(log.other) || {};
 
-    const providerSummary = getProviderSummary(other);
-    if (providerSummary) {
-      data.push({ key: t('供应商'), value: providerSummary });
-    }
+      const data = [];
+      const billingSourceLabel = getBillingSourceLabel(other, t);
+      const duration = Number(log.use_time || 0);
+      const frt = Number(other.frt || 0);
+      const tps =
+        duration > 0 ? Number(log.completion_tokens || 0) / duration : 0;
 
-    if (billingSourceLabel) {
-      data.push({ key: t('实际扣费来源'), value: billingSourceLabel });
-    }
-    if (other.billing_settlement_failed) {
-      data.push({
-        key: t('logs.billingFailure'),
-        value: [other.billing_settlement_stage, other.billing_settlement_reason].filter(Boolean).join('：') || t('logs.billingFailureFallback'),
-      });
-    }
-    if (other.wallet_refund_queued) {
-      data.push({
-        key: t('logs.walletRefundRecovery'),
-        value: `${other.wallet_refund_reason || t('logs.walletRefundQueued')} · ${formatQuotaAmount(symbol, rate, other.wallet_refund_quota, false)}`,
-      });
-    }
-    if (other.platform_advanced) {
-      data.push({
-        key: t('logs.platformAdvance'),
-        value: `${formatQuotaAmount(symbol, rate, other.platform_advance_quota, false)} · ${other.platform_advance_status || t('logs.platformAdvanceOutstanding')}`,
-      });
-    }
+      const providerSummary = getProviderSummary(other);
+      if (providerSummary) {
+        data.push({ key: t("供应商"), value: providerSummary });
+      }
 
-    if (log.content) {
-      data.push({ key: t('logs.content'), value: log.content });
-    }
-    if (other.task_id) {
-      data.push({ key: t('任务 ID'), value: other.task_id });
-    }
-    if (other.upstream_task_id && other.upstream_task_id !== other.task_id) {
-      data.push({ key: t('上游任务 ID'), value: other.upstream_task_id });
-    }
-    if (other.reason) {
-      data.push({ key: t('原因'), value: other.reason });
-    }
+      if (billingSourceLabel) {
+        data.push({ key: t("实际扣费来源"), value: billingSourceLabel });
+      }
+      if (other.billing_settlement_failed) {
+        data.push({
+          key: t("logs.billingFailure"),
+          value:
+            [other.billing_settlement_stage, other.billing_settlement_reason]
+              .filter(Boolean)
+              .join("：") || t("logs.billingFailureFallback"),
+        });
+      }
+      if (other.wallet_refund_queued) {
+        data.push({
+          key: t("logs.walletRefundRecovery"),
+          value: `${other.wallet_refund_reason || t("logs.walletRefundQueued")} · ${formatQuotaAmount(symbol, rate, other.wallet_refund_quota, false)}`,
+        });
+      }
+      if (other.platform_advanced) {
+        data.push({
+          key: t("logs.platformAdvance"),
+          value: `${formatQuotaAmount(symbol, rate, other.platform_advance_quota, false)} · ${other.platform_advance_status || t("logs.platformAdvanceOutstanding")}`,
+        });
+      }
 
-    data.push(...getSitePricingDetails(other, symbol, rate, t));
+      if (log.content) {
+        data.push({ key: t("logs.content"), value: log.content });
+      }
+      if (other.task_id) {
+        data.push({ key: t("任务 ID"), value: other.task_id });
+      }
+      if (other.upstream_task_id && other.upstream_task_id !== other.task_id) {
+        data.push({ key: t("上游任务 ID"), value: other.upstream_task_id });
+      }
+      if (other.reason) {
+        data.push({ key: t("原因"), value: other.reason });
+      }
 
-    if (other.cache_tokens > 0) {
-      data.push({ key: t('缓存命中 Tokens'), value: Number(other.cache_tokens).toLocaleString() });
-    }
-    if (other.cache_creation_tokens > 0) {
-      data.push({ key: t('缓存创建 Tokens'), value: Number(other.cache_creation_tokens).toLocaleString() });
-    }
-    if (other.cache_creation_tokens_5m > 0) {
-      data.push({ key: t('缓存创建 Tokens (5m)'), value: Number(other.cache_creation_tokens_5m).toLocaleString() });
-    }
-    if (other.cache_creation_tokens_1h > 0) {
-      data.push({ key: t('缓存创建 Tokens (1h)'), value: Number(other.cache_creation_tokens_1h).toLocaleString() });
-    }
+      data.push(...getSitePricingDetails(other, symbol, rate, t));
 
-    // Request ID
-    if (log.request_id) {
-      data.push({ key: 'Request ID', value: log.request_id });
-    }
-    if (log.ip) {
-      data.push({ key: t('logs.clientIp'), value: log.ip });
-    }
+      if (other.cache_tokens > 0) {
+        data.push({
+          key: t("缓存命中 Tokens"),
+          value: Number(other.cache_tokens).toLocaleString(),
+        });
+      }
+      if (
+        getCacheWriteTokens(other) > 0 &&
+        !other.cache_creation_tokens_5m &&
+        !other.cache_creation_tokens_1h
+      ) {
+        data.push({
+          key: t("缓存创建 Tokens"),
+          value: formatTokens(getCacheWriteTokens(other)),
+        });
+      }
+      if (other.cache_creation_tokens_5m > 0) {
+        data.push({
+          key: t("缓存创建 Tokens (5m)"),
+          value: Number(other.cache_creation_tokens_5m).toLocaleString(),
+        });
+      }
+      if (other.cache_creation_tokens_1h > 0) {
+        data.push({
+          key: t("缓存创建 Tokens (1h)"),
+          value: Number(other.cache_creation_tokens_1h).toLocaleString(),
+        });
+      }
 
-    // Stream info
-    if (log.is_stream !== undefined) {
-      data.push({ key: t('流式'), value: log.is_stream ? t('是') : t('否') });
-    }
+      // Request ID
+      if (log.request_id) {
+        data.push({ key: "Request ID", value: log.request_id });
+      }
+      if (log.upstream_request_id) {
+        data.push({ key: t("上游请求 ID"), value: log.upstream_request_id });
+      }
+      if (log.ip) {
+        data.push({ key: t("logs.clientIp"), value: log.ip });
+      }
 
-    // First response time for streaming
-    if (log.is_stream && other.frt) {
-      const frtSeconds = (parseFloat(other.frt) / 1000.0).toFixed(1);
-      data.push({ key: t('首字时间'), value: `${frtSeconds}s` });
-    }
+      // Stream info
+      if (log.is_stream !== undefined) {
+        data.push({ key: t("流式"), value: log.is_stream ? t("是") : t("否") });
+      }
 
-    return data;
-  }, [rate, symbol, t]);
+      if (duration > 0) {
+        data.push({
+          key: t("响应时间"),
+          value: `${duration.toFixed(1)}s${log.is_stream && frt > 0 ? ` (FRT: ${(frt / 1000).toFixed(1)}s)` : ""}`,
+        });
+      }
+      if (log.is_stream && tps > 0) {
+        data.push({ key: t("流速"), value: `${tps.toFixed(1)} t/s` });
+      }
+
+      // Keep FRT visible even when the total duration was not recorded.
+      if (log.is_stream && other.frt && duration <= 0) {
+        const frtSeconds = (parseFloat(other.frt) / 1000.0).toFixed(1);
+        data.push({ key: t("首字时间"), value: `${frtSeconds}s` });
+      }
+
+      return data;
+    },
+    [rate, symbol, t],
+  );
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-10">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-heading font-bold text-page mb-1">{t('logs.title')}</h1>
-        <p className="text-sm text-page-secondary">{t('logs.subtitle')}</p>
+        <h1 className="text-2xl font-heading font-bold text-page mb-1">
+          {t("logs.title")}
+        </h1>
+        <p className="text-sm text-page-secondary">{t("logs.subtitle")}</p>
       </div>
       <LogSubnav active="logs" />
 
@@ -377,16 +467,16 @@ export default function Logs() {
             value={startTime}
             onChange={(e) => setStartTime(e.target.value)}
             className="input w-full"
-            aria-label={t('logs.startTime')}
-            title={t('logs.startTime')}
+            aria-label={t("logs.startTime")}
+            title={t("logs.startTime")}
           />
           <input
             type="datetime-local"
             value={endTime}
             onChange={(e) => setEndTime(e.target.value)}
             className="input w-full"
-            aria-label={t('logs.endTime')}
-            title={t('logs.endTime')}
+            aria-label={t("logs.endTime")}
+            title={t("logs.endTime")}
           />
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-page-muted" />
@@ -395,7 +485,7 @@ export default function Logs() {
               value={modelFilter}
               onChange={(e) => setModelFilter(e.target.value)}
               className="input w-full pl-10"
-              placeholder={t('logs.filterModel')}
+              placeholder={t("logs.filterModel")}
             />
           </div>
           <div className="relative">
@@ -405,7 +495,7 @@ export default function Logs() {
               value={tokenFilter}
               onChange={(e) => setTokenFilter(e.target.value)}
               className="input w-full pl-10"
-              placeholder={t('logs.filterToken')}
+              placeholder={t("logs.filterToken")}
             />
           </div>
         </div>
@@ -414,15 +504,15 @@ export default function Logs() {
             value={logType}
             onChange={(e) => setLogType(e.target.value)}
             className="input input-solid w-full"
-            aria-label={t('logs.type')}
+            aria-label={t("logs.type")}
           >
-            <option value="0">{t('logs.typeAll')}</option>
-            <option value="2">{t('logs.typeConsume')}</option>
-            <option value="5">{t('logs.typeError')}</option>
-            <option value="1">{t('logs.typeTopup')}</option>
-            <option value="6">{t('logs.typeRefund')}</option>
-            <option value="3">{t('logs.typeManage')}</option>
-            <option value="4">{t('logs.typeSystem')}</option>
+            <option value="0">{t("logs.typeAll")}</option>
+            <option value="2">{t("logs.typeConsume")}</option>
+            <option value="5">{t("logs.typeError")}</option>
+            <option value="1">{t("logs.typeTopup")}</option>
+            <option value="6">{t("logs.typeRefund")}</option>
+            <option value="3">{t("logs.typeManage")}</option>
+            <option value="4">{t("logs.typeSystem")}</option>
           </select>
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-page-muted" />
@@ -431,33 +521,68 @@ export default function Logs() {
               value={requestIdFilter}
               onChange={(e) => setRequestIdFilter(e.target.value)}
               className="input w-full pl-10"
-              placeholder={t('logs.filterRequestId')}
+              placeholder={t("logs.filterRequestId")}
+            />
+          </div>
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-page-muted" />
+            <input
+              type="text"
+              value={upstreamRequestIdFilter}
+              onChange={(e) => setUpstreamRequestIdFilter(e.target.value)}
+              className="input w-full pl-10"
+              placeholder={t("上游请求 ID")}
             />
           </div>
           <div className="flex gap-2 lg:col-span-2">
-            <button type="button" onClick={() => setQuickRange(0)} className="btn-secondary flex-1 px-3 text-xs">
-              {t('logs.today')}
+            <button
+              type="button"
+              onClick={() => setQuickRange(0)}
+              className="btn-secondary flex-1 px-3 text-xs"
+            >
+              {t("logs.today")}
             </button>
-            <button type="button" onClick={() => setQuickRange(7)} className="btn-secondary flex-1 px-3 text-xs">
-              {t('logs.last7Days')}
+            <button
+              type="button"
+              onClick={() => setQuickRange(7)}
+              className="btn-secondary flex-1 px-3 text-xs"
+            >
+              {t("logs.last7Days")}
             </button>
-            <button type="button" onClick={() => setQuickRange(30)} className="btn-secondary flex-1 px-3 text-xs">
-              {t('logs.last30Days')}
+            <button
+              type="button"
+              onClick={() => setQuickRange(30)}
+              className="btn-secondary flex-1 px-3 text-xs"
+            >
+              {t("logs.last30Days")}
             </button>
           </div>
         </div>
         <div className="mt-3 flex flex-wrap justify-end gap-2">
-          <button type="submit" className="btn-primary inline-flex items-center gap-2 text-sm" disabled={loading}>
+          <button
+            type="submit"
+            className="btn-primary inline-flex items-center gap-2 text-sm"
+            disabled={loading}
+          >
             <Search className="h-4 w-4" />
-            {t('logs.search')}
+            {t("logs.search")}
           </button>
-          <button type="button" onClick={resetFilters} className="btn-secondary inline-flex items-center gap-2 text-sm">
+          <button
+            type="button"
+            onClick={resetFilters}
+            className="btn-secondary inline-flex items-center gap-2 text-sm"
+          >
             <RotateCcw className="h-4 w-4" />
-            {t('logs.clearFilter')}
+            {t("logs.clearFilter")}
           </button>
-          <button type="button" onClick={exportLogs} className="btn-secondary inline-flex items-center gap-2 text-sm" disabled={loading || exporting}>
+          <button
+            type="button"
+            onClick={exportLogs}
+            className="btn-secondary inline-flex items-center gap-2 text-sm"
+            disabled={loading || exporting}
+          >
             <Download className="h-4 w-4" />
-            {exporting ? t('logs.exporting') : t('logs.export')}
+            {exporting ? t("logs.exporting") : t("logs.export")}
           </button>
         </div>
       </form>
@@ -473,7 +598,8 @@ export default function Logs() {
         ) : (
           <>
             <span className="rounded-lg border border-page-divider bg-page-surface px-3 py-1.5 text-sm font-medium text-page">
-              {t('logs.totalCost')}: {formatQuotaAmount(symbol, rate, stat.quota, false)}
+              {t("logs.totalCost")}:{" "}
+              {formatQuotaAmount(symbol, rate, stat.quota, false)}
             </span>
             <span className="rounded-lg border border-page-divider bg-page-surface px-3 py-1.5 text-sm font-medium text-page">
               RPM: {formatTokens(stat.rpm)}
@@ -482,7 +608,7 @@ export default function Logs() {
               TPM: {formatTokens(stat.tpm)}
             </span>
             <span className="rounded-lg border border-page-divider bg-page-surface px-3 py-1.5 text-sm font-medium text-page">
-              {t('logs.totalTokens')}: {formatTokens(stat.token)}
+              {t("logs.totalTokens")}: {formatTokens(stat.token)}
             </span>
           </>
         )}
@@ -496,7 +622,7 @@ export default function Logs() {
           </div>
         ) : logs.length === 0 ? (
           <div className="text-center py-16 text-page-secondary">
-            <p>{t('logs.noLogs')}</p>
+            <p>{t("logs.noLogs")}</p>
           </div>
         ) : (
           <>
@@ -506,15 +632,36 @@ export default function Logs() {
                 <thead>
                   <tr className="border-b border-page-divider">
                     <th className="w-8"></th>
-                    <th className="text-left px-4 py-3 font-medium text-page-secondary">{t('logs.time')}</th>
-                    <th className="text-left px-4 py-3 font-medium text-page-secondary">{t('logs.model')}</th>
-                    <th className="text-left px-4 py-3 font-medium text-page-secondary">{t('logs.token')}</th>
-                    <th className="text-left px-4 py-3 font-medium text-page-secondary">{t('logs.type')}</th>
-                    <th className="text-left px-4 py-3 font-medium text-page-secondary">{t('logs.clientIp')}</th>
-                    <th className="text-right px-4 py-3 font-medium text-page-secondary">{t('logs.promptTokens')}</th>
-                    <th className="text-right px-4 py-3 font-medium text-page-secondary">{t('logs.completionTokens')}</th>
-                    <th className="text-right px-4 py-3 font-medium text-page-secondary">{t('logs.cost')}</th>
-                    <th className="text-right px-4 py-3 font-medium text-page-secondary">{t('logs.duration')}</th>
+                    <th className="text-left px-4 py-3 font-medium text-page-secondary">
+                      {t("logs.time")}
+                    </th>
+                    <th className="text-left px-4 py-3 font-medium text-page-secondary">
+                      {t("logs.model")}
+                    </th>
+                    <th className="text-left px-4 py-3 font-medium text-page-secondary">
+                      {t("logs.token")}
+                    </th>
+                    <th className="text-left px-4 py-3 font-medium text-page-secondary">
+                      {t("logs.type")}
+                    </th>
+                    <th className="text-left px-4 py-3 font-medium text-page-secondary">
+                      {t("logs.clientIp")}
+                    </th>
+                    <th className="text-right px-4 py-3 font-medium text-page-secondary">
+                      {t("logs.promptTokens")}
+                    </th>
+                    <th className="text-right px-4 py-3 font-medium text-page-secondary">
+                      {t("logs.completionTokens")}
+                    </th>
+                    <th className="text-right px-4 py-3 font-medium text-page-secondary">
+                      {t("logs.cost")}
+                    </th>
+                    <th className="text-right px-4 py-3 font-medium text-page-secondary">
+                      {t("logs.duration")}
+                    </th>
+                    <th className="text-right px-2 py-3 font-medium text-page-secondary">
+                      {t("详情")}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -522,31 +669,67 @@ export default function Logs() {
                     const expandData = getExpandData(log);
                     const hasExpandData = expandData.length > 0;
                     const isExpanded = expandedRows[log.id];
-                    const billingSourceLabel = getBillingSourceLabel(getLogOther(log.other), t);
+                    const billingSourceLabel = getBillingSourceLabel(
+                      getLogOther(log.other),
+                      t,
+                    );
                     return (
                       <React.Fragment key={i}>
                         <tr
-                          className={`border-b border-page-divider last:border-0 hover:bg-page-surface transition-colors ${hasExpandData ? 'cursor-pointer' : ''}`}
+                          className={`border-b border-page-divider last:border-0 hover:bg-page-surface transition-colors ${hasExpandData ? "cursor-pointer" : ""}`}
                           onClick={() => hasExpandData && toggleRow(log.id)}
                         >
                           <td className="px-2 py-3 text-page-secondary">
-                            {hasExpandData && (
-                              isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />
-                            )}
+                            {hasExpandData &&
+                              (isExpanded ? (
+                                <ChevronDown className="w-4 h-4" />
+                              ) : (
+                                <ChevronRight className="w-4 h-4" />
+                              ))}
                           </td>
-                          <td className="px-4 py-3 text-page-secondary text-xs whitespace-nowrap">{formatTime(log.created_at)}</td>
+                          <td className="px-4 py-3 text-page-secondary text-xs whitespace-nowrap">
+                            {formatTime(log.created_at)}
+                          </td>
                           <td className="px-4 py-3">
-                            <span className="font-mono text-xs text-page">{log.model_name || '-'}</span>
+                            <span className="font-mono text-xs text-page">
+                              {log.model_name || "-"}
+                            </span>
                           </td>
-                          <td className="px-4 py-3 text-xs text-page-secondary">{log.token_name || '-'}</td>
+                          <td className="px-4 py-3 text-xs text-page-secondary">
+                            {log.token_name || "-"}
+                          </td>
                           <td className="px-4 py-3">
                             <span className="inline-flex rounded-full border border-page-divider px-2 py-0.5 text-[11px] text-page-secondary">
                               {getLogTypeLabel(log.type, t)}
                             </span>
                           </td>
-                          <td className="px-4 py-3 font-mono text-xs text-page-secondary whitespace-nowrap">{log.ip || '-'}</td>
-                          <td className="px-4 py-3 text-right font-mono text-xs text-page-label">{log.prompt_tokens?.toLocaleString() || '0'}</td>
-                          <td className="px-4 py-3 text-right font-mono text-xs text-page-label">{log.completion_tokens?.toLocaleString() || '0'}</td>
+                          <td className="px-4 py-3 font-mono text-xs text-page-secondary whitespace-nowrap">
+                            {log.ip || "-"}
+                          </td>
+                          <td className="px-4 py-3 text-right font-mono text-xs text-page-label">
+                            {log.prompt_tokens?.toLocaleString() || "0"}
+                            {Number(getLogOther(log.other)?.cache_tokens || 0) >
+                              0 && (
+                              <span className="block text-[10px] text-cyan-500">
+                                {t("缓存↓")}{" "}
+                                {formatTokens(
+                                  getLogOther(log.other).cache_tokens,
+                                )}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-right font-mono text-xs text-page-label">
+                            {log.completion_tokens?.toLocaleString() || "0"}
+                            {getCacheWriteTokens(getLogOther(log.other)) >
+                              0 && (
+                              <span className="block text-[10px] text-page-warning">
+                                {t("缓存↑")}{" "}
+                                {formatTokens(
+                                  getCacheWriteTokens(getLogOther(log.other)),
+                                )}
+                              </span>
+                            )}
+                          </td>
                           <td className="px-4 py-3 text-right">
                             <div className="flex flex-col items-end">
                               <span className="font-mono text-xs text-page-warning">
@@ -560,17 +743,52 @@ export default function Logs() {
                             </div>
                           </td>
                           <td className="px-4 py-3 text-right text-xs text-page-secondary">
-                            {log.use_time > 0 ? `${log.use_time}s` : '-'}
+                            {log.use_time > 0 ? `${log.use_time}s` : "-"}
+                            {log.is_stream &&
+                              Number(getLogOther(log.other)?.frt || 0) > 0 && (
+                                <span className="block text-[10px]">
+                                  FRT{" "}
+                                  {(
+                                    Number(getLogOther(log.other).frt) / 1000
+                                  ).toFixed(1)}
+                                  s
+                                </span>
+                              )}
+                            {log.is_stream && log.use_time > 0 && (
+                              <span className="block text-[10px]">
+                                {(
+                                  Number(log.completion_tokens || 0) /
+                                  Number(log.use_time)
+                                ).toFixed(1)}{" "}
+                                t/s
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-2 py-3">
+                            <button
+                              type="button"
+                              className="text-xs text-brand-500 hover:underline"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                openLogDetails(log);
+                              }}
+                            >
+                              {t("查看完整详情")}
+                            </button>
                           </td>
                         </tr>
                         {isExpanded && hasExpandData && (
                           <tr className="border-b border-page-divider last:border-0 bg-page-surface/50">
-                            <td colSpan="10" className="px-4 py-3">
+                            <td colSpan="11" className="px-4 py-3">
                               <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-2 text-sm">
                                 {expandData.map((item, idx) => (
                                   <div key={idx} className="flex flex-col">
-                                    <span className="text-page-secondary text-xs">{item.key}</span>
-                                    <span className="font-medium text-page">{item.value}</span>
+                                    <span className="text-page-secondary text-xs">
+                                      {item.key}
+                                    </span>
+                                    <span className="font-medium text-page">
+                                      {item.value}
+                                    </span>
                                   </div>
                                 ))}
                               </div>
@@ -590,18 +808,26 @@ export default function Logs() {
                 const expandData = getExpandData(log);
                 const hasExpandData = expandData.length > 0;
                 const isExpanded = expandedRows[log.id];
-                const billingSourceLabel = getBillingSourceLabel(getLogOther(log.other), t);
+                const billingSourceLabel = getBillingSourceLabel(
+                  getLogOther(log.other),
+                  t,
+                );
                 return (
                   <div key={i} className="px-4 py-3 space-y-1.5">
                     <div
-                      className={`flex items-center justify-between ${hasExpandData ? 'cursor-pointer' : ''}`}
+                      className={`flex items-center justify-between ${hasExpandData ? "cursor-pointer" : ""}`}
                       onClick={() => hasExpandData && toggleRow(log.id)}
                     >
                       <div className="flex items-center gap-2">
-                        {hasExpandData && (
-                          isExpanded ? <ChevronDown className="w-4 h-4 text-page-secondary" /> : <ChevronRight className="w-4 h-4 text-page-secondary" />
-                        )}
-                        <span className="font-mono text-xs text-page font-medium">{log.model_name || '-'}</span>
+                        {hasExpandData &&
+                          (isExpanded ? (
+                            <ChevronDown className="w-4 h-4 text-page-secondary" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4 text-page-secondary" />
+                          ))}
+                        <span className="font-mono text-xs text-page font-medium">
+                          {log.model_name || "-"}
+                        </span>
                         <span className="rounded-full border border-page-divider px-2 py-0.5 text-[10px] text-page-secondary">
                           {getLogTypeLabel(log.type, t)}
                         </span>
@@ -619,20 +845,45 @@ export default function Logs() {
                     </div>
                     <div className="flex items-center justify-between text-[11px] text-page-secondary">
                       <span>{formatTime(log.created_at)}</span>
-                      <span>{log.prompt_tokens || 0} / {log.completion_tokens || 0} tokens</span>
+                      <span>
+                        {formatTokens(log.prompt_tokens)} /{" "}
+                        {formatTokens(log.completion_tokens)} tokens
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] text-page-muted">
+                      <span>
+                        {log.is_stream && log.use_time > 0
+                          ? `${(Number(log.completion_tokens || 0) / Number(log.use_time)).toFixed(1)} t/s`
+                          : t(log.is_stream ? "流" : "非流")}
+                      </span>
+                      <button
+                        type="button"
+                        className="text-brand-500 hover:underline"
+                        onClick={() => openLogDetails(log)}
+                      >
+                        {t("查看完整详情")}
+                      </button>
                     </div>
                     {log.token_name && (
-                      <div className="text-[11px] text-page-muted">{log.token_name}</div>
+                      <div className="text-[11px] text-page-muted">
+                        {log.token_name}
+                      </div>
                     )}
                     {log.ip && (
-                      <div className="font-mono text-[11px] text-page-muted">{t('logs.clientIp')}: {log.ip}</div>
+                      <div className="font-mono text-[11px] text-page-muted">
+                        {t("logs.clientIp")}: {log.ip}
+                      </div>
                     )}
                     {isExpanded && hasExpandData && (
                       <div className="mt-3 pt-3 border-t border-page-divider/50 grid grid-cols-2 gap-x-4 gap-y-2">
                         {expandData.map((item, idx) => (
                           <div key={idx} className="flex flex-col">
-                            <span className="text-page-secondary text-[10px]">{item.key}</span>
-                            <span className="font-medium text-page text-xs">{item.value}</span>
+                            <span className="text-page-secondary text-[10px]">
+                              {item.key}
+                            </span>
+                            <span className="font-medium text-page text-xs">
+                              {item.value}
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -645,11 +896,24 @@ export default function Logs() {
         )}
       </div>
 
+      <LogDetailsModal
+        open={Boolean(selectedLog)}
+        onClose={() => setSelectedLog(null)}
+        log={selectedLog}
+        t={t}
+        symbol={symbol}
+        rate={rate}
+      />
+
       {/* Pagination */}
       {total > pageSize && (
         <div className="flex items-center justify-between mt-6">
           <p className="text-sm text-page-secondary">
-            {t('logs.showing', { from: (page - 1) * pageSize + 1, to: Math.min(page * pageSize, total), total })}
+            {t("logs.showing", {
+              from: (page - 1) * pageSize + 1,
+              to: Math.min(page * pageSize, total),
+              total,
+            })}
           </p>
           <div className="flex items-center gap-2">
             <button
@@ -657,7 +921,7 @@ export default function Logs() {
               disabled={page <= 1}
               className="btn-secondary text-sm px-3 py-1.5 disabled:opacity-30"
             >
-              {t('logs.prev')}
+              {t("logs.prev")}
             </button>
             <span className="text-sm text-page-secondary px-2">
               {page} / {totalPages}
@@ -667,7 +931,7 @@ export default function Logs() {
               disabled={page >= totalPages}
               className="btn-secondary text-sm px-3 py-1.5 disabled:opacity-30"
             >
-              {t('logs.next')}
+              {t("logs.next")}
             </button>
           </div>
         </div>

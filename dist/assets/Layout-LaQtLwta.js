@@ -1,0 +1,1 @@
+import{j as e}from"./index-BpsoW534.js";import{B as o}from"./BrandLayout-BCM6XMbX.js";function t(){return e.jsx(o,{variant:"default"})}const u=Object.freeze(Object.defineProperty({__proto__:null,default:t},Symbol.toStringTag,{value:"Module"})),l=Object.freeze(Object.defineProperty({__proto__:null,default:t},Symbol.toStringTag,{value:"Module"}));export{u as L,l as a};
