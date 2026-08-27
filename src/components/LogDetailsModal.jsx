@@ -1,6 +1,11 @@
 import React from "react";
 import { Copy, X } from "lucide-react";
 import { Q } from "../api";
+import {
+  getSiteBillingLines,
+  getSitePricingDetails,
+  hasSitePricingSnapshot,
+} from "../utils/logBilling";
 
 const n = (value) => Number(value || 0).toLocaleString();
 
@@ -99,10 +104,8 @@ function LogDetailsModal({
   // Prefer the customer-facing site snapshot whenever it is available so the
   // detail view still reflects the price that was actually offered to users.
   const siteBillingMode = String(other.site_billing_mode || "").trim();
-  const basePrice =
-    Number(other.site_input_price || 0) > 0
-      ? Number(other.site_input_price)
-      : Number(other.model_ratio || 0) * 2;
+  const useSiteSnapshot = hasSitePricingSnapshot(other);
+  const basePrice = Number(other.model_ratio || 0) * 2;
   const groupRatio = Number.isFinite(Number(other.site_group_ratio))
     ? other.site_group_ratio
     : other.user_group_ratio !== undefined &&
@@ -195,26 +198,24 @@ function LogDetailsModal({
           : []),
       ]
     : [];
-  const outputPrice =
-    Number(other.site_output_price || 0) > 0
-      ? Number(other.site_output_price)
-      : basePrice * Number(other.completion_ratio || 0);
-  const cacheReadPrice =
-    Number(other.site_cache_read_price || 0) > 0
-      ? Number(other.site_cache_read_price)
-      : basePrice * Number(other.cache_ratio || 1);
-  const cacheCreatePrice =
-    Number(other.site_cache_creation_price || 0) > 0
-      ? Number(other.site_cache_creation_price)
-      : basePrice * Number(other.cache_creation_ratio || 1);
-  const cacheCreate5mPrice =
-    Number(other.site_cache_creation_price_5m || 0) > 0
-      ? Number(other.site_cache_creation_price_5m)
-      : basePrice * Number(other.cache_creation_ratio_5m || 1);
-  const cacheCreate1hPrice =
-    Number(other.site_cache_creation_price_1h || 0) > 0
-      ? Number(other.site_cache_creation_price_1h)
-      : basePrice * Number(other.cache_creation_ratio_1h || 1);
+  const inputPrice = useSiteSnapshot
+    ? Number(other.site_input_price || 0)
+    : basePrice;
+  const outputPrice = useSiteSnapshot
+    ? Number(other.site_output_price || 0)
+    : basePrice * Number(other.completion_ratio || 0);
+  const cacheReadPrice = useSiteSnapshot
+    ? Number(other.site_cache_read_price || 0)
+    : basePrice * Number(other.cache_ratio || 1);
+  const cacheCreatePrice = useSiteSnapshot
+    ? Number(other.site_cache_creation_price || 0)
+    : basePrice * Number(other.cache_creation_ratio || 1);
+  const cacheCreate5mPrice = useSiteSnapshot
+    ? Number(other.site_cache_creation_price_5m || 0)
+    : basePrice * Number(other.cache_creation_ratio_5m || 1);
+  const cacheCreate1hPrice = useSiteSnapshot
+    ? Number(other.site_cache_creation_price_1h || 0)
+    : basePrice * Number(other.cache_creation_ratio_1h || 1);
   const rows = [
     [t("时间"), new Date(Number(log.created_at || 0) * 1000).toLocaleString()],
     [t("请求 ID"), log.request_id, true],
@@ -252,7 +253,7 @@ function LogDetailsModal({
     ...dynamicPricingRows,
     ...(!isTieredBilling && !isPerCallBilling
       ? [
-          [t("输入"), price(basePrice)],
+          [t("输入"), price(inputPrice)],
           [t("输出"), price(outputPrice)],
           ...(cacheReadTokens > 0
             ? [[t("缓存读取价格"), price(cacheReadPrice)]]
@@ -289,6 +290,7 @@ function LogDetailsModal({
     if (other.provider_billing_mode === "per_call") {
       return `${t("按次计费")} · ${symbol}${(Number(other.provider_fixed_price || 0) * Number(rate || 1)).toFixed(6)} / ${t("次")}`;
     }
+    if (other.provider_billing_mode === "tiered_expr") return t("动态定价");
     if (other.provider_billing_mode !== "per_token") return "";
     const providerCacheCreate5m = Number(
       other.provider_cache_creation_price_5m || 0,
@@ -317,29 +319,10 @@ function LogDetailsModal({
     ].filter(Boolean);
     return `${t("按量计费")} · ${parts.join(" · ")}`;
   })();
-  const sitePricing = (() => {
-    if (other.site_billing_mode === "per_call") {
-      return `${t("按次计费")} · ${symbol}${(Number(other.site_fixed_price || 0) * Number(rate || 1)).toFixed(6)} / ${t("次")}`;
-    }
-    if (other.site_billing_mode !== "per_token") return "";
-    const parts = [
-      Number(other.site_input_price || 0) > 0 &&
-        `${t("输入")} ${price(other.site_input_price)}`,
-      Number(other.site_output_price || 0) > 0 &&
-        `${t("输出")} ${price(other.site_output_price)}`,
-      Number(other.site_cache_read_price || 0) > 0 &&
-        `${t("缓存读取")} ${price(other.site_cache_read_price)}`,
-      Number(other.site_cache_creation_price_5m || 0) > 0 &&
-        `${t("缓存创建 (5m)")} ${price(other.site_cache_creation_price_5m)}`,
-      Number(other.site_cache_creation_price_1h || 0) > 0 &&
-        `${t("缓存创建 (1h)")} ${price(other.site_cache_creation_price_1h)}`,
-      Number(other.site_cache_creation_price_5m || 0) <= 0 &&
-        Number(other.site_cache_creation_price_1h || 0) <= 0 &&
-        Number(other.site_cache_creation_price || 0) > 0 &&
-        `${t("缓存创建")} ${price(other.site_cache_creation_price)}`,
-    ].filter(Boolean);
-    return `${t("按量计费")} · ${parts.join(" · ")}`;
-  })();
+  const sitePricing = getSitePricingDetails(other, symbol, rate, t)
+    .map(({ key, value }) => `${key}: ${value}`)
+    .join(" · ");
+  const siteBillingLines = getSiteBillingLines(log, other, symbol, rate, t);
   const copyValue = async (event, value) => {
     event.stopPropagation();
     if (!value) return;
@@ -412,6 +395,21 @@ function LogDetailsModal({
         <div className="space-y-4">
           <Section title={t("概览")} values={rows} />
           <Section title={t("令牌消耗与计费")} values={billingRows} />
+          {siteBillingLines.length > 0 && (
+            <Section
+              title={t("计费过程")}
+              values={[
+                [
+                  t("计算明细"),
+                  <div key="billing-process" className="space-y-1">
+                    {siteBillingLines.map((line, index) => (
+                      <p key={index}>{line}</p>
+                    ))}
+                  </div>,
+                ],
+              ]}
+            />
+          )}
           {(other.provider_name ||
             providerPricing ||
             sitePricing ||

@@ -12,6 +12,10 @@ import { exportUserLogs, getUserLogs, getUserLogsStat, Q } from "../api";
 import { useCurrency } from "../context/SiteContext";
 import LogSubnav from "../components/LogSubnav";
 import LogDetailsModal from "../components/LogDetailsModal";
+import {
+  getSiteBillingLines,
+  getSitePricingDetails,
+} from "../utils/logBilling";
 
 function formatTime(unix) {
   if (!unix) return "-";
@@ -39,14 +43,6 @@ function getLogOther(otherStr) {
   } catch (e) {
     return null;
   }
-}
-
-function formatAmount(symbol, rate, amount) {
-  const value = Number(amount || 0) * rate;
-  return `${symbol}${value.toLocaleString(undefined, {
-    minimumFractionDigits: value > 0 && value < 0.01 ? 4 : 2,
-    maximumFractionDigits: 6,
-  })}`;
 }
 
 function formatQuotaAmount(symbol, rate, quota, emptyZero = true) {
@@ -104,64 +100,6 @@ function getLogTypeLabel(type, t) {
     6: t("logs.typeRefund"),
   };
   return labels[type] || t("logs.typeUnknown");
-}
-
-function getSitePricingDetails(other, symbol, rate, t) {
-  if (!other?.site_billing_mode) return [];
-
-  if (other.site_billing_mode === "per_call") {
-    return [
-      { key: t("定价方式"), value: t("按次计费") },
-      {
-        key: t("价格"),
-        value: formatAmount(symbol, rate, other.site_fixed_price),
-      },
-    ];
-  }
-
-  const details = [{ key: t("定价方式"), value: t("按量计费") }];
-  if (Number(other.site_input_price || 0) > 0) {
-    details.push({
-      key: t("输入价格"),
-      value: `${formatAmount(symbol, rate, other.site_input_price)} / 1M tokens`,
-    });
-  }
-  if (Number(other.site_output_price || 0) > 0) {
-    details.push({
-      key: t("输出价格"),
-      value: `${formatAmount(symbol, rate, other.site_output_price)} / 1M tokens`,
-    });
-  }
-  if (Number(other.site_cache_read_price || 0) > 0) {
-    details.push({
-      key: t("缓存读取价格"),
-      value: `${formatAmount(symbol, rate, other.site_cache_read_price)} / 1M tokens`,
-    });
-  }
-
-  const cacheCreate5m = Number(other.site_cache_creation_price_5m || 0);
-  const cacheCreate1h = Number(other.site_cache_creation_price_1h || 0);
-  const cacheCreate = Number(other.site_cache_creation_price || 0);
-  if (cacheCreate5m > 0 || cacheCreate1h > 0) {
-    const parts = [];
-    if (cacheCreate5m > 0) {
-      parts.push(`5m ${formatAmount(symbol, rate, cacheCreate5m)} / 1M tokens`);
-    }
-    if (cacheCreate1h > 0) {
-      parts.push(`1h ${formatAmount(symbol, rate, cacheCreate1h)} / 1M tokens`);
-    }
-    details.push({
-      key: t("缓存创建价格"),
-      value: parts.join(" / "),
-    });
-  } else if (cacheCreate > 0) {
-    details.push({
-      key: t("缓存创建价格"),
-      value: `${formatAmount(symbol, rate, cacheCreate)} / 1M tokens`,
-    });
-  }
-
-  return details;
 }
 
 export default function Logs() {
@@ -376,6 +314,14 @@ export default function Logs() {
 
       data.push(...getSitePricingDetails(other, symbol, rate, t));
 
+      const billingLines = getSiteBillingLines(log, other, symbol, rate, t);
+      if (billingLines.length > 0) {
+        data.push({
+          key: t("计费过程"),
+          value: billingLines.join(" · "),
+        });
+      }
+
       if (other.cache_tokens > 0) {
         data.push({
           key: t("缓存命中 Tokens"),
@@ -420,7 +366,6 @@ export default function Logs() {
       if (log.is_stream !== undefined) {
         data.push({ key: t("流式"), value: log.is_stream ? t("是") : t("否") });
       }
-
       if (duration > 0) {
         data.push({
           key: t("响应时间"),
