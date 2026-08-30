@@ -36,6 +36,40 @@ import toast from 'react-hot-toast';
 const DEFAULT_SUBROUTER_ROUTE_PREFERENCE =
   'first_token_first,stability_first,authenticity_first,price_first';
 
+const ROUTING_SORT_MODES = [
+  { value: 'token_price_first', label: 'tokens.tokenPriceFirst' },
+  { value: 'per_call_price_first', label: 'tokens.perCallPriceFirst' },
+];
+
+const RoutingSortModeSelector = ({ value, onChange, t }) => {
+  return (
+    <div
+      className='grid grid-cols-2 gap-1 rounded-lg border border-page-divider bg-page-surface p-1'
+      role='group'
+      aria-label={t('tokens.routeSortMode')}
+    >
+      {ROUTING_SORT_MODES.map((option) => {
+        const isSelected = value === option.value;
+        return (
+          <button
+            key={option.value}
+            type='button'
+            aria-pressed={isSelected}
+            onClick={() => onChange(option.value)}
+            className={`flex min-h-11 items-center justify-center rounded-md px-2 py-2 text-center text-xs font-medium leading-snug transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500/40 ${
+              isSelected
+                ? 'bg-brand-500 text-white shadow-sm'
+                : 'text-page-secondary hover:bg-page-surface-hover hover:text-page'
+            }`}
+          >
+            <span>{t(option.label)}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
 const normalizeOfficialKeyMaxDiscount = (value) => {
   const n = Number(value);
   return Number.isFinite(n) && n > 0 ? Math.min(n, 1) : 0;
@@ -1584,18 +1618,13 @@ function TokenControlFields({
             <label className='block text-sm font-medium text-page-label mb-1.5'>
               {t('tokens.routeSortMode')}
             </label>
-            <select
-              className='input'
+            <RoutingSortModeSelector
               value={form.subrouter_sort_mode || 'token_price_first'}
-              onChange={(e) => onChange('subrouter_sort_mode', e.target.value)}
-            >
-              <option value='token_price_first'>
-                {t('tokens.tokenPriceFirst')}
-              </option>
-              <option value='per_call_price_first'>
-                {t('tokens.perCallPriceFirst')}
-              </option>
-            </select>
+              onChange={(sortMode) =>
+                onChange('subrouter_sort_mode', sortMode)
+              }
+              t={t}
+            />
           </div>
           {fullMode && (
             <div className='min-w-0'>
