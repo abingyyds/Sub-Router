@@ -4,6 +4,8 @@ import AuthGuard from "./components/AuthGuard";
 import NotificationBell from "./components/NotificationBell";
 import { useSite } from "./context/SiteContext";
 import { ThemeProvider, useTheme } from "./context/ThemeContext";
+import { useTranslation } from "react-i18next";
+import { AlertTriangle } from "lucide-react";
 
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
@@ -39,6 +41,44 @@ const Loading = () => (
     />
   </div>
 );
+
+function MainlandChinaUnavailable() {
+  const { t } = useTranslation();
+  const { site } = useSite();
+  const title = t("本服务不对中国大陆提供");
+
+  return (
+    <div
+      className="flex min-h-screen items-center justify-center px-4 py-16"
+      style={{ background: "var(--page-bg)", color: "var(--page-text)" }}
+    >
+      <div className="max-w-md text-center">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+          <AlertTriangle size={24} />
+        </div>
+        <h1 className="text-xl font-semibold">{title}</h1>
+        <p className="mt-3 text-sm opacity-70">
+          {t("当前地区暂不支持访问此分站。", {
+            defaultValue: "This distributor site is not available in your region.",
+          })}
+        </p>
+        {site?.name && <p className="mt-2 text-xs opacity-50">{site.name}</p>}
+      </div>
+    </div>
+  );
+}
+
+function RegionGuard({ children }) {
+  const { site, siteResolved } = useSite();
+  const blocked =
+    siteResolved &&
+    (site?.dist_site_mainland_china_access_block_enabled === true ||
+      site?.mainland_china_access_block_enabled === true) &&
+    String(site?.client_country || "").toUpperCase() === "CN";
+
+  if (blocked) return <MainlandChinaUnavailable />;
+  return children;
+}
 
 function AppMarketRoute() {
   const { site } = useSite();
@@ -172,7 +212,9 @@ function ThemedRoutes() {
 export default function App() {
   return (
     <ThemeProvider>
-      <ThemedRoutes />
+      <RegionGuard>
+        <ThemedRoutes />
+      </RegionGuard>
     </ThemeProvider>
   );
 }

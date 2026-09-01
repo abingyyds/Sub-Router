@@ -29,6 +29,8 @@ const siteTranslations = {
     'marketplace.ratingValue': '{{rating}} 分',
     'marketplace.tokens': 'Token',
     'nav.main': '主导航',
+    '本服务不对中国大陆提供': '本服务不对中国大陆提供',
+    '当前地区暂不支持访问此分站。': '当前地区暂不支持访问此分站。',
     'OAuth 启动失败': 'OAuth 启动失败',
     'OAuth 账号': 'OAuth 账号',
     'OAuth 账号导入并通过测试后立即进入调度，套餐和模型自动识别。':
@@ -336,6 +338,8 @@ const siteTranslations = {
     'marketplace.ratingValue': '{{rating}} rating',
     'marketplace.tokens': 'tokens',
     'nav.main': 'Main navigation',
+    '本服务不对中国大陆提供': 'This service is not available in mainland China',
+    '当前地区暂不支持访问此分站。': 'This distributor site is not available in your region.',
     'OAuth 启动失败': 'Failed to start OAuth',
     'OAuth 账号': 'OAuth accounts',
     'OAuth 账号导入并通过测试后立即进入调度，套餐和模型自动识别。':

@@ -11,7 +11,10 @@ function readCachedSite() {
     const cached = JSON.parse(localStorage.getItem(SITE_CACHE_KEY) || "null");
     if (!cached?.site || typeof cached.cachedAt !== "number") return null;
     if (Date.now() - cached.cachedAt > SITE_CACHE_TTL) return null;
-    return cached.site;
+    // Country is request-specific; do not trust a value cached by another network.
+    const site = { ...cached.site };
+    delete site.client_country;
+    return site;
   } catch (e) {
     return null;
   }
@@ -20,9 +23,12 @@ function readCachedSite() {
 function writeCachedSite(site) {
   if (typeof window === "undefined" || !site) return;
   try {
+    // Country is request-specific; never reuse it for another network.
+    const cacheableSite = { ...site };
+    delete cacheableSite.client_country;
     localStorage.setItem(
       SITE_CACHE_KEY,
-      JSON.stringify({ site, cachedAt: Date.now() }),
+      JSON.stringify({ site: cacheableSite, cachedAt: Date.now() }),
     );
   } catch (e) {}
 }
