@@ -428,31 +428,37 @@ export default function SubDistributor() {
 
               <div>
                 <label className="block text-sm font-medium text-page-label mb-2">{t('subDist.paymentMethod')}</label>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  {paymentMethods.map((method) => (
-                    <label
-                      key={method.type}
-                      className={`rounded-2xl border px-4 py-3 cursor-pointer transition-colors ${
-                        form.payment_method === method.type
-                          ? 'border-page-link bg-page-link/10'
-                          : 'border-border hover:bg-page-surface-hover'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        className="sr-only"
-                        checked={form.payment_method === method.type}
-                        onChange={() => setForm({ ...form, payment_method: method.type })}
-                      />
-                      <div className="flex items-center gap-2 text-sm font-medium text-page">
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-page-surface text-page-link">
-                          {method.type === 'crypto' ? <Coins size={15} aria-hidden="true" /> : <CreditCard size={15} aria-hidden="true" />}
-                        </span>
-                        <span className="min-w-0 truncate">{method.name || method.type}</span>
-                      </div>
-                    </label>
-                  ))}
-                </div>
+                {paymentMethods.length > 0 ? (
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    {paymentMethods.map((method) => (
+                      <label
+                        key={method.type}
+                        className={`rounded-2xl border px-4 py-3 cursor-pointer transition-colors ${
+                          form.payment_method === method.type
+                            ? 'border-page-link bg-page-link/10'
+                            : 'border-border hover:bg-page-surface-hover'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          className="sr-only"
+                          checked={form.payment_method === method.type}
+                          onChange={() => setForm({ ...form, payment_method: method.type })}
+                        />
+                        <div className="flex items-center gap-2 text-sm font-medium text-page">
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-page-surface text-page-link">
+                            {method.type === 'crypto' ? <Coins size={15} aria-hidden="true" /> : <CreditCard size={15} aria-hidden="true" />}
+                          </span>
+                          <span className="min-w-0 truncate">{method.name || method.type}</span>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-page-warning">
+                    {t('subDist.noPaymentMethods')}
+                  </p>
+                )}
               </div>
 
               {form.payment_method === 'crypto' && (
@@ -561,7 +567,7 @@ export default function SubDistributor() {
                 </div>
               )}
 
-              <button type="submit" disabled={submitting || cryptoUnavailable} className="btn-primary w-full justify-center flex items-center gap-2">
+              <button type="submit" disabled={submitting || cryptoUnavailable || paymentMethods.length === 0} className="btn-primary w-full justify-center flex items-center gap-2">
                 {submitting && <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />}
                 {t('subDist.payAndOpen', { symbol, price: Number(subInfo?.price || 0).toFixed(2) })}
                 {!submitting && <ArrowRight size={16} aria-hidden="true" />}

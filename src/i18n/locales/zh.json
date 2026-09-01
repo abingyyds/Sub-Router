@@ -373,6 +373,7 @@
     "subDist.siteSlug": "站点标识 (slug)",
     "subDist.siteSlugHelp": "将作为您的中转站标识，支付成功后不可修改。",
     "subDist.paymentMethod": "支付方式",
+    "subDist.noPaymentMethods": "当前暂未开放可用的支付方式，请联系站点管理员。",
     "subDist.chain": "区块链",
     "subDist.token": "代币",
     "subDist.payAndOpen": "支付搭建 {{symbol}}{{price}}",

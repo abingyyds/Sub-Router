@@ -373,6 +373,7 @@
     "subDist.siteSlug": "Site Slug",
     "subDist.siteSlugHelp": "This will become your relay site identifier and cannot be changed after payment.",
     "subDist.paymentMethod": "Payment Method",
+    "subDist.noPaymentMethods": "No payment methods are currently available. Please contact the site administrator.",
     "subDist.chain": "Blockchain",
     "subDist.token": "Token",
     "subDist.payAndOpen": "Pay to Build {{symbol}}{{price}}",
