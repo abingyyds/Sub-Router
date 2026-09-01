@@ -553,6 +553,7 @@ export default function SharedSubscriptions() {
                         <span className="min-w-0 flex-1 truncate font-mono text-page">
                           {model.model_name}
                         </span>
+                        <SharedFirstTokenLatency model={model} />
                         <AvailabilityStrip
                           windows={model.availability_windows}
                         />
@@ -2108,6 +2109,39 @@ function AvailabilityStrip({ windows = [] }) {
           />
         );
       })}
+    </span>
+  );
+}
+
+function formatFirstTokenLatency(value) {
+  const milliseconds = Number(value || 0);
+  if (!Number.isFinite(milliseconds) || milliseconds <= 0) return '--';
+  const seconds = milliseconds / 1000;
+  return `${seconds >= 10 ? Math.round(seconds) : Number(seconds.toFixed(1))}s`;
+}
+
+function isFirstTokenApplicableModel(model) {
+  const category = String(model?.category || 'chat').toLowerCase();
+  return !['image', 'video', 'audio', 'embedding', 'rerank'].some(
+    (value) => category === value || category.startsWith(`${value}_`),
+  );
+}
+
+function SharedFirstTokenLatency({ model }) {
+  if (!isFirstTokenApplicableModel(model)) return null;
+  const latency = Number(model?.median_ttft || 0);
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium tabular-nums ${
+        latency > 0
+          ? 'border-emerald-500/20 bg-emerald-500/10 text-page-success'
+          : 'border-page-divider bg-page-surface text-page-muted'
+      }`}
+      title={translate('首字时间')}
+    >
+      <Clock3 size={11} aria-hidden="true" />
+      <span>{translate('首字时间')}</span>
+      <span>{formatFirstTokenLatency(latency)}</span>
     </span>
   );
 }
