@@ -535,6 +535,8 @@
     "tokens.routeSortMode": "价格排序方式",
     "tokens.routePreference": "路由偏好",
     "tokens.priceFirst": "低价优先",
+    "tokens.includeCacheHitRate": "考虑缓存命中率",
+    "tokens.includeCacheHitRateDesc": "比较价格时计入观测到的缓存命中率；命中率 70% 时按普通输入价格的 30% 计算。",
     "tokens.lowPriceTag": "低价标签",
     "tokens.compositePriceFirst": "综合价优先",
     "tokens.priceFirstDesc": "价格明显低的权重更高，接近时看成功率和延迟",

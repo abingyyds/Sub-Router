@@ -535,6 +535,8 @@
     "tokens.routeSortMode": "Price sort mode",
     "tokens.routePreference": "Routing preference",
     "tokens.priceFirst": "Lowest price",
+    "tokens.includeCacheHitRate": "Adjust for cache hit rate",
+    "tokens.includeCacheHitRateDesc": "Use observed cache hit rates when comparing prices; a 70% hit rate prices the model at 30% of its normal input cost.",
     "tokens.lowPriceTag": "Low price",
     "tokens.compositePriceFirst": "Composite price first",
     "tokens.priceFirstDesc": "Clearly lower prices rank higher; close options are compared by success rate and latency",

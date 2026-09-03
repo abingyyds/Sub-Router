@@ -106,6 +106,7 @@ const emptyControlForm = () => ({
 	subrouter_model_providers: '',
 	subrouter_model_price_limits: '',
 	include_provider_self: true,
+	include_cache_hit_rate: false,
 	include_official_channels: true,
 	official_key_max_discount: '',
 	include_shared_subscriptions: true,
@@ -179,6 +180,7 @@ const buildTokenControlPayload = (
     remain_quota: remainQuota,
     allow_ips: String(form.allow_ips || '').trim(),
     subrouter_sort_mode: form.subrouter_sort_mode || 'token_price_first',
+    include_cache_hit_rate: Boolean(form.include_cache_hit_rate),
   };
 	if (includeModelLimits) {
 	  payload.model_limits = parseModelLimits(form.model_limits).join(',');
@@ -211,6 +213,7 @@ const tokenToEditForm = (token, rate) => ({
 	subrouter_model_providers: token?.subrouter_model_providers || '',
 	subrouter_model_price_limits: token?.subrouter_model_price_limits || '',
 	include_provider_self: token?.include_provider_self !== false,
+	include_cache_hit_rate: token?.include_cache_hit_rate === true,
 	include_official_channels: Boolean(token?.include_official_channels),
   official_key_max_discount: token?.include_official_channels
     ? normalizeOfficialKeyMaxDiscount(token?.official_key_max_discount) || ''
@@ -376,6 +379,8 @@ export default function Tokens() {
 		subrouter_route_preference:
 		  site?.subrouter_route_preference || DEFAULT_SUBROUTER_ROUTE_PREFERENCE,
 		include_provider_self: fullMode ? true : site?.include_provider_self !== false,
+		include_cache_hit_rate:
+		  fullMode ? false : site?.include_cache_hit_rate === true,
 		subrouter_providers: [],
 	  });
     setCreateModelSearch('');
@@ -392,6 +397,8 @@ export default function Tokens() {
 		subrouter_route_preference:
 		  site?.subrouter_route_preference || DEFAULT_SUBROUTER_ROUTE_PREFERENCE,
 		include_provider_self: fullMode ? true : site?.include_provider_self !== false,
+		include_cache_hit_rate:
+		  fullMode ? false : site?.include_cache_hit_rate === true,
 		subrouter_providers: [],
 	  });
     setCreateModelSearch('');
@@ -1625,6 +1632,24 @@ function TokenControlFields({
               }
               t={t}
             />
+            <label className='mt-3 flex items-start justify-between gap-4 rounded-xl border border-page-divider bg-page-surface px-3 py-2.5'>
+              <span className='min-w-0'>
+                <span className='block text-sm font-medium text-page'>
+                  {t('tokens.includeCacheHitRate')}
+                </span>
+                <span className='mt-1 block break-words text-xs text-page-secondary'>
+                  {t('tokens.includeCacheHitRateDesc')}
+                </span>
+              </span>
+              <input
+                type='checkbox'
+                className='mt-0.5 h-4 w-4 shrink-0 accent-brand-500'
+                checked={Boolean(form.include_cache_hit_rate)}
+                onChange={(event) =>
+                  onChange('include_cache_hit_rate', event.target.checked)
+                }
+              />
+            </label>
           </div>
           {fullMode && (
             <div className='min-w-0'>
