@@ -2069,7 +2069,11 @@ function GroupPricingModal({
                         </div>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3.5 text-sm leading-5 text-page-secondary">
-                        {item.billing_type === 'per_call' ? t('pricing.perCall') : t('按量计费')}
+                        {item.billing_type === 'per_call'
+                          ? t('pricing.perCall')
+                          : item.billing_type === 'tiered_expr'
+                            ? t('pricing.expressionPricing')
+                            : t('按量计费')}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3.5 text-right font-mono text-sm font-semibold leading-5 tabular-nums text-page-label">
                         {item.status !== 'healthy'
