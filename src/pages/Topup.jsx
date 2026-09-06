@@ -53,6 +53,36 @@ function normalizePaymentLabel(value) {
   return Array.from(label).slice(0, 32).join('');
 }
 
+const PAYMENT_METHOD_LABELS = {
+  alipay: '支付宝',
+  wxpay: '微信支付',
+  stripe: 'Stripe',
+  creem: 'Creem',
+  crypto: 'USDT/USDC',
+  redemption: '兑换码',
+  epay_alipay: '易支付支付宝',
+  epay_wxpay: '易支付微信支付',
+  epay_qqpay: '易支付QQ钱包',
+  epay_bank: '易支付网银支付',
+  epay2_alipay: '易支付2支付宝',
+  epay2_wxpay: '易支付2微信支付',
+  epay2_qqpay: '易支付2 QQ钱包',
+  epay2_bank: '易支付2网银支付',
+  platform_epay_alipay: '平台易支付支付宝',
+  platform_epay_wxpay: '平台易支付微信支付',
+  platform_epay_qqpay: '平台易支付QQ钱包',
+  platform_epay_bank: '平台易支付网银支付',
+  platform_epay2_alipay: '平台易支付2支付宝',
+  platform_epay2_wxpay: '平台易支付2微信支付',
+  platform_epay2_qqpay: '平台易支付2 QQ钱包',
+  platform_epay2_bank: '平台易支付2网银支付',
+};
+
+function getPaymentMethodLabel(value, fallback = '') {
+  const method = String(value || '').trim().toLowerCase();
+  return PAYMENT_METHOD_LABELS[method] || fallback || value;
+}
+
 function normalizeCreemProducts(value) {
   if (!value) return [];
   try {
@@ -269,9 +299,17 @@ export default function Topup() {
     setAmount(String(tier.amount));
   };
 
+  const isEpayPayment = (method) => {
+    const normalized = String(method || '').toLowerCase();
+    return normalized.startsWith('epay_') ||
+      normalized.startsWith('epay2_') ||
+      normalized.startsWith('platform_epay_') ||
+      normalized.startsWith('platform_epay2_');
+  };
+
   // Determine if a payment method is Stripe-based
   const isStripePayment = (method) =>
-    ['stripe', 'alipay', 'wxpay'].includes(method) && !method.startsWith('epay_');
+    ['stripe', 'alipay', 'wxpay'].includes(method) && !isEpayPayment(method);
 
   const isCreemPayment = (method) => method === 'creem';
 
@@ -969,7 +1007,7 @@ export default function Topup() {
                       )}
                     </p>
                     <p className="text-xs text-page-muted">
-                      {new Date(item.create_time * 1000).toLocaleString()} · {item.payment_method === 'redemption' || !item.payment_method ? t('topup.redeemCode') : item.payment_method}
+                      {new Date(item.create_time * 1000).toLocaleString()} · {item.payment_method === 'redemption' || !item.payment_method ? t('topup.redeemCode') : getPaymentMethodLabel(item.payment_method)}
                     </p>
                     {item.trade_no && (
                       <p className="mt-1 truncate font-mono text-[11px] text-page-muted" title={item.trade_no}>
