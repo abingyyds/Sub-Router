@@ -650,6 +650,8 @@ export const createInvoice = (data) => api.post("/api/dist/invoice", data);
 
 // ===== Affiliate / Invitation =====
 export const getAffCode = () => api.get("/api/dist/aff");
+export const getAffDashboard = (params) =>
+  api.get("/api/dist/aff_dashboard", { params });
 export const transferAffQuota = (data) =>
   api.post("/api/dist/aff_transfer", data);
 export const getAffEarnings = (params) =>

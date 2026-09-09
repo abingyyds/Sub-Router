@@ -4,6 +4,7 @@ import {
   BriefcaseBusiness,
   ChevronDown,
   ClipboardList,
+  HandCoins,
   KeyRound,
   LogOut,
   UserCircle,
@@ -16,6 +17,7 @@ function getUserInitial(user) {
 }
 
 function getMenuIcon(to) {
+  if (to === '/affiliate') return HandCoins;
   if (to === '/tokens') return KeyRound;
   if (to === '/logs') return ClipboardList;
   if (to === '/topup') return WalletCards;

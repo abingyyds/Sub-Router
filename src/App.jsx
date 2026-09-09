@@ -11,6 +11,7 @@ const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
 const OAuthCallback = lazy(() => import("./pages/OAuthCallback"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const AffiliateCenter = lazy(() => import("./pages/AffiliateCenter"));
 const Tokens = lazy(() => import("./pages/Tokens"));
 const Packages = lazy(() => import("./pages/Packages"));
 const Pricing = lazy(() => import("./pages/Pricing"));
@@ -182,6 +183,7 @@ function ThemedRoutes() {
           {/* Protected pages */}
           <Route element={<AuthGuard />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/affiliate" element={<AffiliateCenter />} />
             <Route path="/tokens" element={<Tokens />} />
             <Route
               path="/shared-subscriptions"

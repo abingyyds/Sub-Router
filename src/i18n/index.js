@@ -15,6 +15,7 @@ import sourceLocaleTranslations from "./sourceLocaleTranslations";
 import longTailTranslations from "./longTailTranslations";
 import pageGapTranslations from "./pageGapTranslations";
 import subDistributorTranslations from "./subDistributorTranslations";
+import affiliateTranslations from "./affiliateTranslations";
 import {
   APP_LANGUAGE_CODES,
   DIST_SITE_LANGUAGE_STORAGE_KEY,
@@ -62,6 +63,7 @@ const localeBackend = {
           ...(longTailTranslations[normalizedLanguage] || {}),
           ...(pageGapTranslations[normalizedLanguage] || {}),
           ...(subDistributorTranslations[normalizedLanguage] || {}),
+          ...(affiliateTranslations[normalizedLanguage] || affiliateTranslations.en || {}),
         }),
       )
       .catch((error) => callback(error, false));
@@ -91,6 +93,7 @@ i18n
           ...(longTailTranslations.zh || {}),
           ...(pageGapTranslations.zh || {}),
           ...(subDistributorTranslations.zh || {}),
+          ...(affiliateTranslations.zh || {}),
         },
       },
       en: {
@@ -108,6 +111,7 @@ i18n
           ...(longTailTranslations.en || {}),
           ...(pageGapTranslations.en || {}),
           ...(subDistributorTranslations.en || {}),
+          ...(affiliateTranslations.en || {}),
         },
       },
     },

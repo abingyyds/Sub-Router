@@ -39,6 +39,7 @@ export function getSiteNavItems({ t, site }) {
     // Keep the console as the final primary-navigation action. AuthGuard
     // redirects signed-out visitors to login while preserving their target.
     { to: "/dashboard", label: t("nav.dashboard"), auth: false },
+    { to: "/affiliate", label: t("nav.affiliate"), auth: true },
     { to: "/tokens", label: t("nav.apiKeys"), auth: true },
     ...(fullMode && site?.allow_provider_registration
       ? [
@@ -62,6 +63,7 @@ export function getVisibleNavItems(navItems, user) {
 }
 
 const userMenuNavItems = [
+  "/affiliate",
   "/tokens",
   "/logs",
   "/topup",
