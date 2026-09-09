@@ -1013,7 +1013,12 @@ export default function Topup() {
                       )}
                     </p>
                     <p className="text-xs text-page-muted">
-                      {new Date(item.create_time * 1000).toLocaleString()} · {item.payment_method === 'redemption' || !item.payment_method ? t('topup.redeemCode') : getPaymentMethodLabel(item.payment_method)}
+                      {new Date(item.create_time * 1000).toLocaleString()} · {item.payment_method === 'redemption' || !item.payment_method ? t('topup.redeemCode') : getPaymentMethodLabel(
+                        item.payment_method,
+                        item.payment_method === 'crypto'
+                          ? cryptoPaymentName
+                          : payMethods.find((method) => method.type === item.payment_method)?.name,
+                      )}
                     </p>
                     {item.trade_no && (
                       <p className="mt-1 truncate font-mono text-[11px] text-page-muted" title={item.trade_no}>
