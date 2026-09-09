@@ -8,6 +8,7 @@ export function getSiteNavItems({ t, site }) {
   return [
     { to: "/", label: t("nav.home"), auth: false },
     { to: "/pricing", label: t("nav.pricing"), auth: false },
+    { to: "/docs", label: t("nav.docs"), auth: false },
     ...(fullMode
       ? [{ to: "/marketplace", label: t("nav.marketplace"), auth: false }]
       : []),

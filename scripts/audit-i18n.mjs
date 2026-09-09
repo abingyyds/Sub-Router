@@ -14,6 +14,7 @@ import subDistributorTranslations from "../src/i18n/subDistributorTranslations.j
 import pageTranslations from "../src/i18n/pageTranslations.js";
 import siteCoreTranslations from "../src/i18n/siteCoreTranslations.js";
 import siteTranslations from "../src/i18n/siteTranslations.js";
+import apiDocsTranslations from "../src/i18n/apiDocsTranslations.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const localeCodes = [
@@ -56,12 +57,16 @@ const criticalKeys = [
     .filter((key) => key.startsWith("appMarket.")),
   ...new Set(Object.values(pageGapTranslations).flatMap((catalog) => Object.keys(catalog))),
   ...new Set(Object.values(subDistributorTranslations).flatMap((catalog) => Object.keys(catalog))),
+  ...Object.keys(apiDocsTranslations.en),
 ];
 const properNounKeys = new Set([
   "home.apiEndpointOverseasDirect",
   "appMarket.statusLive",
   "appMarket.featureAgents",
   "appMarket.openSource",
+  "docs.endpoints.responses",
+  "docs.text.sdkTitle",
+  "docs.table.endpoint",
 ]);
 const pageInvariantKeys = new Set([
   "officialChannels.multiplierLabel",
@@ -73,6 +78,9 @@ const pageInvariantKeys = new Set([
   "appMarket.openSource",
   "appMarket.statusLive",
   "appMarket.featureAgents",
+  "docs.endpoints.responses",
+  "docs.text.sdkTitle",
+  "docs.table.endpoint",
 ]);
 const interpolationPattern = /{{\s*([^},\s]+)[^}]*}}/g;
 
@@ -95,6 +103,7 @@ const loadLocale = (locale) => {
     ...(longTailTranslations[locale] || {}),
     ...(pageGapTranslations[locale] || {}),
     ...(subDistributorTranslations[locale] || {}),
+    ...(apiDocsTranslations[locale] || apiDocsTranslations.en || {}),
   };
 };
 

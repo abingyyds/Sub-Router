@@ -15,6 +15,7 @@ const AffiliateCenter = lazy(() => import("./pages/AffiliateCenter"));
 const Tokens = lazy(() => import("./pages/Tokens"));
 const Packages = lazy(() => import("./pages/Packages"));
 const Pricing = lazy(() => import("./pages/Pricing"));
+const Docs = lazy(() => import("./pages/Docs"));
 const OfficialChannels = lazy(() => import("./pages/OfficialChannels"));
 const AppMarket = lazy(() => import("./pages/AppMarket"));
 const Topup = lazy(() => import("./pages/Topup"));
@@ -141,6 +142,7 @@ function ThemedRoutes() {
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/docs" element={<Docs />} />
           <Route
             path="/marketplace"
             element={
