@@ -237,6 +237,7 @@ export default function Topup() {
   const enableStripe = topupInfo?.enable_stripe_topup;
   const enableCreem = topupInfo?.enable_creem_topup;
   const enableCrypto = topupInfo?.enable_crypto_topup;
+  const cryptoPaymentName = topupInfo?.crypto_payment_name || t('topup.cryptoPayment');
   const redeemCodeShopUrl = useMemo(
     () => normalizeExternalUrl(site?.top_up_link || topupConfig?.top_up_link || topupInfo?.top_up_link),
     [site?.top_up_link, topupConfig?.top_up_link, topupInfo?.top_up_link],
@@ -780,7 +781,7 @@ export default function Topup() {
                   }`}
                 >
                   <Coins size={16} aria-hidden="true" />
-                  {t('topup.cryptoPayment')}
+                  {cryptoPaymentName}
                 </button>
               )}
               {redeemCodeShopUrl && (
@@ -811,7 +812,7 @@ export default function Topup() {
                     <Coins size={18} aria-hidden="true" />
                   </span>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-page">{t('topup.cryptoPayment')}</p>
+                    <p className="text-sm font-semibold text-page">{cryptoPaymentName}</p>
                     <p className="mt-1 text-xs leading-relaxed text-page-muted">{t('topup.cryptoSelectionHint')}</p>
                   </div>
                 </div>
@@ -929,7 +930,7 @@ export default function Topup() {
               <CryptoNetworkIcon chain={cryptoOrder.chain || selectedChain} size={42} />
               <CryptoTokenIcon token={cryptoOrder.token || selectedToken} size={32} />
               <div className="min-w-0">
-                <h3 className="text-lg font-semibold text-page">{t('topup.cryptoPayment')}</h3>
+                <h3 className="text-lg font-semibold text-page">{cryptoPaymentName}</h3>
                 <p className="mt-0.5 truncate text-xs text-page-muted">{selectedCryptoLabel}</p>
               </div>
             </div>
@@ -942,6 +943,11 @@ export default function Topup() {
                 <p className="text-xs font-semibold text-page-warning mb-2">{t('topup.exactAmountLabel')}</p>
                 <p className="text-2xl font-bold text-page-warning font-mono break-all">{cryptoOrder.amount} {cryptoOrder.token}</p>
                 <p className="mt-2 text-xs leading-relaxed text-page-warning">{t('topup.exactAmountNotice')}</p>
+                {Number(cryptoOrder.discount_rate) > 0 && (
+                  <p className="mt-2 border-t border-amber-400/30 pt-2 text-xs leading-relaxed text-page-warning">
+                    {t('充值面值')} ${Number(cryptoOrder.display_amount || 0).toFixed(2)} · {t('优惠')} {Number(cryptoOrder.discount_rate).toFixed(2).replace(/\.00$/, '')}% · {t('到账')} ${Number(cryptoOrder.display_amount || 0).toFixed(2)}
+                  </p>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="glass-sm rounded-xl p-3">
