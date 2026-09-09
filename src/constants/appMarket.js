@@ -11,7 +11,7 @@ const MONEY_PRINTER_TURBO_REPO_RAW =
   'https://raw.githubusercontent.com/harry0703/MoneyPrinterTurbo/main';
 const MONEY_PRINTER_TURBO_OWNER_AVATAR = 'https://github.com/harry0703.png';
 const OPEN_DESIGN_REPO_RAW =
-  'https://raw.githubusercontent.com/nexu-io/open-design/main';
+  'https://raw.githubusercontent.com/abingyyds/open-design/main';
 
 const PLATFORM_APP_INTEGRATION = [
   'appMarket.integrationLogin',
