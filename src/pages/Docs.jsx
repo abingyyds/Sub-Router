@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { getSiteModels } from '../api';
+import { SHARED_API_ENDPOINTS } from '../constants/apiEndpoints';
 import {
   AlertCircle,
   ArrowRight,
@@ -266,7 +267,7 @@ function TaskStatusTable() {
 
 export default function Docs() {
   const { t } = useTranslation();
-  const baseUrl = typeof window === 'undefined' ? 'https://your-site.example' : window.location.origin.replace(/\/$/, '');
+  const baseUrl = SHARED_API_ENDPOINTS[0]?.url || 'https://api.43-161-200-52.sslip.io';
   const [models, setModels] = useState([]);
   const [modelsLoading, setModelsLoading] = useState(true);
   const [modelsError, setModelsError] = useState(false);
@@ -540,24 +541,39 @@ while (true) {
             </div>
           </div>
 
-          <div className="mt-8 grid gap-3 md:grid-cols-2">
-            <div className="docs-meta-card rounded-lg border border-page-divider bg-page-surface p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-[11px] font-bold uppercase text-page-muted">{t('docs.baseUrl')}</p>
-                  <code className="mt-1 block truncate text-sm font-semibold text-page-label">{baseUrl}</code>
-                </div>
-                <CopyButton value={baseUrl} label={t('docs.copyBaseUrl')} />
+          <div className="mt-8">
+            <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-sm font-bold text-page">{t('docs.apiEndpointsTitle')}</p>
+                <p className="mt-1 text-xs leading-5 text-page-secondary">{t('docs.apiEndpointsDesc')}</p>
+              </div>
+              <div className="flex items-center gap-2 text-[11px] text-page-muted">
+                <ShieldCheck className="h-4 w-4 text-page-success" aria-hidden="true" />
+                <span>Authorization: Bearer sk-...</span>
               </div>
             </div>
-            <div className="docs-meta-card rounded-lg border border-page-divider bg-page-surface p-4">
-              <div className="flex items-center gap-3">
-                <ShieldCheck className="h-5 w-5 shrink-0 text-page-success" aria-hidden="true" />
-                <div className="min-w-0">
-                  <p className="text-[11px] font-bold uppercase text-page-muted">{t('docs.authentication')}</p>
-                  <code className="mt-1 block truncate text-sm font-semibold text-page-label">Authorization: Bearer sk-...</code>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {SHARED_API_ENDPOINTS.map((endpoint, index) => (
+                <div key={endpoint.id} className="docs-meta-card rounded-lg border border-page-divider bg-page-surface p-3.5">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-brand-500/10 font-mono text-xs font-bold text-page-link">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <p className="truncate text-xs font-semibold text-page-label">{t(endpoint.labelKey)}</p>
+                        {index === 0 && (
+                          <span className="shrink-0 rounded-full bg-page-success/10 px-2 py-0.5 text-[10px] font-semibold text-page-success">
+                            {t('docs.recommendedDirect')}
+                          </span>
+                        )}
+                      </div>
+                      <code className="mt-1 block break-all text-[11px] leading-5 text-page-secondary">{endpoint.url}</code>
+                    </div>
+                    <CopyButton value={endpoint.url} label={`${t('home.apiEndpointClickToCopy')}: ${t(endpoint.labelKey)}`} />
+                  </div>
                 </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>

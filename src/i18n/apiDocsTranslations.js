@@ -1845,4 +1845,126 @@ apiDocsTranslations.tr = {
   'docs.table.action': 'İstemci işlemi',
 };
 
+const endpointCopy = {
+  zh: {
+    'docs.apiEndpointsTitle': 'API 调用地址',
+    'docs.apiEndpointsDesc': '创建 API Key 后，可使用以下任一地址调用。推荐优先使用香港直连，其他地址可按网络情况选择。',
+    'docs.recommendedDirect': '推荐直连',
+    'docs.quickstart.step3Desc': '从下方六个调用地址中选择一个，将其作为 API Base URL，并通过 Bearer Token 发送 API Key。',
+    'docs.text.sdkDesc': 'OpenAI SDK 的 Base URL 需要包含 /v1；请将下方任一调用地址拼接 /v1 后填入 SDK。',
+    'docs.endpoints.description': '所有路径都相对于你选择的调用地址，默认使用 Authorization: Bearer <API_KEY> 鉴权。',
+  },
+  en: {
+    'docs.apiEndpointsTitle': 'API call addresses',
+    'docs.apiEndpointsDesc': 'After creating an API key, use any of the six addresses below. The recommended direct route is Hong Kong; choose another route when it is closer to your network.',
+    'docs.recommendedDirect': 'Recommended direct',
+    'docs.quickstart.step3Desc': 'Choose one of the six call addresses below as your API base URL and send the API key as a Bearer token.',
+    'docs.text.sdkDesc': 'OpenAI SDKs need /v1 at the end of the base URL. Append /v1 to any address below before putting it into the SDK.',
+    'docs.endpoints.description': 'All paths are relative to the call address you selected and use Authorization: Bearer <API_KEY> unless noted otherwise.',
+  },
+  'zh-TW': {
+    'docs.apiEndpointsTitle': 'API 呼叫位址',
+    'docs.apiEndpointsDesc': '建立 API Key 後，可使用下列任一位址呼叫。建議優先使用香港直連，其他位址可依網路情況選擇。',
+    'docs.recommendedDirect': '推薦直連',
+    'docs.quickstart.step3Desc': '從下方六個呼叫位址中選擇一個作為 API Base URL，並透過 Bearer Token 傳送 API Key。',
+    'docs.text.sdkDesc': 'OpenAI SDK 的 Base URL 結尾必須包含 /v1；請在下列任一位址後加上 /v1，再填入 SDK。',
+    'docs.endpoints.description': '所有路徑都以你選擇的呼叫位址為基準，除非另有說明，預設使用 Authorization: Bearer <API_KEY> 驗證。',
+  },
+  es: {
+    'docs.apiEndpointsTitle': 'Direcciones de llamada API',
+    'docs.apiEndpointsDesc': 'Después de crear una clave API, usa cualquiera de las seis direcciones. Se recomienda la conexión directa de Hong Kong; elige otra según tu red.',
+    'docs.recommendedDirect': 'Conexión directa recomendada',
+    'docs.quickstart.step3Desc': 'Elige una de las seis direcciones de abajo como Base URL de la API y envía la clave como Bearer Token.',
+    'docs.text.sdkDesc': 'Los SDK de OpenAI necesitan /v1 al final de la Base URL. Añade /v1 a cualquiera de las direcciones antes de configurarla en el SDK.',
+    'docs.endpoints.description': 'Todas las rutas son relativas a la dirección elegida y usan Authorization: Bearer <API_KEY>, salvo que se indique lo contrario.',
+  },
+  'pt-BR': {
+    'docs.apiEndpointsTitle': 'Endereços de chamada da API',
+    'docs.apiEndpointsDesc': 'Depois de criar uma chave de API, use qualquer um dos seis endereços. Recomendamos a conexão direta de Hong Kong; escolha outro conforme sua rede.',
+    'docs.recommendedDirect': 'Conexão direta recomendada',
+    'docs.quickstart.step3Desc': 'Escolha um dos seis endereços abaixo como a Base URL da API e envie a chave como Bearer Token.',
+    'docs.text.sdkDesc': 'Os SDKs da OpenAI precisam de /v1 no final da Base URL. Adicione /v1 a qualquer endereço abaixo antes de configurá-lo no SDK.',
+    'docs.endpoints.description': 'Todos os caminhos são relativos ao endereço escolhido e usam Authorization: Bearer <API_KEY>, salvo indicação contrária.',
+  },
+  fr: {
+    'docs.apiEndpointsTitle': "Adresses d'appel API",
+    'docs.apiEndpointsDesc': "Après avoir créé une clé API, utilisez l'une des six adresses ci-dessous. La connexion directe de Hong Kong est recommandée ; choisissez une autre route selon votre réseau.",
+    'docs.recommendedDirect': 'Connexion directe recommandée',
+    'docs.quickstart.step3Desc': "Choisissez l'une des six adresses ci-dessous comme Base URL de l'API et envoyez la clé comme Bearer Token.",
+    'docs.text.sdkDesc': "Les SDK OpenAI exigent /v1 à la fin de la Base URL. Ajoutez /v1 à l'une des adresses avant de la renseigner dans le SDK.",
+    'docs.endpoints.description': "Tous les chemins sont relatifs à l'adresse choisie et utilisent Authorization: Bearer <API_KEY> sauf indication contraire.",
+  },
+  de: {
+    'docs.apiEndpointsTitle': 'API-Aufrufadressen',
+    'docs.apiEndpointsDesc': 'Nach dem Erstellen eines API-Schlüssels können Sie eine der sechs Adressen verwenden. Die direkte Verbindung über Hongkong wird empfohlen; wählen Sie je nach Netzwerk eine andere Route.',
+    'docs.recommendedDirect': 'Direkt empfohlen',
+    'docs.quickstart.step3Desc': 'Wählen Sie eine der sechs Adressen unten als API-Basis-URL und senden Sie den API-Schlüssel als Bearer-Token.',
+    'docs.text.sdkDesc': 'OpenAI-SDKs benötigen /v1 am Ende der Basis-URL. Hängen Sie /v1 an eine der Adressen an, bevor Sie sie im SDK eintragen.',
+    'docs.endpoints.description': 'Alle Pfade beziehen sich auf die gewählte Aufrufadresse und verwenden standardmäßig Authorization: Bearer <API_KEY>.',
+  },
+  ar: {
+    'docs.apiEndpointsTitle': 'عناوين استدعاء API',
+    'docs.apiEndpointsDesc': 'بعد إنشاء مفتاح API، استخدم أيًا من العناوين الستة أدناه. يُنصح بالاتصال المباشر عبر هونغ كونغ، ويمكن اختيار عنوان آخر وفقًا لشبكتك.',
+    'docs.recommendedDirect': 'الاتصال المباشر الموصى به',
+    'docs.quickstart.step3Desc': 'اختر أحد عناوين الاستدعاء الستة أدناه كعنوان API الأساسي، وأرسل مفتاح API بصيغة Bearer Token.',
+    'docs.text.sdkDesc': 'تحتاج حزم OpenAI إلى /v1 في نهاية عنوان API الأساسي. أضف /v1 إلى أي عنوان أدناه قبل وضعه في حزمة SDK.',
+    'docs.endpoints.description': 'جميع المسارات نسبية إلى عنوان الاستدعاء الذي اخترته وتستخدم Authorization: Bearer <API_KEY> ما لم يذكر خلاف ذلك.',
+  },
+  ja: {
+    'docs.apiEndpointsTitle': 'API 呼び出しアドレス',
+    'docs.apiEndpointsDesc': 'API キーを作成したら、以下の 6 つのアドレスのいずれかを使えます。香港の直通接続を推奨しますが、ネットワークに応じて別の経路も選択できます。',
+    'docs.recommendedDirect': '推奨直通',
+    'docs.quickstart.step3Desc': '以下の 6 つの呼び出しアドレスから 1 つを API Base URL に指定し、API キーを Bearer Token で送信します。',
+    'docs.text.sdkDesc': 'OpenAI SDK の Base URL の末尾には /v1 が必要です。以下のアドレスの末尾に /v1 を付けて SDK に設定してください。',
+    'docs.endpoints.description': 'すべてのパスは選択した呼び出しアドレスを基準とし、特に記載がない限り Authorization: Bearer <API_KEY> を使用します。',
+  },
+  id: {
+    'docs.apiEndpointsTitle': 'Alamat panggilan API',
+    'docs.apiEndpointsDesc': 'Setelah membuat API key, gunakan salah satu dari enam alamat berikut. Koneksi langsung Hong Kong direkomendasikan; pilih rute lain sesuai jaringan Anda.',
+    'docs.recommendedDirect': 'Langsung direkomendasikan',
+    'docs.quickstart.step3Desc': 'Pilih salah satu dari enam alamat panggilan di bawah sebagai Base URL API dan kirim API key sebagai Bearer Token.',
+    'docs.text.sdkDesc': 'OpenAI SDK memerlukan /v1 di akhir Base URL. Tambahkan /v1 ke salah satu alamat di bawah sebelum memasukkannya ke SDK.',
+    'docs.endpoints.description': 'Semua jalur relatif terhadap alamat panggilan yang dipilih dan menggunakan Authorization: Bearer <API_KEY> kecuali dinyatakan lain.',
+  },
+  ru: {
+    'docs.apiEndpointsTitle': 'Адреса вызова API',
+    'docs.apiEndpointsDesc': 'После создания API-ключа используйте любой из шести адресов ниже. Рекомендуется прямое подключение через Гонконг; выберите другой маршрут в зависимости от сети.',
+    'docs.recommendedDirect': 'Рекомендуемый прямой',
+    'docs.quickstart.step3Desc': 'Выберите один из шести адресов вызова ниже как Base URL API и передайте ключ как Bearer Token.',
+    'docs.text.sdkDesc': 'SDK OpenAI требуют /v1 в конце Base URL. Добавьте /v1 к любому адресу ниже перед настройкой SDK.',
+    'docs.endpoints.description': 'Все пути относительны к выбранному адресу вызова и по умолчанию используют Authorization: Bearer <API_KEY>.',
+  },
+  ko: {
+    'docs.apiEndpointsTitle': 'API 호출 주소',
+    'docs.apiEndpointsDesc': 'API 키를 만든 후 아래 6개 주소 중 하나를 사용하세요. 홍콩 직접 연결을 권장하며, 네트워크에 따라 다른 경로를 선택할 수 있습니다.',
+    'docs.recommendedDirect': '권장 직결',
+    'docs.quickstart.step3Desc': '아래 6개 호출 주소 중 하나를 API Base URL로 선택하고 API 키를 Bearer Token으로 보내세요.',
+    'docs.text.sdkDesc': 'OpenAI SDK의 Base URL 끝에는 /v1이 필요합니다. 아래 주소 중 하나에 /v1을 붙여 SDK에 설정하세요.',
+    'docs.endpoints.description': '모든 경로는 선택한 호출 주소를 기준으로 하며 별도 안내가 없으면 Authorization: Bearer <API_KEY>를 사용합니다.',
+  },
+  vi: {
+    'docs.apiEndpointsTitle': 'Địa chỉ gọi API',
+    'docs.apiEndpointsDesc': 'Sau khi tạo API key, hãy dùng một trong sáu địa chỉ dưới đây. Khuyến nghị kết nối trực tiếp qua Hồng Kông; chọn tuyến khác tùy mạng của bạn.',
+    'docs.recommendedDirect': 'Đề xuất kết nối trực tiếp',
+    'docs.quickstart.step3Desc': 'Chọn một trong sáu địa chỉ gọi bên dưới làm Base URL API và gửi API key dưới dạng Bearer Token.',
+    'docs.text.sdkDesc': 'OpenAI SDK cần /v1 ở cuối Base URL. Hãy thêm /v1 vào một địa chỉ bên dưới trước khi cấu hình SDK.',
+    'docs.endpoints.description': 'Mọi đường dẫn tương đối với địa chỉ gọi đã chọn và dùng Authorization: Bearer <API_KEY> nếu không có ghi chú khác.',
+  },
+  tr: {
+    'docs.apiEndpointsTitle': 'API çağrı adresleri',
+    'docs.apiEndpointsDesc': 'API anahtarı oluşturduktan sonra aşağıdaki altı adresten herhangi birini kullanın. Hong Kong doğrudan bağlantısı önerilir; ağınıza göre başka bir rota seçebilirsiniz.',
+    'docs.recommendedDirect': 'Önerilen doğrudan',
+    'docs.quickstart.step3Desc': 'Aşağıdaki altı çağrı adresinden birini API Base URL olarak seçin ve API anahtarını Bearer Token olarak gönderin.',
+    'docs.text.sdkDesc': 'OpenAI SDK’ları Base URL sonunda /v1 ister. Aşağıdaki adreslerden birinin sonuna /v1 ekleyerek SDK’ya girin.',
+    'docs.endpoints.description': 'Tüm yollar seçtiğiniz çağrı adresine göredir ve aksi belirtilmedikçe Authorization: Bearer <API_KEY> kullanır.',
+  },
+};
+
+Object.entries(endpointCopy).forEach(([locale, translations]) => {
+  apiDocsTranslations[locale] = {
+    ...apiDocsTranslations[locale],
+    ...translations,
+  };
+});
+
 export default apiDocsTranslations;
