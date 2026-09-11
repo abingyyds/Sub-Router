@@ -61,7 +61,7 @@ function MainlandChinaUnavailable() {
         <h1 className="text-xl font-semibold">{title}</h1>
         <p className="mt-3 text-sm opacity-70">
           {t("当前地区暂不支持访问此分站。", {
-            defaultValue: "This distributor site is not available in your region.",
+            defaultValue: "This site is not available in your region.",
           })}
         </p>
         {site?.name && <p className="mt-2 text-xs opacity-50">{site.name}</p>}

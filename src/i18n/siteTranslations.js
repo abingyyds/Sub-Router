@@ -18,7 +18,7 @@ const siteTranslations = {
     'downloads.tools.cherry-studio.description':
       '支持接入 OpenAI / Anthropic / Gemini 服务商，可配合本站生成参数使用。',
     'downloads.tools.codex.description':
-      'OpenAI 官方 Codex 桌面版，提供 Windows / macOS 站内中转下载；Linux 可继续使用 npm 安装。',
+      'OpenAI 官方 Codex 桌面版，提供 Windows / macOS 站内下载；Linux 可继续使用 npm 安装。',
     'downloads.tools.nodejs.description':
       '运行 Codex CLI、Claude Code 相关工具和常见前端开发工具所需的 Node.js LTS 环境。',
     'Key 只显示在当前窗口，请妥善保管。': 'Key 只显示在当前窗口，请妥善保管。',
@@ -30,7 +30,7 @@ const siteTranslations = {
     'marketplace.tokens': 'Token',
     'nav.main': '主导航',
     '本服务不对中国大陆提供': '本服务不对中国大陆提供',
-    '当前地区暂不支持访问此分站。': '当前地区暂不支持访问此分站。',
+    '当前地区暂不支持访问此分站。': '当前地区暂不支持访问本站。',
     'OAuth 启动失败': 'OAuth 启动失败',
     'OAuth 账号': 'OAuth 账号',
     'OAuth 账号导入并通过测试后立即进入调度，套餐和模型自动识别。':
@@ -60,14 +60,14 @@ const siteTranslations = {
     '为提高账号存活率，建议购买并使用静态住宅 IP。':
       '为提高账号存活率，建议购买并使用静态住宅 IP。',
     '主站商家后台激活邮件已发送到绑定邮箱。':
-      '主站商家后台激活邮件已发送到绑定邮箱。',
+      '平台商家后台激活邮件已发送到绑定邮箱。',
     '仅导入已绑定专属代理的 OAuth 账号，其他认证类型会跳过':
       '仅导入已绑定专属代理的 OAuth 账号，其他认证类型会跳过',
     '代理仅绑定当前托管账号，提交前会测试连通性；支持公网 IP 或域名。':
       '代理仅绑定当前托管账号，提交前会测试连通性；支持公网 IP 或域名。',
     以后自动订阅本站新准入商家: '以后自动订阅本站新准入商家',
     '使用站长已进货上架的共享套餐、贡献账号并管理收益':
-      '使用站长已进货上架的共享套餐、贡献账号并管理收益',
+      '使用本站已上架的共享套餐、贡献账号并管理收益',
     保存中: '保存中',
     保存范围: '保存范围',
     保存资料: '保存资料',
@@ -84,7 +84,7 @@ const siteTranslations = {
     '最高 RPM': '最高 RPM',
     分享实际使用体验: '分享实际使用体验',
     分成比例: '分成比例',
-    分站抽成结算: '分站抽成结算',
+    分站抽成结算: '收益分成结算',
     删除: '删除',
     删除账号: '删除账号',
     刷新: '刷新',
@@ -115,7 +115,7 @@ const siteTranslations = {
     商家标识: '商家标识',
     固定: '固定',
     '在当前分站生成并管理可调用共享套餐的 API Key。':
-      '在当前分站生成并管理可调用共享套餐的 API Key。',
+      '在本站生成并管理可调用共享套餐的 API Key。',
     在浏览器中完成授权: '在浏览器中完成授权',
     在线容量: '在线容量',
     复制: '复制',
@@ -278,9 +278,9 @@ const siteTranslations = {
     调用时间: '调用时间',
     贡献者分成: '贡献者分成',
     '贡献者分成后的抽成，50% 进入站长收益，50% 留给主平台。':
-      '贡献者分成后的抽成，50% 进入站长收益，50% 留给主平台。',
+      '贡献者分成后的收益，50% 归运营方，50% 归平台。',
     '贡献者分成遵循平台套餐配置；分站订单剩余抽成由站长与主平台各获得 50%。':
-      '贡献者分成遵循平台套餐配置；分站订单剩余抽成由站长与主平台各获得 50%。',
+      '贡献者分成遵循本站套餐配置；订单剩余分成由运营方与平台各获得 50%。',
     账号备份文件解析失败: '账号备份文件解析失败',
     '账号导入并通过测试后立即进入调度，模型和销售价格会自动同步。':
       '账号导入并通过测试后立即进入调度，模型和销售价格会自动同步。',
@@ -326,7 +326,7 @@ const siteTranslations = {
     'downloads.tools.cherry-studio.description':
       'Connects to OpenAI, Anthropic and Gemini providers and works well with generated settings from this site.',
     'downloads.tools.codex.description':
-      'OpenAI official Codex desktop app with local relayed Windows and macOS downloads. Linux users can continue using npm installation.',
+      'OpenAI official Codex desktop app with Windows and macOS downloads from this site. Linux users can continue using npm installation.',
     'downloads.tools.nodejs.description':
       'Node.js LTS runtime for Codex CLI, Claude Code related tools and common frontend tooling.',
     'Key 只显示在当前窗口，请妥善保管。':
@@ -339,7 +339,7 @@ const siteTranslations = {
     'marketplace.tokens': 'tokens',
     'nav.main': 'Main navigation',
     '本服务不对中国大陆提供': 'This service is not available in mainland China',
-    '当前地区暂不支持访问此分站。': 'This distributor site is not available in your region.',
+    '当前地区暂不支持访问此分站。': 'This site is not available in your region.',
     'OAuth 启动失败': 'Failed to start OAuth',
     'OAuth 账号': 'OAuth accounts',
     'OAuth 账号导入并通过测试后立即进入调度，套餐和模型自动识别。':
@@ -373,7 +373,7 @@ const siteTranslations = {
     '为提高账号存活率，建议购买并使用静态住宅 IP。':
       'For better account stability, use a static residential IP.',
     '主站商家后台激活邮件已发送到绑定邮箱。':
-      'The main merchant background activation email has been sent to the linked email.',
+      'The provider dashboard activation email has been sent to the linked email.',
     '仅导入已绑定专属代理的 OAuth 账号，其他认证类型会跳过':
       'Only import OAuth accounts with dedicated agents bound to them, other authentication types will be skipped',
     '代理仅绑定当前托管账号，提交前会测试连通性；支持公网 IP 或域名。':
@@ -381,7 +381,7 @@ const siteTranslations = {
     以后自动订阅本站新准入商家:
       'Automatically subscribe to new merchants on our site in the future',
     '使用站长已进货上架的共享套餐、贡献账号并管理收益':
-      'Use a shared plan that the webmaster has purchased on the shelf, contribute to the account, and manage your earnings',
+      'Use shared plans listed on this site, contribute accounts, and manage your earnings',
     保存中: 'Saving',
     保存范围: 'Storage Range',
     保存资料: 'Save Profile',
@@ -398,7 +398,7 @@ const siteTranslations = {
     '最高 RPM': 'Max RPM',
     分享实际使用体验: 'Share your experience',
     分成比例: 'Revenue share',
-    分站抽成结算: 'Substation Allotment and Settlement',
+    分站抽成结算: 'Revenue Share Settlement',
     删除: 'Delete',
     删除账号: 'Delete account',
     刷新: 'Refresh',
@@ -431,7 +431,7 @@ const siteTranslations = {
     商家标识: 'Provider Slug',
     固定: 'Fixed',
     '在当前分站生成并管理可调用共享套餐的 API Key。':
-      'Generate and manage API keys that can invoke shared plans in the current substation.',
+      'Generate and manage API keys that can invoke shared plans on this site.',
     在浏览器中完成授权: 'Complete authorization in your browser',
     在线容量: 'Online capacity',
     复制: 'Copy',
@@ -525,7 +525,7 @@ const siteTranslations = {
     '有 {{value1}} 个 OAuth 账号未绑定代理，请补充 proxy、proxy_url 或 proxy_id':
       'There are {{value1}} OAuth accounts with unbound proxies, please add proxy, proxy_url or proxy_id',
     服务状态: 'Service Status',
-    本站最终价格: 'Final price of this station',
+    本站最终价格: 'Final price of this site',
     '本站准入商家、最终售价和实时可用模型。':
       'This site has access to merchants, final selling price and real-time available models.',
     查看可用度: 'View Availability',
@@ -596,9 +596,9 @@ const siteTranslations = {
     调用时间: 'Request time',
     贡献者分成: 'Contributor share',
     '贡献者分成后的抽成，50% 进入站长收益，50% 留给主平台。':
-      'After the contributor shares, 50% of the revenue goes to the webmaster, and 50% is reserved for the main platform.',
+      'After the contributor share, 50% of the revenue goes to the site operator and 50% to the platform.',
     '贡献者分成遵循平台套餐配置；分站订单剩余抽成由站长与主平台各获得 50%。':
-      "The contributor's share follows the platform package configuration; the remaining share of the substation order is 50% by the webmaster and 50% by the main platform.",
+      "The contributor's share follows this site's plan configuration; the remaining order share is split 50/50 between the site operator and platform.",
     账号备份文件解析失败: 'Could not parse the account backup file',
     '账号导入并通过测试后立即进入调度，模型和销售价格会自动同步。':
       'After an account is imported and passes testing, it enters scheduling immediately. Models and selling prices sync automatically.',
@@ -689,15 +689,15 @@ const siteTranslations = {
     '为提高账号存活率，建议购买并使用静态住宅 IP。':
       'Hesap kararlılığını artırmak için sabit bir konut IP’si kullanmanızı öneririz.',
     '主站商家后台激活邮件已发送到绑定邮箱。':
-      'Ana platformdaki sağlayıcı paneli için etkinleştirme e-postası bağlı e-posta adresine gönderildi.',
+      'Sağlayıcı paneli etkinleştirme e-postası bağlı e-posta adresine gönderildi.',
     '仅导入已绑定专属代理的 OAuth 账号，其他认证类型会跳过':
       'Yalnızca özel proxy bağlanmış OAuth hesapları içe aktarılır; diğer kimlik doğrulama türleri atlanır.',
     '代理仅绑定当前托管账号，提交前会测试连通性；支持公网 IP 或域名。':
       'Proxy yalnızca bu barındırılan hesaba bağlanır ve gönderilmeden önce bağlantısı test edilir. Genel IP’ler ve alan adları desteklenir.',
     以后自动订阅本站新准入商家:
-      'Bu alt siteye yeni kabul edilen sağlayıcılara otomatik abone ol',
+      'Bu siteye yeni kabul edilen sağlayıcılara otomatik abone ol',
     '使用站长已进货上架的共享套餐、贡献账号并管理收益':
-      'Site sahibinin listelediği paylaşılan planları kullanın, hesap katkısında bulunun ve kazançlarınızı yönetin',
+      'Bu sitede listelenen paylaşılan planları kullanın, hesap katkısında bulunun ve kazançlarınızı yönetin',
     保存中: 'Kaydediliyor...',
     保存范围: 'Kapsamı kaydet',
     保存资料: 'Bilgileri kaydet',
@@ -714,7 +714,7 @@ const siteTranslations = {
     '最高 RPM': 'Max RPM',
     分享实际使用体验: 'Gerçek kullanım deneyiminizi paylaşın',
     分成比例: 'Gelir paylaşımı',
-    分站抽成结算: 'Alt site komisyon mutabakatı',
+    分站抽成结算: 'Gelir paylaşımı mutabakatı',
     删除: 'Sil',
     删除账号: 'Hesabı sil',
     刷新: 'Yenile',
@@ -741,13 +741,13 @@ const siteTranslations = {
     同步于: 'Senkronizasyon:',
     商家: 'Sağlayıcı',
     '商家不存在或未被本站准入。':
-      'Sağlayıcı bulunamadı veya bu alt siteye kabul edilmedi.',
+      'Sağlayıcı bulunamadı veya bu siteye kabul edilmedi.',
     商家介绍: 'Sağlayıcı açıklaması',
     商家公告: 'Sağlayıcı duyurusu',
     商家标识: 'Slug',
     固定: 'Sabit',
     '在当前分站生成并管理可调用共享套餐的 API Key。':
-      'Bu alt sitede paylaşılan planları kullanabilen API Key’leri oluşturun ve yönetin.',
+      'Bu sitede paylaşılan planları kullanabilen API Key’leri oluşturun ve yönetin.',
     在浏览器中完成授权: 'Yetkilendirmeyi tarayıcınızda tamamlayın',
     在线容量: 'Çevrimiçi kapasite',
     复制: 'Kopyala',
@@ -841,9 +841,9 @@ const siteTranslations = {
     '有 {{value1}} 个 OAuth 账号未绑定代理，请补充 proxy、proxy_url 或 proxy_id':
       '{{value1}} OAuth hesabına proxy bağlanmamış. proxy, proxy_url veya proxy_id ekleyin',
     服务状态: 'Hizmet Durumu',
-    本站最终价格: 'Bu alt sitedeki nihai fiyat',
+    本站最终价格: 'Bu sitedeki nihai fiyat',
     '本站准入商家、最终售价和实时可用模型。':
-      'Bu alt siteye kabul edilen sağlayıcıları, nihai satış fiyatlarını ve gerçek zamanlı kullanılabilir modelleri görüntüleyin.',
+      'Bu siteye kabul edilen sağlayıcıları, nihai satış fiyatlarını ve gerçek zamanlı kullanılabilir modelleri görüntüleyin.',
     查看可用度: 'Kullanılabilirliği görüntüle',
     格式示例: 'Biçim örneği',
     模型: 'Model',
@@ -904,9 +904,9 @@ const siteTranslations = {
     调用时间: 'Çağrı zamanı',
     贡献者分成: 'Katkıda bulunan payı',
     '贡献者分成后的抽成，50% 进入站长收益，50% 留给主平台。':
-      'Katkıda bulunan payı ayrıldıktan sonra kalan komisyonun %50’si site sahibine, %50’si ana platforma gider.',
+      'Katkıda bulunan payı ayrıldıktan sonra kalan gelirin %50’si site işletmecisine, %50’si platforma gider.',
     '贡献者分成遵循平台套餐配置；分站订单剩余抽成由站长与主平台各获得 50%。':
-      'Katkıda bulunan payı platform planına göre belirlenir; alt site siparişinden kalan komisyon site sahibi ile ana platform arasında eşit paylaşılır.',
+      'Katkıda bulunan payı bu sitenin planına göre belirlenir; kalan sipariş geliri site işletmecisi ile platform arasında eşit paylaşılır.',
     账号备份文件解析失败: 'Hesap yedekleme dosyası ayrıştırılamadı',
     '账号导入并通过测试后立即进入调度，模型和销售价格会自动同步。':
       'Hesap içe aktarılıp testlerden geçtikten sonra hemen planlamaya alınır; model ve satış fiyatları otomatik eşitlenir.',

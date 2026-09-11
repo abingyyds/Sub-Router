@@ -109,7 +109,7 @@ const previewPackages = [
   },
   {
     id: "preview-pro",
-    name: "Pro Relay",
+    name: "Pro Plan",
     description_key: "preview.proDesc",
     price: 99,
     original_price: 149,
@@ -165,7 +165,7 @@ const previewOfficialChannels = [
   {
     official_channel_id: 2,
     name: "Anthropic Official",
-    description: "Claude official models with station-level price caps.",
+    description: "Claude official models with site-level price caps.",
     max_final_discount: 0.6,
     min_allowed_final_discount: 0.4,
     min_final_price_discount: 0.4,

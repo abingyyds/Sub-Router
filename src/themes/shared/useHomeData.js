@@ -27,7 +27,7 @@ const previewPackages = [
   },
   {
     id: 'preview-pro',
-    name: 'Pro Relay',
+    name: 'Pro Plan',
     description_key: 'preview.proDesc',
     price: 99,
     original_price: 149,

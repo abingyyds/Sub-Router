@@ -42,8 +42,8 @@ export const DOWNLOAD_TOOLS = [
     id: 'codex',
     title: 'Codex',
     version: '0.144.5',
-    descZh: 'OpenAI 官方 Codex 桌面版，提供 Windows / macOS 站内中转下载；Linux 可继续使用 npm 安装。',
-    descEn: 'OpenAI official Codex desktop app with local relayed Windows and macOS downloads. Linux users can continue using npm installation.',
+    descZh: 'OpenAI 官方 Codex 桌面版，提供 Windows / macOS 站内下载；Linux 可继续使用 npm 安装。',
+    descEn: 'OpenAI official Codex desktop app with Windows and macOS downloads from this site. Linux users can continue using npm installation.',
     installGuide: 'https://github.com/openai/codex#installation',
     releases: 'https://github.com/openai/codex/releases/latest',
     groups: [

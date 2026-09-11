@@ -420,7 +420,7 @@ export default function SubDistributor() {
                   value={form.slug}
                   onChange={(e) => setForm({ ...form, slug: e.target.value.toLowerCase() })}
                   className="input"
-                  placeholder="my-sub-site"
+                  placeholder="my-site"
                   required
                 />
                 <p className="text-xs text-page-muted mt-2">{t('subDist.siteSlugHelp')}</p>

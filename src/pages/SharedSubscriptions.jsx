@@ -756,7 +756,7 @@ export default function SharedSubscriptions() {
             </h2>
             <p className='mt-1 text-sm text-page-muted'>
               {translate(
-                '贡献者分成遵循平台套餐配置；分站订单剩余抽成由站长与主平台各获得 50%。',
+                '贡献者分成遵循平台套餐配置；订单剩余分成由运营方与平台各获得 50%。',
               )}
             </p>
           </div>
@@ -805,7 +805,7 @@ export default function SharedSubscriptions() {
                 '05',
                 translate('分站抽成结算'),
                 translate(
-                  '贡献者分成后的抽成，50% 进入站长收益，50% 留给主平台。',
+                  '贡献者分成后的收益，50% 归运营方，50% 归平台。',
                 ),
               ],
             ].map(([index, title, description]) => (
