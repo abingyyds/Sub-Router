@@ -267,7 +267,7 @@ function TaskStatusTable() {
 
 export default function Docs() {
   const { t } = useTranslation();
-  const baseUrl = SHARED_API_ENDPOINTS[0]?.url || 'https://api.43-161-200-52.sslip.io';
+  const baseUrl = SHARED_API_ENDPOINTS[0]?.url || 'https://hk.orbitlink.me';
   const [models, setModels] = useState([]);
   const [modelsLoading, setModelsLoading] = useState(true);
   const [modelsError, setModelsError] = useState(false);
