@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { getSiteModels } from '../api';
-import { SHARED_API_ENDPOINTS } from '../constants/apiEndpoints';
+import { PUBLIC_API_ENDPOINT } from '../constants/apiEndpoints';
 import {
   AlertCircle,
   ArrowRight,
@@ -267,7 +267,7 @@ function TaskStatusTable() {
 
 export default function Docs() {
   const { t } = useTranslation();
-  const baseUrl = SHARED_API_ENDPOINTS[0]?.url || 'https://hk.orbitlink.me';
+  const baseUrl = PUBLIC_API_ENDPOINT;
   const [models, setModels] = useState([]);
   const [modelsLoading, setModelsLoading] = useState(true);
   const [modelsError, setModelsError] = useState(false);

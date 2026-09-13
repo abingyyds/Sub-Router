@@ -44,3 +44,4 @@ export const SHARED_API_ENDPOINTS = [
 ];
 
 export const PUBLIC_API_ENDPOINT_COUNT = SHARED_API_ENDPOINTS.length;
+export const PUBLIC_API_ENDPOINT = SHARED_API_ENDPOINTS[0]?.url || '';
