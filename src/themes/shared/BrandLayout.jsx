@@ -7,6 +7,7 @@ import { useSite } from '../../context/SiteContext';
 import LanguageSwitch from '../../components/LanguageSwitch';
 import UserMenu from '../../components/UserMenu';
 import { FooterLegalLinks } from '../../components/LegalLinks';
+import NodeStatusRail from '../../components/NodeStatusRail';
 import maoqiuAiImage from '../../assets/maoqiu-ai.png';
 import {
   getHeaderNavItems,
@@ -378,6 +379,7 @@ export default function BrandLayout({ variant }) {
           </div>
         </div>
       </footer>
+      <NodeStatusRail />
     </div>
   );
 }

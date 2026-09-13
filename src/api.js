@@ -274,9 +274,7 @@ api.interceptors.response.use(
     return res;
   },
   (err) => {
-    const msg =
-      err.response?.data?.message ||
-      i18n.t("common.requestFailed");
+    const msg = err.response?.data?.message || i18n.t("common.requestFailed");
     if (err.response?.status === 401) {
       localStorage.removeItem("dist_user_id");
       // Emit event so AuthContext can clear React state
@@ -334,6 +332,11 @@ export const getSiteModels = (params = {}) =>
         api.get("/api/dist/site/models", { params }),
       );
 export const getSitePricing = () => api.get("/api/dist/site/pricing");
+export const getNodeStatus = (period = "24h") =>
+  api.get("/api/dist/node-status", {
+    params: { period },
+    skipErrorHandler: true,
+  });
 export const getSiteOfficialChannels = (params = {}) =>
   getPreviewTheme()
     ? previewResponse(
@@ -631,7 +634,9 @@ export const createCreemOrder = (data) =>
 export const createCryptoOrder = (data) =>
   api.post("/api/dist/topup/crypto/pay", data);
 export const getCryptoOrderStatus = (tradeNo) =>
-  api.get(`/api/dist/topup/crypto/status?trade_no=${encodeURIComponent(tradeNo)}`);
+  api.get(
+    `/api/dist/topup/crypto/status?trade_no=${encodeURIComponent(tradeNo)}`,
+  );
 export const reconcileCryptoOrder = (tradeNo) =>
   api.post("/api/dist/topup/crypto/reconcile", { trade_no: tradeNo });
 export const claimCryptoOrderTransfer = (tradeNo, txHash) =>

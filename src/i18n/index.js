@@ -17,6 +17,7 @@ import pageGapTranslations from "./pageGapTranslations";
 import subDistributorTranslations from "./subDistributorTranslations";
 import affiliateTranslations from "./affiliateTranslations";
 import apiDocsTranslations from "./apiDocsTranslations";
+import nodeStatusTranslations from "./nodeStatusTranslations";
 import {
   APP_LANGUAGE_CODES,
   DIST_SITE_LANGUAGE_STORAGE_KEY,
@@ -59,13 +60,22 @@ const localeBackend = {
           ...(journeyGapTranslations[normalizedLanguage] || {}),
           ...(legalPageTranslations[normalizedLanguage] || {}),
           ...(appMarketTranslations[normalizedLanguage] || {}),
-          ...(sharedSubscriptionTranslations[normalizedLanguage] || sharedSubscriptionTranslations.en || {}),
+          ...(sharedSubscriptionTranslations[normalizedLanguage] ||
+            sharedSubscriptionTranslations.en ||
+            {}),
           ...(sourceLocaleTranslations[normalizedLanguage] || {}),
           ...(longTailTranslations[normalizedLanguage] || {}),
           ...(pageGapTranslations[normalizedLanguage] || {}),
           ...(subDistributorTranslations[normalizedLanguage] || {}),
-          ...(affiliateTranslations[normalizedLanguage] || affiliateTranslations.en || {}),
-          ...(apiDocsTranslations[normalizedLanguage] || apiDocsTranslations.en || {}),
+          ...(affiliateTranslations[normalizedLanguage] ||
+            affiliateTranslations.en ||
+            {}),
+          ...(apiDocsTranslations[normalizedLanguage] ||
+            apiDocsTranslations.en ||
+            {}),
+          ...(nodeStatusTranslations[normalizedLanguage] ||
+            nodeStatusTranslations.en ||
+            {}),
         }),
       )
       .catch((error) => callback(error, false));
@@ -97,6 +107,7 @@ i18n
           ...(subDistributorTranslations.zh || {}),
           ...(affiliateTranslations.zh || {}),
           ...(apiDocsTranslations.zh || {}),
+          ...(nodeStatusTranslations.zh || {}),
         },
       },
       en: {
@@ -116,6 +127,7 @@ i18n
           ...(subDistributorTranslations.en || {}),
           ...(affiliateTranslations.en || {}),
           ...(apiDocsTranslations.en || {}),
+          ...(nodeStatusTranslations.en || {}),
         },
       },
     },
