@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useSite } from '../context/SiteContext';
 import { LegalAgreementCheckbox } from '../components/LegalLinks';
 import OAuthLoginButtons from '../components/OAuthLoginButtons';
+import TurnstileWidget from '../components/TurnstileWidget';
 import toast from 'react-hot-toast';
 import { sendRegistrationEmailVerification } from '../api';
 
@@ -24,7 +25,10 @@ export default function Register() {
   const [verificationLoading, setVerificationLoading] = useState(false);
   const [verificationCooldown, setVerificationCooldown] = useState(0);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
   const emailVerificationRequired = Boolean(site?.registration_email_verification_enabled);
+  const turnstileEnabled = Boolean(site?.turnstile_check && site?.turnstile_site_key);
 
   // Capture aff code from URL and persist in localStorage
   useEffect(() => {
@@ -92,16 +96,23 @@ export default function Register() {
       toast.error(t('legal.agreeRequired'));
       return;
     }
+    if (turnstileEnabled && !turnstileToken) {
+      toast.error(t('turnstile.checking'));
+      return;
+    }
     setLoading(true);
     try {
       const affCode = new URLSearchParams(window.location.search).get('aff') || localStorage.getItem('dist_aff') || '';
-      const result = await register({
-        username: form.username,
-        password: form.password,
-        email: form.email || undefined,
-        verification_code: emailVerificationRequired ? form.verification_code : undefined,
-        aff_code: affCode || undefined,
-      });
+      const result = await register(
+        {
+          username: form.username,
+          password: form.password,
+          email: form.email || undefined,
+          verification_code: emailVerificationRequired ? form.verification_code : undefined,
+          aff_code: affCode || undefined,
+        },
+        turnstileToken,
+      );
       if (result.success) {
         toast.success(t('register.accountCreated'));
         navigate('/login', { replace: true });
@@ -110,6 +121,10 @@ export default function Register() {
       // error toast is handled by api interceptor for success:false
     } catch (err) {
       // Network error handled by interceptor
+    }
+    if (turnstileEnabled) {
+      setTurnstileToken('');
+      setTurnstileResetKey((current) => current + 1);
     }
     setLoading(false);
   };
@@ -210,6 +225,20 @@ export default function Register() {
             </div>
 
             <LegalAgreementCheckbox id="dist-register-agreement" checked={agreedToTerms} onChange={(e) => setAgreedToTerms(e.target.checked)} />
+
+            {turnstileEnabled && (
+              <TurnstileWidget
+                siteKey={site.turnstile_site_key}
+                embedUrl={site.turnstile_embed_url || ''}
+                resetKey={turnstileResetKey}
+                onVerify={(token) => setTurnstileToken(token)}
+                onExpire={() => setTurnstileToken('')}
+                onError={() => {
+                  setTurnstileToken('');
+                  toast.error(t('turnstile.failed'));
+                }}
+              />
+            )}
 
             <button type="submit" disabled={loading || !agreedToTerms} className="btn-primary w-full flex items-center justify-center gap-2">
               {loading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}

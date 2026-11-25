@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useSite } from '../context/SiteContext';
 import { LegalAgreementCheckbox } from '../components/LegalLinks';
 import OAuthLoginButtons from '../components/OAuthLoginButtons';
+import TurnstileWidget from '../components/TurnstileWidget';
 import toast from 'react-hot-toast';
 
 export default function Login() {
@@ -16,6 +17,9 @@ export default function Login() {
   const [form, setForm] = useState({ username: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
+  const turnstileEnabled = Boolean(site?.turnstile_check && site?.turnstile_site_key);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -47,9 +51,13 @@ export default function Login() {
       toast.error(t('legal.agreeRequired'));
       return;
     }
+    if (turnstileEnabled && !turnstileToken) {
+      toast.error(t('turnstile.checking'));
+      return;
+    }
     setLoading(true);
     try {
-      const result = await login(form.username, form.password);
+      const result = await login(form.username, form.password, turnstileToken);
       if (result.success) {
         toast.success(t('login.welcomeBackToast'));
         const from = location.state?.from?.pathname || '/dashboard';
@@ -59,6 +67,10 @@ export default function Login() {
       // error toast is handled by api interceptor for success:false
     } catch (err) {
       // Network error handled by interceptor
+    }
+    if (turnstileEnabled) {
+      setTurnstileToken('');
+      setTurnstileResetKey((current) => current + 1);
     }
     setLoading(false);
   };
@@ -107,6 +119,20 @@ export default function Login() {
               checked={agreedToTerms}
               onChange={(e) => setAgreedToTerms(e.target.checked)}
             />
+
+            {turnstileEnabled && (
+              <TurnstileWidget
+                siteKey={site.turnstile_site_key}
+                embedUrl={site.turnstile_embed_url || ''}
+                resetKey={turnstileResetKey}
+                onVerify={(token) => setTurnstileToken(token)}
+                onExpire={() => setTurnstileToken('')}
+                onError={() => {
+                  setTurnstileToken('');
+                  toast.error(t('turnstile.failed'));
+                }}
+              />
+            )}
 
             <button
               type="submit"

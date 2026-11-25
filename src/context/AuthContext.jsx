@@ -60,8 +60,8 @@ export function AuthProvider({ children }) {
     return () => window.removeEventListener('auth:logout', handleForceLogout);
   }, []);
 
-  const login = useCallback(async (username, password) => {
-    const res = await loginApi({ username, password });
+  const login = useCallback(async (username, password, turnstileToken = '') => {
+    const res = await loginApi({ username, password }, turnstileToken);
     if (res.data.success) {
       // Server sets session cookie automatically
       // Store user ID for New-Api-User header
@@ -82,8 +82,8 @@ export function AuthProvider({ children }) {
     return { success: false, message: res.data.message };
   }, []);
 
-  const register = useCallback(async (data) => {
-    const res = await registerApi(data);
+  const register = useCallback(async (data, turnstileToken = '') => {
+    const res = await registerApi(data, turnstileToken);
     if (res.data.success) {
       // Registration succeeds — but user needs to login separately
       // (backend register does NOT set session)
