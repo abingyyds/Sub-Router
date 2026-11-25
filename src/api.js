@@ -426,8 +426,18 @@ export const getAppReviews = (params) =>
 // ===== Auth =====
 export const sendRegistrationEmailVerification = (email) =>
   api.post("/api/dist/user/email-verification", { email });
-export const register = (data) => api.post("/api/dist/user/register", data);
-export const login = (data) => api.post("/api/dist/user/login", data);
+export const register = (data, turnstileToken = "") =>
+  api.post(
+    "/api/dist/user/register",
+    data,
+    turnstileToken ? { params: { turnstile: turnstileToken } } : undefined,
+  );
+export const login = (data, turnstileToken = "") =>
+  api.post(
+    "/api/dist/user/login",
+    data,
+    turnstileToken ? { params: { turnstile: turnstileToken } } : undefined,
+  );
 export const logout = () => api.post("/api/dist/user/logout");
 export const completeOAuth = (provider, params) =>
   api.get(`/api/dist/oauth/${encodeURIComponent(provider)}/callback`, {

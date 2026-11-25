@@ -1199,6 +1199,8 @@
     "logs.walletRefundRecovery": "Difference refund",
     "logs.walletRefundQueued": "Queued for automatic recovery",
     "logs.platformAdvance": "Platform advance",
-    "logs.platformAdvanceOutstanding": "Outstanding"
+    "logs.platformAdvanceOutstanding": "Outstanding",
+    "turnstile.checking": "Please wait while we verify you are human",
+    "turnstile.failed": "Human verification failed to load. Please refresh and try again."
   }
 }
