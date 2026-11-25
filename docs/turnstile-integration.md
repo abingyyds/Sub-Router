@@ -88,7 +88,8 @@
   ```
 - **`Turnstile token 为空`**：确认 `turnstile` 位于 URL query 参数而非 JSON body，且前端已刷新 `/api/dist/site/info`（未被旧 `localStorage` 缓存覆盖）。
 - **第一次输错密码，第二次报 `Turnstile 校验失败`**：token 为单次有效，需在请求未成功时清空本地 token 并触发 reset。
-- **自定义域名 iframe 返回 `403`**：确认 `origin` 对应的域名与后台绑定的分站自定义域名完全一致（含是否带 `www.`）且分站处于启用状态。
+- **自定义域名 iframe 返回 `403`**：确认 `origin` 对应的域名与后台绑定的分站自定义域名匹配且分站处于启用状态。平台自动互认 `<domain>`、`www.<domain>` 与 `api.<domain>`（例如后台绑定 `api.example.com` 时，前端部署在 `https://example.com` 或 `https://www.example.com` 均可自动放行）；但完全不同的第二个独立域名（如另买的新后缀域名）未在后台登记时会被 `403` 拦截。
+- **独立反代部署返回 `turnstile_embed_url: ""` 导致报 `110200`**：若自定义前端部署在 `https://example.com` 并把 `/api/*` 反代到 `<slug>.subrouter.ai`，建议反代保留浏览器的 `Origin`/`Referer` 请求头，或直接以绑定的自定义域名（如 `Host: api.example.com`）转发，避免后端误判为 `*.subrouter.ai` 直连模式。
 
 快速自检命令（替换 `yourdomain.com`）：
 
